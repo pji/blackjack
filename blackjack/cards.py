@@ -154,6 +154,9 @@ class Deck:
         return card
     
     # Container protocol.
+    def __contains__(self, item):
+        return item in self.cards
+    
     # Collection protocol.
     # Reversible protocol.
     # Sequence protocol.

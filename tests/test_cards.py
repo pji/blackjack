@@ -349,6 +349,21 @@ class DeckTestCase(unittest.TestCase):
             actual += 1
         
         self.assertEqual(expected, actual)
+    
+    def test_container_protocol(self):
+        """Deck should implement the Container protocol."""
+        expected = col.Container
+        d = cards.Deck()
+        self.assertTrue(isinstance(d, col.Container))
+    
+    def test___contains__(self):
+        """Deck should implement the in operator."""
+        c1 = cards.Card(1, 0)
+        c2 = cards.Card(2, 0)
+        c3 = cards.Card(3, 0)
+        d = cards.Deck([c1, c2])
+        self.assertTrue(c1 in d)
+        self.assertFalse(c3 in d)
 
 
 class validate_rankTestCase(unittest.TestCase):
