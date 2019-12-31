@@ -214,3 +214,28 @@ class valfactoryTestCase(unittest.TestCase):
         actual = cls.msg
         
         self.assertEqual(expected, actual)
+
+
+class validate_boolTestCase(unittest.TestCase):
+    def test_exists(self):
+        """A function named validate_bool should exist."""
+        names = [item[0] for item in inspect.getmembers(model)]
+        self.assertTrue('validate_bool' in names)
+    
+    def test_valid(self):
+        """If passed a valid value, validate_bool should return it."""
+        expected = True
+        actual = model.validate_bool(None, expected)
+        self.assertEqual(expected, actual)
+    
+    def test_invalid_type(self):
+        """If passed a non-bool, validate_bool should reject it by 
+        raising a ValueError.
+        """
+        expected = ValueError
+        
+        class Spam:
+            msg = '{}'
+        
+        with self.assertRaises(expected):
+            _ = model.validate_bool(Spam(), 'eggs')

@@ -63,3 +63,16 @@ def valfactory(name, validator, message):
         'msg': message,
     }
     return type(name, (Validated,), attrs)
+
+
+# Common validate functions.
+def validate_bool(self, value):
+    """Validate booleans."""
+    if isinstance(value, bool):
+        return value
+    reason = 'not a bool'
+    raise ValueError(self.msg.format(reason))
+
+
+# Common validator functions.
+Boolean = valfactory('Boolean', validate_bool, 'Invalid bool({}).')

@@ -51,6 +51,30 @@ class CardTestCase(unittest.TestCase):
         expected = ValueError
         with self.assertRaises(expected):
             _ = cards.Card(5, 'spam')
+    
+    def test_facing(self):
+        """Card objects can be initiated with a facing value."""
+        expected = True
+        
+        c = cards.Card(1, 1, cards.UP)
+        actual = c.facing
+        
+        self.assertEqual(expected, actual)
+    
+    def test_invalid_facing(self):
+        """Card facing must be a bool."""
+        expected = ValueError
+        with self.assertRaises(expected):
+            c = cards.Card(1, 1, 'spam')
+    
+    def test___repr__(self):
+        """Card should return a string useful for debugging."""
+        expected = "Card(rank=10, suit='clubs', facing=True)"
+        
+        c = cards.Card(10, 'clubs', cards.UP)
+        actual = c.__repr__()
+        
+        self.assertEqual(expected, actual)
 
 
 class validate_rankTestCase(unittest.TestCase):

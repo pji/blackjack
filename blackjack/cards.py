@@ -5,7 +5,12 @@ cards
 The module contains the basic classes used by blackjack for handling 
 cards.
 """
-from blackjack.model import valfactory
+from blackjack.model import Boolean, valfactory
+
+# Global values.
+UP = True
+DOWN = False
+
 
 # Validator functions.
 def validate_rank(self, value: int) -> int:
@@ -62,15 +67,25 @@ class Card:
     """A playing card for the game of blackjack."""
     rank = Rank('rank')
     suit = Suit('suit')
+    facing = Boolean('facing')
     
-    def __init__(self, rank: int = 11, suit: str = 'spades') -> None:
+    def __init__(self, rank: int = 11, suit: str = 'spades',
+                 facing: bool = UP) -> None:
         """Initialize an instance of the class.
         
         :param rank: (Optional.) The rank (number value) of the card.
+        :param suit: (Optional.) The suit of the card.
+        :param facing: (Optional.) Whether the card is face up. True 
+            is face up. False is face down.
         :return: None.
         :rtype: None.
         """
         self.rank = rank
         self.suit = suit
-
+        self.facing = facing
+    
+    def __repr__(self):
+        cls = self.__class__
+        tmp = '{}(rank={}, suit={!r}, facing={})'
+        return tmp.format(cls.__name__, self.rank, self.suit, self.facing)
 
