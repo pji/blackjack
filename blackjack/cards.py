@@ -6,7 +6,7 @@ The module contains the basic classes used by blackjack for handling
 cards.
 """
 from collections import OrderedDict
-from copy import deepcopy
+from copy import copy
 from itertools import product
 
 from blackjack.model import Boolean, valfactory
@@ -128,6 +128,7 @@ class Deck:
         :return: None
         :rtype: None
         """
+        self._iter_index = 0
         self.cards = cards
         if not self.cards:
             self.cards = []
@@ -139,13 +140,19 @@ class Deck:
     
     # Sized protocol.
     def __len__(self):
-        """Get the number of cards in the deck."""
         return len(self.cards)
     
     # Iterator protocol.
+    def __iter__(self):
+        return self.copy()
     
+    def __next__(self):
+        if self._iter_index >= len(self):
+            raise StopIteration
+        card = self.cards[self._iter_index]
+        self._iter_index += 1
+        return card
     
-    # Iterable protocol.
     # Container protocol.
     # Collection protocol.
     # Reversible protocol.
@@ -154,7 +161,7 @@ class Deck:
     
     def copy(self):
         """Return a copy of the Deck object."""
-        return deepcopy(self)
+        return copy(self)
     
     @classmethod
     def build(cls, num_decks: int = 1):
