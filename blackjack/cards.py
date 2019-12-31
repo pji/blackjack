@@ -6,6 +6,7 @@ The module contains the basic classes used by blackjack for handling
 cards.
 """
 from collections import OrderedDict
+from copy import deepcopy
 from itertools import product
 
 from blackjack.model import Boolean, valfactory
@@ -150,6 +151,10 @@ class Deck:
     # Reversible protocol.
     # Sequence protocol.
     # MutableSequence protocol.
+    
+    def copy(self):
+        """Return a copy of the Deck object."""
+        return deepcopy(self)
     
     @classmethod
     def build(cls, num_decks: int = 1):

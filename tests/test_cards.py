@@ -248,7 +248,18 @@ class DeckTestCase(unittest.TestCase):
     
     def test_copy(self):
         """Deck.copy() should return a copy of the Deck object."""
+        expected = cards.Deck([
+            cards.Card(1, 3),
+            cards.Card(2, 3),
+            cards.Card(3, 3),
+        ])
         
+        actual = expected.copy()
+        
+        self.assertEqual(expected, actual)
+        self.assertFalse(expected is actual)
+        for i in range(len(actual)):
+            self.assertFalse(expected.cards[i] is actual.cards[i])
 
 
 class validate_rankTestCase(unittest.TestCase):
