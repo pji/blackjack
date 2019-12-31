@@ -157,8 +157,11 @@ class Deck:
     def __contains__(self, item):
         return item in self.cards
     
-    # Collection protocol.
     # Reversible protocol.
+    def __reversed__(self):
+        cls = self.__class__
+        return cls(self.cards[::-1])
+    
     # Sequence protocol.
     # MutableSequence protocol.
     

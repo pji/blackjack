@@ -364,6 +364,30 @@ class DeckTestCase(unittest.TestCase):
         d = cards.Deck([c1, c2])
         self.assertTrue(c1 in d)
         self.assertFalse(c3 in d)
+    
+    def test_reversible_protocol(self):
+        """Deck should implement the Reversible protocol."""
+        expected = col.Reversible
+        d = cards.Deck()
+        self.assertTrue(isinstance(d, expected))
+    
+    def test___reversed__(self):
+        """__reversed__ should return an iterator that iterates 
+        though the cards in the Deck object in reverse order.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+            cards.Card(3, 0),
+        ]
+        expected = cards.Deck(card_list[::-1])
+        
+        d = cards.Deck(card_list)
+        actual = d.__reversed__()
+        
+        self.assertEqual(expected, actual)
+        
+        
 
 
 class validate_rankTestCase(unittest.TestCase):
