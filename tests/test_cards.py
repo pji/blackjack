@@ -4,6 +4,7 @@ test_cards.py
 
 This module contains the unit tests for the blackjack.cards module.
 """
+import collections.abc as col
 import inspect
 import unittest
 from unittest.mock import call, Mock
@@ -156,6 +157,17 @@ class DeckTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test__iter_index(self):
+        """An instance of Deck should initialize the iter_index 
+        attribute to zero.
+        """
+        expected = 0
+        
+        d = cards.Deck()
+        actual = d._iter_index
+        
+        self.assertEqual(expected, actual)
+    
     def test_build(self):
         """Deck.build() should return an instance of deck that 
         contains the cards needed for a blackjack game.
@@ -247,7 +259,9 @@ class DeckTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
     
     def test_copy(self):
-        """Deck.copy() should return a copy of the Deck object."""
+        """Deck.copy() should return a shallow copy of the Deck 
+        object.
+        """
         expected = cards.Deck([
             cards.Card(1, 3),
             cards.Card(2, 3),
@@ -259,7 +273,82 @@ class DeckTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
         self.assertFalse(expected is actual)
         for i in range(len(actual)):
-            self.assertFalse(expected.cards[i] is actual.cards[i])
+            self.assertTrue(expected.cards[i] is actual.cards[i])
+    
+    def test_iterator_protocol(self):
+        """Deck implements the iterator protocol."""
+        expected = col.Iterator
+        d = cards.Deck()
+        self.assertTrue(isinstance(d, expected))
+    
+    def test___next___increment(self):
+        """Calls to __next__() should increment the Deck object's 
+        _iter_index attribute.
+        """
+        expected = 3
+        
+        d = cards.Deck.build()
+        next(d)
+        next(d)
+        next(d)
+        actual = d._iter_index
+        
+        self.assertEqual(expected, actual)
+    
+    def test___next___stop(self):
+        """If _iter_index is equal to or greater than the number of 
+        cards in the Deck object, __next__() should raise 
+        StopIteration.
+        """
+        expected = StopIteration
+        
+        d = cards.Deck.build()
+        d._iter_index = 52
+        
+        with self.assertRaises(expected):
+            _ = next(d)
+            
+    def test___next___return(self):
+        """__next__() should return the next card held by the Deck 
+        object.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+        ]
+        expected = card_list[1]
+        
+        d = cards.Deck(card_list)
+        d._iter_index = 1
+        actual = next(d)
+        
+        self.assertEqual(expected, actual)
+    
+    def test___iter__(self):
+        """__iter__() should return a copy of of the Deck object for 
+        iteration.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+        ]
+        expected = cards.Deck(card_list)
+        
+        actual = expected.__iter__()
+        
+        self.assertEqual(expected, actual)
+        self.assertFalse(expected is actual)
+    
+    def test_card_iteratation(self):
+        """The cards in Deck.card should be able to be iterated."""
+        expected = 52
+        
+        d = cards.Deck.build()
+        actual = 0
+        for card in d:
+            actual += 1
+        
+        self.assertEqual(expected, actual)
 
 
 class validate_rankTestCase(unittest.TestCase):
