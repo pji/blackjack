@@ -75,6 +75,15 @@ class CardTestCase(unittest.TestCase):
         actual = c.__repr__()
         
         self.assertEqual(expected, actual)
+    
+    def test___str__(self):
+        """Card should return a string suitable for printing."""
+        expected = 'Q♥'
+        
+        c = cards.Card(12, 'hearts')
+        actual = str(c)
+        
+        self.assertEqual(expected, actual)
 
 
 class validate_rankTestCase(unittest.TestCase):

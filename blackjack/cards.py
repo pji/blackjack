@@ -88,4 +88,23 @@ class Card:
         cls = self.__class__
         tmp = '{}(rank={}, suit={!r}, facing={})'
         return tmp.format(cls.__name__, self.rank, self.suit, self.facing)
+    
+    def __str__(self):
+        rank_translate = {
+            1: 'A',
+            11: 'J',
+            12: 'Q',
+            13: 'K',
+        }
+        suit_translate = {
+            'clubs': '♣',
+            'diamonds': '♦',
+            'hearts': '♥',
+            'spades': '♠',
+        }
+        rank = self.rank
+        if rank in rank_translate:
+            rank = rank_translate[rank]
+        suit = suit_translate[self.suit]
+        return f'{rank}{suit}'
 
