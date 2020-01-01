@@ -9,6 +9,7 @@ from collections import OrderedDict
 from collections.abc import MutableSequence
 from copy import copy
 from itertools import product
+from random import shuffle
 
 from blackjack.model import Boolean, valfactory
 
@@ -214,3 +215,7 @@ class Deck(MutableSequence):
         :rtype: Card
         """
         return self.pop()
+    
+    def shuffle(self):
+        """Randomize the order of the deck."""
+        shuffle(self.cards)

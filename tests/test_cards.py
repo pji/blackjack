@@ -5,6 +5,7 @@ test_cards.py
 This module contains the unit tests for the blackjack.cards module.
 """
 import collections.abc as col
+from copy import deepcopy
 import inspect
 import unittest
 from unittest.mock import call, Mock
@@ -502,7 +503,7 @@ class DeckTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
     
     def test_draw_a_card(self):
-        """draw should remove the "top card" of the deck and return 
+        """draw() should remove the "top card" of the deck and return 
         it. For performance reasons, "top card" is defined as the 
         card at index -1.
         """
@@ -520,7 +521,24 @@ class DeckTestCase(unittest.TestCase):
         
         self.assertEqual(expected_card, actual_card)
         self.assertEqual(expected_deck, actual_deck)
- 
+    
+    def test_shuffle(self):
+        """shuffle() should randomize the order of the deck.
+        
+        NOTE: Because shuffling is a random action, it's possible 
+        for this to fail because the randomized order ends up the 
+        same as the original order. The odds for this should be 
+        1 in 52!, which is around 8 * 10^67.
+        """
+        original = cards.Deck.build()
+        expected_len = len(original)
+        
+        d = deepcopy(original)
+        d.shuffle()
+        actual_len = len(d)
+        
+        self.assertNotEqual(original, d)
+        self.assertEqual(expected_len, actual_len)
 
 
 class validate_rankTestCase(unittest.TestCase):
