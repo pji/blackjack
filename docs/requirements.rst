@@ -72,7 +72,38 @@ I think that translates into the following requirements:
 * A Card object that is an ace can have a value of either 1 or 11.
 * A Card object has a facing.
 * A Card object's facing can be flipped.
+* You don't know the suit or rank of a face down card.
 
 Cards aren't directly exposed to user input, but it probably still 
 makes sense for them to describe their data. That way, there is a 
 chance to catch something weird that happens for easier debugging.
+
+Based on those requirements, the following methods seem to make 
+sense for the Card class:
+
+* Card.flip()
+
+
+Deck
+~~~~
+Next up is the deck the cards are drawn from. The characteristics of 
+a blackjack deck are:
+
+* The Deck class exists.
+* An instance of the Deck class can be created.
+* The Deck contains Card objects.
+* The Deck can contain multiple complete standard decks of cards.
+* The dealer can draw cards from the deck.
+* Cards drawn from the deck are removed from the deck.
+* The deck can be shuffled.
+* Between 60 to 75 cards can be removed from the end of the deck to 
+  make card counting harder.
+* Cards are face down in the deck.
+
+Based on those requirements, the following methods seems to make 
+sense for the Deck class:
+
+* Deck.build(num_decks)
+* Deck.draw(num_cards)
+* Deck.shuffle()
+* Deck.cut(num_cards)
