@@ -111,3 +111,53 @@ sense for the Deck class:
 Deck.random_cut() is named random_cut() rather than cut() in case it 
 it useful to have a method to more traditionally cut the deck in the 
 future.
+
+
+Hand
+~~~~
+Now I need an object to represent a hand in blackjack.
+
+Do I, though? Could the hand just be a list stored as an attribute of 
+the player? Maybe it doesn't need its own class. The answer depends on 
+what a hand needs to be able to do. So, what does a hand need to have 
+or do?
+
+* A hand has cards.
+* A hand has a score.
+* A hand can be split into two hands.
+* A hand can be hit.
+
+Both list and object implementations will be able to hold cards and be 
+hit, so that argues for list.
+
+Does it make more sense for the hand to calculate it's own score and 
+handle its own split or should this be handled by a function? Both of 
+these are characteristic of blackjack hands, so there isn't really 
+any reuse if I have them as separate functions. Though, the ace being 
+worth either one or eleven depending on the situation does make it 
+tricky.
+
+Do you ever need to look at the dealer's hand in order to know whether 
+to count an ace as one or eleven? Maybe, but that's more of a decision 
+for the player not the hand. If scoring is done on the hand, then it 
+probably makes sense to return all possible scores and allow the 
+player to decide. It also only really matters for computer players 
+other than the dealer, if those are ever implemented. The player can 
+make the decision themselves when deciding whether to hit. And when 
+the player's hand is compared to the dealer's hand, it will be 
+obvious whether to count the aces as one or eleven.
+
+After all of that, the score is something that is intrinsic to the 
+hand, so it probably makes sense to go ahead and implement hands as 
+a class, with the following custom methods:
+
+* Hand.score()
+* Hand.split()
+* Hand.can_split()
+
+One final thought, both decks and hands are collections of cards. Does 
+it make sense to have a superclass for them that implements common 
+methods like the MutableSequence protocol? That'll take quite a bit of 
+refactoring, but it's probably worth it to be able to say hand[0] 
+rather than hand.cards[0]. I'll go with Pile for the name of the 
+superclass.
