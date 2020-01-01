@@ -127,7 +127,7 @@ class Card:
         self.facing = not self.facing
 
 
-class Deck(MutableSequence):
+class Pile(MutableSequence):
     """A deck of playing cards for blackjack."""
     def __init__(self, cards: list = None) -> None:
         """Initialize and instance of the class.
@@ -143,7 +143,7 @@ class Deck(MutableSequence):
             self.cards = []
     
     def __eq__(self, other):
-        if isinstance(other, Deck):
+        if isinstance(other, Pile):
             return self.cards == other.cards
         return NotImplemented
     
@@ -185,7 +185,13 @@ class Deck(MutableSequence):
     def insert(self, key, item):
         self.cards.insert(key, item)
     
-    # Custom methods.
+    #Utility methods.
+    def copy(self):
+        """Return a copy of the Deck object."""
+        return copy(self)
+
+
+class Deck(Pile):
     @classmethod
     def build(cls, num_decks: int = 1):
         """(Class method.) Create a Deck object that is populated 
@@ -203,10 +209,6 @@ class Deck(MutableSequence):
         for i in range(num_decks):
             d.cards.extend(std_deck)
         return d
-    
-    def copy(self):
-        """Return a copy of the Deck object."""
-        return copy(self)
     
     def draw(self):
         """Draw the top card from the deck.

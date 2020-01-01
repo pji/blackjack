@@ -166,20 +166,29 @@ class CardTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-class DeckTestCase(unittest.TestCase):
+class PileTestCase(unittest.TestCase):
+    # Utility methods.
+    def cardlist(self):
+        return [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+            cards.Card(3, 0),
+        ]
+    
+    # Tests.
     def test_exists(self):
-        """A class named Deck should exist."""
+        """A class named Pile should exist."""
         names = [item[0] for item in inspect.getmembers(cards)]
-        self.assertTrue('Deck' in names)
+        self.assertTrue('Pile' in names)
     
     def test_can_instantiate(self):
-        """An instance of Deck should be able to be instantiated."""
-        expected = cards.Deck
-        actual = cards.Deck()
+        """An instance of Pile should be able to be instantiated."""
+        expected = cards.Pile
+        actual = cards.Pile()
         self.assertTrue(isinstance(actual, expected))
     
     def test_cards(self):
-        """An instance of Deck should be able to hold cards in its 
+        """An instance of Pile should be able to hold cards in its 
         cards attribute.
         """
         expected = [
@@ -188,24 +197,283 @@ class DeckTestCase(unittest.TestCase):
             cards.Card(3, 3),
         ]
         
-        d = cards.Deck(expected)
+        d = cards.Pile(expected)
         actual = d.cards
         
         self.assertEqual(expected, actual)
     
     def test__iter_index(self):
-        """An instance of Deck should initialize the iter_index 
+        """An instance of Pile should initialize the iter_index 
         attribute to zero.
         """
         expected = 0
         
-        d = cards.Deck()
+        d = cards.Pile()
         actual = d._iter_index
         
         self.assertEqual(expected, actual)
     
+    def test_sized_protocol(self):
+        """Pile should implement the Sized protocol by returning the 
+        number of cards in the deck for Pile.__len__."""
+        expected = 3
+        
+        d = cards.Pile(self.cardlist())
+        actual = len(d)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_equality_test(self):
+        """Piles that contain the same cards in the same order should 
+        be equal.
+        """
+        d1 = cards.Pile([
+            cards.Card(1, 3),
+            cards.Card(2, 3),
+            cards.Card(3, 3),
+        ])
+        d2 = cards.Pile([
+            cards.Card(1, 3),
+            cards.Card(2, 3),
+            cards.Card(3, 3),
+        ])
+        d3 = cards.Pile([
+            cards.Card(1, 2),
+            cards.Card(2, 3),
+            cards.Card(3, 3),
+        ])
+        d4 = cards.Pile([
+            cards.Card(1, 3),
+            cards.Card(3, 3),
+        ])
+        d5 = cards.Pile([
+            cards.Card(3, 3),
+            cards.Card(1, 3),
+            cards.Card(2, 3),
+        ])
+        
+        self.assertTrue(d1 == d2)
+        self.assertFalse(d1 == d3)
+        self.assertFalse(d1 == d4)
+        self.assertFalse(d1 == d5)
+    
+    def test_equality_notimplemented(self):
+        """Attempts to compare a Pile object with a non-Pile object 
+        should return NotImplemented.
+        """
+        expected = NotImplemented
+        
+        d1 = cards.Pile([
+            cards.Card(1, 3),
+            cards.Card(2, 3),
+            cards.Card(3, 3),
+        ])
+        other = 'spam'
+        actual = d1.__eq__(other)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_copy(self):
+        """Pile.copy() should return a shallow copy of the Pile 
+        object.
+        """
+        expected = cards.Pile([
+            cards.Card(1, 3),
+            cards.Card(2, 3),
+            cards.Card(3, 3),
+        ])
+        
+        actual = expected.copy()
+        
+        self.assertEqual(expected, actual)
+        self.assertFalse(expected is actual)
+        for i in range(len(actual)):
+            self.assertTrue(expected.cards[i] is actual.cards[i])
+    
+    def test_iterator_protocol(self):
+        """Pile implements the iterator protocol."""
+        expected = col.Iterator
+        d = cards.Pile()
+        self.assertTrue(isinstance(d, expected))
+    
+    def test___next___increment(self):
+        """Calls to __next__() should increment the Pile object's 
+        _iter_index attribute.
+        """
+        expected = 2
+        
+        d = cards.Pile(self.cardlist())
+        next(d)
+        next(d)
+        actual = d._iter_index
+        
+        self.assertEqual(expected, actual)
+    
+    def test___next___stop(self):
+        """If _iter_index is equal to or greater than the number of 
+        cards in the Pile object, __next__() should raise 
+        StopIteration.
+        """
+        expected = StopIteration
+        
+        d = cards.Pile(self.cardlist())
+        d._iter_index = 3
+        
+        with self.assertRaises(expected):
+            _ = next(d)
+            
+    def test___next___return(self):
+        """__next__() should return the next card held by the Pile 
+        object.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+        ]
+        expected = card_list[1]
+        
+        d = cards.Pile(card_list)
+        d._iter_index = 1
+        actual = next(d)
+        
+        self.assertEqual(expected, actual)
+    
+    def test___iter__(self):
+        """__iter__() should return a copy of of the Pile object for 
+        iteration.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+        ]
+        expected = cards.Pile(card_list)
+        
+        actual = expected.__iter__()
+        
+        self.assertEqual(expected, actual)
+        self.assertFalse(expected is actual)
+    
+    def test_card_iteratation(self):
+        """The cards in Pile.card should be able to be iterated."""
+        expected = 3
+        
+        d = cards.Pile(self.cardlist())
+        actual = 0
+        for card in d:
+            actual += 1
+        
+        self.assertEqual(expected, actual)
+    
+    def test_container_protocol(self):
+        """Pile should implement the Container protocol."""
+        expected = col.Container
+        d = cards.Pile()
+        self.assertTrue(isinstance(d, col.Container))
+    
+    def test___contains__(self):
+        """Pile should implement the in operator."""
+        c1 = cards.Card(1, 0)
+        c2 = cards.Card(2, 0)
+        c3 = cards.Card(3, 0)
+        d = cards.Pile([c1, c2])
+        self.assertTrue(c1 in d)
+        self.assertFalse(c3 in d)
+    
+    def test_reversible_protocol(self):
+        """Pile should implement the Reversible protocol."""
+        expected = col.Reversible
+        d = cards.Pile()
+        self.assertTrue(isinstance(d, expected))
+    
+    def test___reversed__(self):
+        """__reversed__ should return an iterator that iterates 
+        though the cards in the Pile object in reverse order.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+            cards.Card(3, 0),
+        ]
+        expected = cards.Pile(card_list[::-1])
+        
+        d = cards.Pile(card_list)
+        actual = d.__reversed__()
+        
+        self.assertEqual(expected, actual)
+    
+    def test_sequence_protocol(self):
+        """Pile should implement the Sequence protocol."""
+        expected = col.Sequence
+        d = cards.Pile()
+        self.assertTrue(isinstance(d, expected))
+    
+    def test___getitem__(self):
+        """Given a key, __getitem__ should return the item for that 
+        key.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+            cards.Card(3, 0),
+        ]
+        expected = card_list[1]
+        
+        d = cards.Pile(card_list)
+        actual = d.__getitem__(1)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_mutablesequence_protocol(self):
+        """Pile should implement the MutableSequence protocol."""
+        expected = col.MutableSequence
+        d = cards.Pile()
+        self.assertTrue(isinstance(d, expected))
+    
+    def test___setitem__(self):
+        """Given a key and value, __setitem__ should set the value of 
+        cards at that index to the value.
+        """
+        expected = cards.Card(11, 3)
+        
+        d = cards.Pile(self.cardlist())
+        d.__setitem__(1, expected)
+        actual = d.cards[1]
+        
+        self.assertEqual(expected, actual)
+    
+    def test___delitem__(self):
+        """Given a key, __delitem__ should delete the item at that key 
+        of cards.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+            cards.Card(3, 0),
+        ]
+        expected = [card_list[0], card_list[2]]
+        
+        d = cards.Pile(card_list)
+        d.__delitem__(1)
+        actual = d.cards
+        
+        self.assertEqual(expected, actual)
+    
+    def test_insert(self):
+        """Given a key and an object, insert() should insert the item
+        at the key.
+        """
+        expected = cards.Card(11, 3)
+
+        d = cards.Pile(self.cardlist())
+        d.insert(1, expected)
+        actual = d.cards[1]
+
+        self.assertEqual(expected, actual)
+
+
+class DeckTestCase(unittest.TestCase):
     def test_build(self):
-        """Deck.build() should return an instance of deck that 
+        """Pile.build() should return an instance of deck that 
         contains the cards needed for a blackjack game.
         """
         expected_size = 52
@@ -229,8 +497,8 @@ class DeckTestCase(unittest.TestCase):
             self.assertEqual(expected, actual)
     
     def test_build_casino_deck(self):
-        """If given the number of standard decks to use, Deck.build() 
-        should return a Deck object that contains cards from that many 
+        """If given the number of standard decks to use, Pile.build() 
+        should return a Pile object that contains cards from that many 
         standard decks.
         """
         num_decks = 6
@@ -244,264 +512,6 @@ class DeckTestCase(unittest.TestCase):
         for card in d.cards:
             self.assertTrue(isinstance(card, expected_class))
     
-    def test_sized_protocol(self):
-        """Deck should implement the Sized protocol by returning the 
-        number of cards in the deck for Deck.__len__."""
-        expected = 52
-        
-        d = cards.Deck.build()
-        actual = len(d)
-        
-        self.assertEqual(expected, actual)
-    
-    def test_equality_test(self):
-        """Decks that contain the same cards in the same order should 
-        be equal.
-        """
-        d1 = cards.Deck([
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        ])
-        d2 = cards.Deck([
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        ])
-        d3 = cards.Deck([
-            cards.Card(1, 2),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        ])
-        d4 = cards.Deck([
-            cards.Card(1, 3),
-            cards.Card(3, 3),
-        ])
-        d5 = cards.Deck([
-            cards.Card(3, 3),
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-        ])
-        
-        self.assertTrue(d1 == d2)
-        self.assertFalse(d1 == d3)
-        self.assertFalse(d1 == d4)
-        self.assertFalse(d1 == d5)
-    
-    def test_equality_notimplemented(self):
-        """Attempts to compare a Deck object with a non-Deck object 
-        should return NotImplemented.
-        """
-        expected = NotImplemented
-        
-        d1 = cards.Deck([
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        ])
-        other = 'spam'
-        actual = d1.__eq__(other)
-        
-        self.assertEqual(expected, actual)
-    
-    def test_copy(self):
-        """Deck.copy() should return a shallow copy of the Deck 
-        object.
-        """
-        expected = cards.Deck([
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        ])
-        
-        actual = expected.copy()
-        
-        self.assertEqual(expected, actual)
-        self.assertFalse(expected is actual)
-        for i in range(len(actual)):
-            self.assertTrue(expected.cards[i] is actual.cards[i])
-    
-    def test_iterator_protocol(self):
-        """Deck implements the iterator protocol."""
-        expected = col.Iterator
-        d = cards.Deck()
-        self.assertTrue(isinstance(d, expected))
-    
-    def test___next___increment(self):
-        """Calls to __next__() should increment the Deck object's 
-        _iter_index attribute.
-        """
-        expected = 3
-        
-        d = cards.Deck.build()
-        next(d)
-        next(d)
-        next(d)
-        actual = d._iter_index
-        
-        self.assertEqual(expected, actual)
-    
-    def test___next___stop(self):
-        """If _iter_index is equal to or greater than the number of 
-        cards in the Deck object, __next__() should raise 
-        StopIteration.
-        """
-        expected = StopIteration
-        
-        d = cards.Deck.build()
-        d._iter_index = 52
-        
-        with self.assertRaises(expected):
-            _ = next(d)
-            
-    def test___next___return(self):
-        """__next__() should return the next card held by the Deck 
-        object.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-        ]
-        expected = card_list[1]
-        
-        d = cards.Deck(card_list)
-        d._iter_index = 1
-        actual = next(d)
-        
-        self.assertEqual(expected, actual)
-    
-    def test___iter__(self):
-        """__iter__() should return a copy of of the Deck object for 
-        iteration.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-        ]
-        expected = cards.Deck(card_list)
-        
-        actual = expected.__iter__()
-        
-        self.assertEqual(expected, actual)
-        self.assertFalse(expected is actual)
-    
-    def test_card_iteratation(self):
-        """The cards in Deck.card should be able to be iterated."""
-        expected = 52
-        
-        d = cards.Deck.build()
-        actual = 0
-        for card in d:
-            actual += 1
-        
-        self.assertEqual(expected, actual)
-    
-    def test_container_protocol(self):
-        """Deck should implement the Container protocol."""
-        expected = col.Container
-        d = cards.Deck()
-        self.assertTrue(isinstance(d, col.Container))
-    
-    def test___contains__(self):
-        """Deck should implement the in operator."""
-        c1 = cards.Card(1, 0)
-        c2 = cards.Card(2, 0)
-        c3 = cards.Card(3, 0)
-        d = cards.Deck([c1, c2])
-        self.assertTrue(c1 in d)
-        self.assertFalse(c3 in d)
-    
-    def test_reversible_protocol(self):
-        """Deck should implement the Reversible protocol."""
-        expected = col.Reversible
-        d = cards.Deck()
-        self.assertTrue(isinstance(d, expected))
-    
-    def test___reversed__(self):
-        """__reversed__ should return an iterator that iterates 
-        though the cards in the Deck object in reverse order.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-            cards.Card(3, 0),
-        ]
-        expected = cards.Deck(card_list[::-1])
-        
-        d = cards.Deck(card_list)
-        actual = d.__reversed__()
-        
-        self.assertEqual(expected, actual)
-    
-    def test_sequence_protocol(self):
-        """Deck should implement the Sequence protocol."""
-        expected = col.Sequence
-        d = cards.Deck()
-        self.assertTrue(isinstance(d, expected))
-    
-    def test___getitem__(self):
-        """Given a key, __getitem__ should return the item for that 
-        key.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-            cards.Card(3, 0),
-        ]
-        expected = card_list[1]
-        
-        d = cards.Deck(card_list)
-        actual = d.__getitem__(1)
-        
-        self.assertEqual(expected, actual)
-    
-    def test_mutablesequence_protocol(self):
-        """Deck should implement the MutableSequence protocol."""
-        expected = col.MutableSequence
-        d = cards.Deck()
-        self.assertTrue(isinstance(d, expected))
-    
-    def test___setitem__(self):
-        """Given a key and value, __setitem__ should set the value of 
-        cards at that index to the value.
-        """
-        expected = cards.Card(11, 3)
-        
-        d = cards.Deck.build()
-        d.__setitem__(3, expected)
-        actual = d.cards[3]
-        
-        self.assertEqual(expected, actual)
-    
-    def test___delitem__(self):
-        """Given a key, __delitem__ should delete the item at that key 
-        of cards.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-            cards.Card(3, 0),
-        ]
-        expected = [card_list[0], card_list[2]]
-        
-        d = cards.Deck(card_list)
-        d.__delitem__(1)
-        actual = d.cards
-        
-        self.assertEqual(expected, actual)
-    
-    def test_insert(self):
-        """Given a key and an object, insert() should insert the item
-        at the key.
-        """
-        expected = cards.Card(11, 3)
-
-        d = cards.Deck.build()
-        d.insert(3, expected)
-        actual = d.cards[3]
-
-        self.assertEqual(expected, actual)
-    
     def test_draw_a_card(self):
         """draw() should remove the "top card" of the deck and return 
         it. For performance reasons, "top card" is defined as the 
@@ -513,7 +523,7 @@ class DeckTestCase(unittest.TestCase):
             cards.Card(3, 0),
         ]
         expected_card = card_list[-1]
-        expected_deck = cards.Deck(card_list[0:2])
+        expected_deck = cards.Pile(card_list[0:2])
         
         d = cards.Deck(card_list)
         actual_card = d.draw()
