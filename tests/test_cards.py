@@ -635,6 +635,21 @@ class HandTestCase(unittest.TestCase):
         actual = h.cards
         
         self.assertEqual(expected, actual)
+    
+    def test_score_simple(self):
+        """score() should add together the values of the cards in the 
+        hand and return the score.
+        """
+        expected = [18,]
+        
+        cardlist = [
+            cards.Card(11, 3),
+            cards.Card(7, 2),
+        ]
+        h = cards.Hand(cardlist)
+        actual = h.score()
+        
+        self.assertEqual(expected, actual)
 
 
 class validate_rankTestCase(unittest.TestCase):
