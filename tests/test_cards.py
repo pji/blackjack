@@ -152,6 +152,17 @@ class CardTestCase(unittest.TestCase):
         actual = c.facing
         
         self.assertEqual(expected, actual)
+    
+    def test_print_should_hide_info_when_face_down(self):
+        """When facing is down, __str__() should not reveal the suit 
+        or rank of the card.
+        """
+        expected = '\u2500\u2500'
+        
+        c = cards.Card(11, 3, cards.DOWN)
+        actual = c.__str__()
+        
+        self.assertEqual(expected, actual)
 
 
 class DeckTestCase(unittest.TestCase):
@@ -205,6 +216,17 @@ class DeckTestCase(unittest.TestCase):
         self.assertEqual(expected_size, actual_size)
         for card in d.cards:
             self.assertTrue(isinstance(card, expected_class))
+    
+    def test_build_cards_face_down(self):
+        """Card objects should be face down in the deck."""
+        expected = cards.DOWN
+        
+        d = cards.Deck.build()
+        for c in d:
+            actual = c.facing
+            
+            self.assertEqual(expected, actual)
+        
     
     def test_build_casino_deck(self):
         """If given the number of standard decks to use, Deck.build() 

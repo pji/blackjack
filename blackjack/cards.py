@@ -95,6 +95,9 @@ class Card:
         return tmp.format(cls.__name__, self.rank, self.suit, self.facing)
     
     def __str__(self):
+        if self.facing == DOWN:
+            return '\u2500\u2500'
+        
         rank_translate = {
             1: 'A',
             11: 'J',
@@ -198,7 +201,8 @@ class Deck(MutableSequence):
         """
         d = cls()
         ranks = reversed(RANKS)
-        std_deck = [Card(rank, suit) for suit, rank in product(SUITS, ranks)]
+        std_deck = [Card(rank, suit, DOWN) for suit, rank 
+                    in product(SUITS, ranks)]
         for i in range(num_decks):
             d.cards.extend(std_deck)
         return d
