@@ -667,13 +667,12 @@ class HandTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
     
     def test_score_ace(self):
-        """score() should return all possible scores if there is an 
+        """score() should return all unique scores if there is an 
         ace in the hand.
         """
         expected = [
             4,      # 1, 1, 2
-            14,     # 1, 11, 2
-            14,     # 11, 1, 2
+            14,     # 1, 11, 2 & 11, 1, 2
             24,     # 11, 11, 2
         ]
         

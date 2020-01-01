@@ -248,7 +248,7 @@ class Hand(Pile):
         self.cards.append(item)
     
     def score(self):
-        scores = []
+        scores = set()
         
         # Reduce to ranks and sort to simplify scoring.
         ranks = sorted([card.rank for card in self.cards])
@@ -257,7 +257,7 @@ class Hand(Pile):
         if (len(ranks) == 2 
                 and ranks[0] == 1
                 and ranks[1] >= 10):
-            scores.append('natural')
+            scores.add('natural')
         
         # Other scoring.
         else:
@@ -272,7 +272,7 @@ class Hand(Pile):
                     score += rank
             
             if not aces:
-                scores.append(score)
+                scores.add(score)
             else:
                 products = product('01', repeat=len(aces))
                 for item in products:
@@ -282,8 +282,9 @@ class Hand(Pile):
                             score_aces += 1
                         else:
                             score_aces += 11
-                    scores.append(score + score_aces)
+                    scores.add(score + score_aces)
         
         # Return results.
+        scores = list(scores)
         return sorted(scores)
         
