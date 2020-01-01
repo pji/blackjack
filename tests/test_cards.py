@@ -644,7 +644,7 @@ class HandTestCase(unittest.TestCase):
         
         cardlist = [
             cards.Card(11, 3),
-            cards.Card(7, 2),
+            cards.Card(8, 2),
         ]
         h = cards.Hand(cardlist)
         actual = h.score()

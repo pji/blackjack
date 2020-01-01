@@ -240,3 +240,17 @@ class Hand(Pile):
     """A hand of blackjack."""
     def append(self, item):
         self.cards.append(item)
+    
+    def score(self):
+        scores = []
+        
+        score = 0
+        for card in self.cards:
+            if card.rank > 10:
+                score += 10
+            else:
+                score += card.rank
+        scores.append(score)
+        
+        return scores
+        
