@@ -237,20 +237,53 @@ class Deck(Pile):
 
 
 class Hand(Pile):
-    """A hand of blackjack."""
+    """A hand of blackjack.
+    
+    NOTE: Five card charlie (winning if you get five cards without 
+    busting) is a house rule. This implementation is based on the 
+    Bicycle rules for Blackjack at bicyclecards.com, so it doesn't 
+    implement that rule.
+    """
     def append(self, item):
         self.cards.append(item)
     
     def score(self):
         scores = []
         
-        score = 0
-        for card in self.cards:
-            if card.rank > 10:
-                score += 10
-            else:
-                score += card.rank
-        scores.append(score)
+        # Reduce to ranks and sort to simplify scoring.
+        ranks = sorted([card.rank for card in self.cards])
         
-        return scores
+        # Natural blackjack.
+        if (len(ranks) == 2 
+                and ranks[0] == 1
+                and ranks[1] >= 10):
+            scores.append('natural')
+        
+        # Other scoring.
+        else:
+            aces = [rank for rank in ranks if rank == 1]
+            other = [rank for rank in ranks if rank > 1]
+            
+            score = 0
+            for rank in other:
+                if rank > 10:
+                    score += 10
+                else:
+                    score += rank
+            
+            if not aces:
+                scores.append(score)
+            else:
+                products = product('01', repeat=len(aces))
+                for item in products:
+                    score_aces = 0
+                    for ace in item:
+                        if ace == '0':
+                            score_aces += 1
+                        else:
+                            score_aces += 11
+                    scores.append(score + score_aces)
+        
+        # Return results.
+        return sorted(scores)
         

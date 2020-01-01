@@ -650,6 +650,42 @@ class HandTestCase(unittest.TestCase):
         actual = h.score()
         
         self.assertEqual(expected, actual)
+    
+    def test_score_natural_blackjack(self):
+        """score() should return "natural" if the hand is a natural 
+        blackjack.
+        """
+        expected = ['natural',]
+        
+        cardlist = [
+            cards.Card(11, 3),
+            cards.Card(1, 2),
+        ]
+        h = cards.Hand(cardlist)
+        actual = h.score()
+        
+        self.assertEqual(expected, actual)
+    
+    def test_score_ace(self):
+        """score() should return all possible scores if there is an 
+        ace in the hand.
+        """
+        expected = [
+            4,      # 1, 1, 2
+            14,     # 1, 11, 2
+            14,     # 11, 1, 2
+            24,     # 11, 11, 2
+        ]
+        
+        cardlist = [
+            cards.Card(1, 0),
+            cards.Card(1, 1),
+            cards.Card(2, 3),
+        ]
+        h = cards.Hand(cardlist)
+        actual = h.score()
+        
+        self.assertEqual(expected, actual)
 
 
 class validate_rankTestCase(unittest.TestCase):
