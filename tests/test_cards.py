@@ -226,7 +226,6 @@ class DeckTestCase(unittest.TestCase):
             actual = c.facing
             
             self.assertEqual(expected, actual)
-        
     
     def test_build_casino_deck(self):
         """If given the number of standard decks to use, Deck.build() 
@@ -501,6 +500,27 @@ class DeckTestCase(unittest.TestCase):
         actual = d.cards[3]
 
         self.assertEqual(expected, actual)
+    
+    def test_draw_a_card(self):
+        """draw should remove the "top card" of the deck and return 
+        it. For performance reasons, "top card" is defined as the 
+        card at index -1.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+            cards.Card(3, 0),
+        ]
+        expected_card = card_list[-1]
+        expected_deck = cards.Deck(card_list[0:2])
+        
+        d = cards.Deck(card_list)
+        actual_card = d.draw()
+        actual_deck = d
+        
+        self.assertEqual(expected_card, actual_card)
+        self.assertEqual(expected_deck, actual_deck)
+ 
 
 
 class validate_rankTestCase(unittest.TestCase):

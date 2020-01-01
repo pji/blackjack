@@ -185,10 +185,6 @@ class Deck(MutableSequence):
         self.cards.insert(key, item)
     
     # Custom methods.
-    def copy(self):
-        """Return a copy of the Deck object."""
-        return copy(self)
-    
     @classmethod
     def build(cls, num_decks: int = 1):
         """(Class method.) Create a Deck object that is populated 
@@ -206,3 +202,15 @@ class Deck(MutableSequence):
         for i in range(num_decks):
             d.cards.extend(std_deck)
         return d
+    
+    def copy(self):
+        """Return a copy of the Deck object."""
+        return copy(self)
+    
+    def draw(self):
+        """Draw the top card from the deck.
+        
+        :return: The top card from the deck.
+        :rtype: Card
+        """
+        return self.pop()
