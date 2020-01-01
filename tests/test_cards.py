@@ -598,6 +598,15 @@ class DeckTestCase(unittest.TestCase):
 
 
 class HandTestCase(unittest.TestCase):
+    # Utility methods.
+    def cardlist(self):
+        return [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+            cards.Card(3, 0),
+        ]
+
+    # Tests.
     def test_exists(self):
         """A class named Hand should exist."""
         names = [item[0] for item in inspect.getmembers(cards)]
@@ -615,6 +624,17 @@ class HandTestCase(unittest.TestCase):
         actual = cards.Hand
         self.assertTrue(issubclass(actual, expected))
     
+    def test_append(self):
+        """Given a Card object, append() should append that card to 
+        cards.
+        """
+        expected = self.cardlist()
+        
+        h = cards.Hand(expected[:2])
+        h.append(expected[2])
+        actual = h.cards
+        
+        self.assertEqual(expected, actual)
 
 
 class validate_rankTestCase(unittest.TestCase):

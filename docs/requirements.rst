@@ -151,6 +151,7 @@ After all of that, the score is something that is intrinsic to the
 hand, so it probably makes sense to go ahead and implement hands as 
 a class, with the following custom methods:
 
+* Hand.append()
 * Hand.score()
 * Hand.split()
 * Hand.can_split()

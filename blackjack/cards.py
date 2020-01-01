@@ -238,3 +238,5 @@ class Deck(Pile):
 
 class Hand(Pile):
     """A hand of blackjack."""
+    def append(self, item):
+        self.cards.append(item)
