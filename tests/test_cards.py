@@ -386,8 +386,75 @@ class DeckTestCase(unittest.TestCase):
         actual = d.__reversed__()
         
         self.assertEqual(expected, actual)
+    
+    def test_sequence_protocol(self):
+        """Deck should implement the Sequence protocol."""
+        expected = col.Sequence
+        d = cards.Deck()
+        self.assertTrue(isinstance(d, expected))
+    
+    def test___getitem__(self):
+        """Given a key, __getitem__ should return the item for that 
+        key.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+            cards.Card(3, 0),
+        ]
+        expected = card_list[1]
         
+        d = cards.Deck(card_list)
+        actual = d.__getitem__(1)
         
+        self.assertEqual(expected, actual)
+    
+    def test_mutablesequence_protocol(self):
+        """Deck should implement the MutableSequence protocol."""
+        expected = col.MutableSequence
+        d = cards.Deck()
+        self.assertTrue(isinstance(d, expected))
+    
+    def test___setitem__(self):
+        """Given a key and value, __setitem__ should set the value of 
+        cards at that index to the value.
+        """
+        expected = cards.Card(11, 3)
+        
+        d = cards.Deck.build()
+        d.__setitem__(3, expected)
+        actual = d.cards[3]
+        
+        self.assertEqual(expected, actual)
+    
+    def test___delitem__(self):
+        """Given a key, __delitem__ should delete the item at that key 
+        of cards.
+        """
+        card_list = [
+            cards.Card(1, 0),
+            cards.Card(2, 0),
+            cards.Card(3, 0),
+        ]
+        expected = [card_list[0], card_list[2]]
+        
+        d = cards.Deck(card_list)
+        d.__delitem__(1)
+        actual = d.cards
+        
+        self.assertEqual(expected, actual)
+    
+    def test_insert(self):
+        """Given a key and an object, insert() should insert the item
+        at the key.
+        """
+        expected = cards.Card(11, 3)
+
+        d = cards.Deck.build()
+        d.insert(3, expected)
+        actual = d.cards[3]
+
+        self.assertEqual(expected, actual)
 
 
 class validate_rankTestCase(unittest.TestCase):

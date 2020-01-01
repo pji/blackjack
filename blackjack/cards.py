@@ -6,6 +6,7 @@ The module contains the basic classes used by blackjack for handling
 cards.
 """
 from collections import OrderedDict
+from collections.abc import MutableSequence
 from copy import copy
 from itertools import product
 
@@ -118,7 +119,7 @@ class Card:
         return result
 
 
-class Deck:
+class Deck(MutableSequence):
     """A deck of playing cards for blackjack."""
     def __init__(self, cards: list = None) -> None:
         """Initialize and instance of the class.
@@ -163,8 +164,20 @@ class Deck:
         return cls(self.cards[::-1])
     
     # Sequence protocol.
-    # MutableSequence protocol.
+    def __getitem__(self, key):
+        return self.cards.__getitem__(key)
     
+    # MutableSequence protocol.
+    def __setitem__(self, key, value):
+        self.cards.__setitem__(key, value)
+    
+    def __delitem__(self, key):
+        self.cards.__delitem__(key)
+    
+    def insert(self, key, item):
+        self.cards.insert(key, item)
+    
+    # Custom methods.
     def copy(self):
         """Return a copy of the Deck object."""
         return copy(self)
@@ -180,7 +193,8 @@ class Deck:
         :rtype: Deck
         """
         d = cls()
-        std_deck = [Card(rank, suit) for rank, suit in product(RANKS, SUITS)]
+        ranks = reversed(RANKS)
+        std_deck = [Card(rank, suit) for suit, rank in product(SUITS, ranks)]
         for i in range(num_decks):
             d.cards.extend(std_deck)
         return d
