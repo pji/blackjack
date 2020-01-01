@@ -128,7 +128,7 @@ class Card:
 
 
 class Pile(MutableSequence):
-    """A deck of playing cards for blackjack."""
+    """A generic pile of cards."""
     def __init__(self, cards: list = None) -> None:
         """Initialize and instance of the class.
         
@@ -192,6 +192,7 @@ class Pile(MutableSequence):
 
 
 class Deck(Pile):
+    """A deck of playing cards for blackjack."""
     @classmethod
     def build(cls, num_decks: int = 1):
         """(Class method.) Create a Deck object that is populated 
@@ -233,3 +234,7 @@ class Deck(Pile):
         """
         num = randrange(60, 76)
         self.cards = self.cards[num:]
+
+
+class Hand(Pile):
+    """A hand of blackjack."""

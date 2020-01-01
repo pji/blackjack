@@ -472,6 +472,23 @@ class PileTestCase(unittest.TestCase):
 
 
 class DeckTestCase(unittest.TestCase):
+    def test_exists(self):
+        """A class named Deck should exist."""
+        names = [item[0] for item in inspect.getmembers(cards)]
+        self.assertTrue('Deck' in names)
+    
+    def test_can_instantiate(self):
+        """An instance of Deck should be able to be instantiated."""
+        expected = cards.Deck
+        actual = cards.Deck()
+        self.assertTrue(isinstance(actual, expected))
+    
+    def test_Pile_subclass(self):
+        """Deck should be a subclass of Pile."""
+        expected = cards.Pile
+        actual = cards.Deck
+        self.assertTrue(issubclass(actual, expected))
+    
     def test_build(self):
         """Pile.build() should return an instance of deck that 
         contains the cards needed for a blackjack game.
@@ -578,6 +595,26 @@ class DeckTestCase(unittest.TestCase):
         length = lengths.pop()
         comp_lengths = [length == n for n in lengths]
         self.assertFalse(all(comp_lengths))
+
+
+class HandTestCase(unittest.TestCase):
+    def test_exists(self):
+        """A class named Hand should exist."""
+        names = [item[0] for item in inspect.getmembers(cards)]
+        self.assertTrue('Hand' in names)
+    
+    def test_can_instantiate(self):
+        """An instance of Hand should be able to be instantiated."""
+        expected = cards.Hand
+        actual = cards.Hand()
+        self.assertTrue(isinstance(actual, expected))
+    
+    def test_Pile_subclass(self):
+        """Hand should be a subclass of Pile."""
+        expected = cards.Pile
+        actual = cards.Hand
+        self.assertTrue(issubclass(actual, expected))
+    
 
 
 class validate_rankTestCase(unittest.TestCase):
