@@ -128,6 +128,30 @@ class CardTestCase(unittest.TestCase):
         self.assertTrue(c1 != c3)
         self.assertTrue(c1 != c4)
         self.assertTrue(c1 != c5)
+    
+    def test_flip_up(self):
+        """When a Card object is face down, flip() should switch it to 
+        being face up.
+        """
+        expected = cards.UP
+        
+        c = cards.Card(11, 0, cards.DOWN)
+        c.flip()
+        actual = c.facing
+        
+        self.assertEqual(expected, actual)
+    
+    def test_flip_down(self):
+        """When a Card object is face up, flip() should switch it to 
+        being face down.
+        """
+        expected = cards.DOWN
+        
+        c = cards.Card(11, 0, cards.UP)
+        c.flip()
+        actual = c.facing
+        
+        self.assertEqual(expected, actual)
 
 
 class DeckTestCase(unittest.TestCase):

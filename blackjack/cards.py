@@ -117,6 +117,10 @@ class Card:
         if isinstance(result, bool):
             return not result
         return result
+    
+    def flip(self):
+        """Flip the facing of the card."""
+        self.facing = not self.facing
 
 
 class Deck(MutableSequence):
