@@ -9,7 +9,7 @@ from collections import OrderedDict
 from collections.abc import MutableSequence
 from copy import copy
 from itertools import product
-from random import shuffle
+from random import randrange, shuffle
 
 from blackjack.model import Boolean, valfactory
 
@@ -211,6 +211,10 @@ class Deck(MutableSequence):
     def draw(self):
         """Draw the top card from the deck.
         
+        NOTE: Due to how lists work, it is more efficient for the top 
+        of the deck to be index -1 rather than index 0, even though 
+        this is counterintuitive.
+        
         :return: The top card from the deck.
         :rtype: Card
         """
@@ -219,3 +223,11 @@ class Deck(MutableSequence):
     def shuffle(self):
         """Randomize the order of the deck."""
         shuffle(self.cards)
+    
+    def random_cut(self):
+        """Remove the last 60-75 cards from the deck. This is done 
+        before a round of blackjack begins to make it harder to 
+        count cards.
+        """
+        num = randrange(60, 76)
+        self.cards = self.cards[num:]

@@ -539,6 +539,35 @@ class DeckTestCase(unittest.TestCase):
         
         self.assertNotEqual(original, d)
         self.assertEqual(expected_len, actual_len)
+    
+    def test_random_cut_end_of_deck(self):
+        """In order to make counting cards more difficult, cut() 
+        should remove a random amount, between 60 and 75, cards from 
+        the deck.
+        
+        NOTE: Since the number of cards removed is random, this test 
+        will run 10 times to try to catch issues with the number 
+        generation.
+        """
+        num_decks = 6
+        original_len = 52 * num_decks
+        too_few_cards = original_len - 76
+        too_many_cards = original_len - 59
+        lengths = []
+        
+        for i in range(10): 
+            d = cards.Deck.build(num_decks)
+            d.random_cut()
+            actual_len = len(d)
+            lengths.append(actual_len)
+            
+            self.assertNotEqual(original_len, actual_len)
+            self.assertTrue(actual_len > too_few_cards)
+            self.assertTrue(actual_len < too_many_cards)
+        
+        length = lengths.pop()
+        comp_lengths = [length == n for n in lengths]
+        self.assertFalse(all(comp_lengths))
 
 
 class validate_rankTestCase(unittest.TestCase):

@@ -106,4 +106,8 @@ sense for the Deck class:
 * Deck.build(num_decks)
 * Deck.draw(num_cards)
 * Deck.shuffle()
-* Deck.cut(num_cards)
+* Deck.random_cut(num_cards)
+
+Deck.random_cut() is named random_cut() rather than cut() in case it 
+it useful to have a method to more traditionally cut the deck in the 
+future.
