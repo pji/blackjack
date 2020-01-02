@@ -20,4 +20,10 @@ def deal(deck: Deck, dealer: Player, players: list = None) -> None:
     
     card = deck.draw()
     hand.append(card)
-    
+
+def play(deck: Deck, dealer: Player, players: list = None) -> None:
+    """Perform the play phase of a blackjack game."""
+    hand = dealer.hands[0]
+    while dealer.will_hit(hand):
+        card = deck.draw()
+        hand.append(card)
