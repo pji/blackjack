@@ -10,6 +10,7 @@ This module contains the unit tests for the blackjack.cards module.
 import collections.abc as col
 from copy import deepcopy
 import inspect
+from itertools import zip_longest
 import unittest
 from unittest.mock import call, Mock
 
@@ -154,6 +155,18 @@ class CardTestCase(unittest.TestCase):
         self.assertTrue(c1 < c6)
         self.assertFalse(c1 < c7)
         self.assertTrue(c1 < c8)
+    
+    def test_less_than_not_implemented(self):
+        """If given a value that isn't a Card object, __lt__() should 
+        return NotImplemented.
+        """
+        expected = NotImplemented
+        
+        c1 = cards.Card(11, 3)
+        c2 = 'spam'
+        actual = c1.__lt__(c2)
+        
+        self.assertEqual(expected, actual)
     
     def test_flip_up(self):
         """When a Card object is face down, flip() should switch it to 
@@ -760,7 +773,6 @@ class HandTestCase(unittest.TestCase):
         
         self.assertFalse(actual)
     
-    @unittest.skip
     def test_split_valid(self):
         """If the hand can be split, split() should return two Hand 
         objects, each containing one of the cards of the split hand.
@@ -771,13 +783,28 @@ class HandTestCase(unittest.TestCase):
         ]
         expected = (
             cards.Hand([cardlist[0],]),
-            cards.Hand([cardlist[0],]),
+            cards.Hand([cardlist[1],]),
         )
         
         h = cards.Hand(cardlist)
         actual = h.split()
         
+        # self.assertEqual(expected, actual)
         self.assertEqual(expected, actual)
+    
+    def test_split_invalid(self):
+        """If the hand cannot be split, split() should raise a 
+        ValueError exception.
+        """
+        expected = ValueError
+        
+        h = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(2, 3),
+        ])
+        
+        with self.assertRaises(ValueError):
+            _ = h.split()
 
 
 class validate_rankTestCase(unittest.TestCase):

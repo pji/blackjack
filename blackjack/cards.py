@@ -126,6 +126,9 @@ class Card:
         return result
     
     def __lt__(self, other):
+        cls = self.__class__
+        if not isinstance(other, cls):
+            return NotImplemented
         if self.rank < other.rank:
             return True
         if self.rank == other.rank:
@@ -316,6 +319,9 @@ class Hand(Pile):
     
     def split(self):
         """Split the hand."""
+        if not self.can_split():
+            msg = 'Hand cannot be split.'
+            raise ValueError(msg)
         hand = sorted(self.cards)
         return (
             Hand([hand[0],]),
