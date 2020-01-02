@@ -250,39 +250,38 @@ class Hand(Pile):
     def score(self):
         scores = set()
         
-        # Reduce to ranks and sort to simplify scoring.
+        # Sorting by ranks makes it easier to score.
         ranks = sorted([card.rank for card in self.cards])
         
-        # Natural blackjack.
-        if (len(ranks) == 2 
-                and ranks[0] == 1
-                and ranks[1] >= 10):
-            scores.add('natural')
+        # Splitting out the aces because they are complicated.
+        aces = [rank for rank in ranks if rank == 1]
+        other = [rank for rank in ranks if rank > 1]
         
-        # Other scoring.
-        else:
-            aces = [rank for rank in ranks if rank == 1]
-            other = [rank for rank in ranks if rank > 1]
-            
-            score = 0
-            for rank in other:
-                if rank > 10:
-                    score += 10
-                else:
-                    score += rank
-            
-            if not aces:
-                scores.add(score)
+        # Doing the easy scoring first.
+        score = 0
+        for rank in other:
+            if rank > 10:
+                score += 10
             else:
-                products = product('01', repeat=len(aces))
-                for item in products:
-                    score_aces = 0
-                    for ace in item:
-                        if ace == '0':
-                            score_aces += 1
-                        else:
-                            score_aces += 11
-                    scores.add(score + score_aces)
+                score += rank
+        
+        if not aces:
+            scores.add(score)
+        
+        # Handling the aces. Here I use itertools.product() to give 
+        # me all the ways to score the aces. Zero is scored as one, 
+        # and one is scored as eleven. It's a little convoluted, but 
+        # I think it's easier to read than the recursion would be.
+        else:
+            products = product('01', repeat=len(aces))
+            for item in products:
+                score_aces = 0
+                for ace in item:
+                    if ace == '0':
+                        score_aces += 1
+                    else:
+                        score_aces += 11
+                scores.add(score + score_aces)
         
         # Return results.
         scores = list(scores)
@@ -292,4 +291,12 @@ class Hand(Pile):
         """Determine whether the hand can be split."""
         if len(self) == 2 and self[0].rank == self[1].rank:
             return True
+        return False
+    
+    def is_blackjack(self):
+        """Determine whether the hand is a natural blackjack."""
+        if len(self.cards) == 2:
+            ranks = sorted([card.rank for card in self.cards])
+            if ranks[0] == 1 and ranks[1] >= 10:
+                return True
         return False

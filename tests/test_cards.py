@@ -651,20 +651,45 @@ class HandTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_score_natural_blackjack(self):
-        """score() should return "natural" if the hand is a natural 
+    def test_is_blackjack_true(self):
+        """is_blackjack() should return true if the hand is a natural 
         blackjack.
         """
-        expected = ['natural',]
-        
         cardlist = [
             cards.Card(11, 3),
             cards.Card(1, 2),
         ]
         h = cards.Hand(cardlist)
-        actual = h.score()
+        actual = h.is_blackjack()
         
-        self.assertEqual(expected, actual)
+        self.assertTrue(actual)
+    
+    def test_is_blackjack_false_two_cards(self):
+        """is_blackjack() should return false if the hand doesn't 
+        equal 21.
+        """
+        cardlist = [
+            cards.Card(11, 3),
+            cards.Card(4, 2),
+        ]
+        h = cards.Hand(cardlist)
+        actual = h.is_blackjack()
+        
+        self.assertFalse(actual)
+    
+    def test_is_blackjack_false_three_cards(self):
+        """is_blackjack() should return false if the hand has more 
+        than two cards.
+        """
+        cardlist = [
+            cards.Card(11, 3),
+            cards.Card(4, 2),
+            cards.Card(7, 3),
+        ]
+        h = cards.Hand(cardlist)
+        actual = h.is_blackjack()
+        
+        self.assertFalse(actual)        
     
     def test_score_ace(self):
         """score() should return all unique scores if there is an 
