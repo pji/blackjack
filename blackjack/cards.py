@@ -4,6 +4,9 @@ cards
 
 The module contains the basic classes used by blackjack for handling 
 cards.
+
+:copyright: (c) 2020 by Paul J. Iutzi
+:license: MIT, see LICENSE for more details.
 """
 from collections import OrderedDict
 from collections.abc import MutableSequence

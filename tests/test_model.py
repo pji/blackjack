@@ -3,6 +3,9 @@ test_model.py
 ~~~~~~~~~~~~~
 
 This module contains the unit tests for the blackjack.model module.
+
+:copyright: (c) 2020 by Paul J. Iutzi
+:license: MIT, see LICENSE for more details.
 """
 import abc
 import inspect

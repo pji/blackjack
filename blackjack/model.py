@@ -4,6 +4,9 @@ model
 
 The module contains the basic classes used to build blackjack's 
 data model.
+
+:copyright: (c) 2020 by Paul J. Iutzi
+:license: MIT, see LICENSE for more details.
 """
 from abc import ABC, abstractmethod
 
