@@ -125,6 +125,16 @@ class Card:
             return not result
         return result
     
+    def __lt__(self, other):
+        if self.rank < other.rank:
+            return True
+        if self.rank == other.rank:
+            suits = list(SUITS.keys())
+            if suits.index(self.suit) < suits.index(other.suit):
+                return True
+        return False
+            
+    
     def flip(self):
         """Flip the facing of the card."""
         self.facing = not self.facing
@@ -303,3 +313,11 @@ class Hand(Pile):
             if ranks[0] == 1 and ranks[1] >= 10:
                 return True
         return False
+    
+    def split(self):
+        """Split the hand."""
+        hand = sorted(self.cards)
+        return (
+            Hand([hand[0],]),
+            Hand([hand[1],]),
+        )

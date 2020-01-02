@@ -133,6 +133,28 @@ class CardTestCase(unittest.TestCase):
         self.assertTrue(c1 != c4)
         self.assertTrue(c1 != c5)
     
+    def test_less_than(self):
+        """If given another Card object, __lt__() should return True 
+        if the Card object is less than the other Card object, and 
+        False is the Card object is not.
+        """
+        c1 = cards.Card(11, 1)
+        c2 = cards.Card(11, 1)
+        c3 = cards.Card(10, 1)
+        c4 = cards.Card(12, 1)
+        c5 = cards.Card(11, 0)
+        c6 = cards.Card(11, 2)
+        c7 = cards.Card(10, 2)
+        c8 = cards.Card(12, 0)
+        
+        self.assertFalse(c1 < c2)
+        self.assertFalse(c1 < c3)
+        self.assertTrue(c1 < c4)
+        self.assertFalse(c1 < c5)
+        self.assertTrue(c1 < c6)
+        self.assertFalse(c1 < c7)
+        self.assertTrue(c1 < c8)
+    
     def test_flip_up(self):
         """When a Card object is face down, flip() should switch it to 
         being face up.
@@ -737,6 +759,25 @@ class HandTestCase(unittest.TestCase):
         actual = h.can_split()
         
         self.assertFalse(actual)
+    
+    @unittest.skip
+    def test_split_valid(self):
+        """If the hand can be split, split() should return two Hand 
+        objects, each containing one of the cards of the split hand.
+        """
+        cardlist = [
+            cards.Card(11, 0),
+            cards.Card(11, 3),
+        ]
+        expected = (
+            cards.Hand([cardlist[0],]),
+            cards.Hand([cardlist[0],]),
+        )
+        
+        h = cards.Hand(cardlist)
+        actual = h.split()
+        
+        self.assertEqual(expected, actual)
 
 
 class validate_rankTestCase(unittest.TestCase):
