@@ -2,7 +2,7 @@
 test_players.py
 ~~~~~~~~~~~~~~~
 
-This module contains the unit tests for the players.cards module.
+This module contains the unit tests for the blackjack.players module.
 
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
