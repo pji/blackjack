@@ -162,3 +162,41 @@ methods like the MutableSequence protocol? That'll take quite a bit of
 refactoring, but it's probably worth it to be able to say hand[0] 
 rather than hand.cards[0]. I'll go with Pile for the name of the 
 superclass.
+
+
+Player
+------
+I may add more later, but initially there are two players, the dealer 
+and the end user. The dealer is computer driven, and the end user is 
+driven by the end user. What do the two have in common?
+
+* They are playing blackjack.
+* They have at least one hand of cards.
+* They can hit.
+* They can stand.
+* They can win or lose.
+* They have some process to determine their actions.
+
+That's not a lot in common, but I think there is enough for an 
+abstract base class there. I'll call it Player, and the following 
+methods and attributes probably make sense:
+
+* Player.hands
+* Player.decide_hit()
+* Player.score()
+
+Hm. That makes decide_hit() an abstract class that is very different 
+for the human player vs. the dealer. The dealer is an automatic 
+process since the dealer isn't allowed to make decisions. The human 
+player's decide_hit() has to call out to the UI to get the user's 
+decision. An ABC is probably overkill here.
+
+I could split the dealer out, leaving the creation of a base class for 
+players to whenever I implement other computer players. They will have 
+more in common with the human player since they will have to decide on 
+betting and splitting. But something is telling me keeping this more 
+organized from the start will make this easier, so I'll go ahead and 
+keep the dealer in.
+
+Since players are a different thing from cards, I'll put them in their 
+own module.

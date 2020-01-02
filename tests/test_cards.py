@@ -789,7 +789,6 @@ class HandTestCase(unittest.TestCase):
         h = cards.Hand(cardlist)
         actual = h.split()
         
-        # self.assertEqual(expected, actual)
         self.assertEqual(expected, actual)
     
     def test_split_invalid(self):
