@@ -179,17 +179,9 @@ driven by the end user. What do the two have in common?
 
 That's not a lot in common, but I think there is enough for an 
 abstract base class there. I'll call it Player, and the following 
-methods and attributes probably make sense:
+attribute probably make sense:
 
 * Player.hands
-* Player.decide_hit()
-* Player.score()
-
-Hm. That makes decide_hit() an abstract class that is very different 
-for the human player vs. the dealer. The dealer is an automatic 
-process since the dealer isn't allowed to make decisions. The human 
-player's decide_hit() has to call out to the UI to get the user's 
-decision. An ABC is probably overkill here.
 
 I could split the dealer out, leaving the creation of a base class for 
 players to whenever I implement other computer players. They will have 
@@ -200,3 +192,71 @@ keep the dealer in.
 
 Since players are a different thing from cards, I'll put them in their 
 own module.
+
+
+Dealer and Pattern of Play
+--------------------------
+Players probably shouldn't be designed in a vacuum. They are going to 
+be interacting with the core game loop. So, the methods needed probably 
+stem from that. So, I'm going to step back and think about the core 
+game loop, but a simpler version. What if this was a solitaire game 
+with only the dealer following the dealer's rules to get as close to 
+21 as possible.
+
+The following events happen:
+
+* The dealer deals their first card.
+* The dealer deals their second card.
+* The dealer performs the hit loop:
+    * The dealer decides whether to hit.
+    * If yes, get the card and go to top of the loop.
+    * If no, exit the loop.
+* Final score is determined.
+* The round ends.
+
+Terminology is a little awkward here since the Dealer isn't actually 
+dealing the cards, the game loop is (though, that can be changed if we 
+want the Dealer to be able to cheat in the future), but those are the 
+events that need to be accounted for.
+
+Here's a question: should the game loop know when to deal cards, or 
+should the players request cards? I'm going to start with having the 
+game loop know that, but I can change it in the future if needed.
+
+The game loop itself is going to be a function that is running from a 
+module named game.
+
+
+Dealing a Card to a Hand
+------------------------
+This is the process for dealing a card to a player:
+
+1. The game gets the next player.
+2. The game gets the player's next hand.
+3. The game gives a card to that hand.
+4. The game determines if the player has another hand.
+    a. If yes, then go to 2.
+    b. If no, then go to 1.
+
+This means the player needs to:
+
+*   Tell the game whether it has more hands.
+*   Give the game a hand.
+
+And the hand must:
+
+*   Accept a new card.
+
+Hand.cards isn't a tuple yet, but it probably will need to be when 
+saving games is implemented. You can't really trust the contents of 
+lists since they are mutable and can be directly accessed. So, it's 
+a bit overkill to implement methods for these, but it will save time 
+when descriptors are implemented on Hand and Player.
+
+That said, the two things that the player has to do are accomplished 
+by passing the game an iterator on Player.hands. Since Player.hands is 
+a list or a tuple, then it is already iterible. No need to add a 
+method there.
+
+So, the end result of this is that Hand needs a append() method, which 
+it already has.
