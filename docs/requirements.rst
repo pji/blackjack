@@ -260,3 +260,33 @@ method there.
 
 So, the end result of this is that Hand needs a append() method, which 
 it already has.
+
+
+Hitting
+-------
+The player needs to communicate to the game loop whether or not they 
+want to hit or stand. This probably works like this:
+
+1. The game gets the next player.
+2. The game gets the player's next hand.
+3. The game asks the player if they want to hit or stand.
+    a. If hit:
+        i. The game gives the card to the hand.
+        ii. Return to 3
+    b. If stand, continue
+4. The game determines if the player has another hand.
+    a. If yes, go to 2
+    b. If no, go to 1
+
+The logic inside the dealer to determine whether to hit would be 
+something like this:
+
+1. Get current possible scores of hand. (This means player needs to 
+   know which had the game is looking at.)
+2. Determine the highest score that is <= to 21
+    a. If no such score exists, the hand has busted, so stand and go to 4
+    b. Otherwise, this is the score
+3. Determine whether to hit:
+    a. If the score is >= 17, stand
+    b. Otherwise, hit
+4. Return the stand or hit
