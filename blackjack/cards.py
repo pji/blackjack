@@ -287,4 +287,9 @@ class Hand(Pile):
         # Return results.
         scores = list(scores)
         return sorted(scores)
-        
+    
+    def can_split(self):
+        """Determine whether the hand can be split."""
+        if len(self) == 2 and self[0].rank == self[1].rank:
+            return True
+        return False
