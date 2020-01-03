@@ -16,6 +16,16 @@ from blackjack import cards, game, players
 
 # UI object.
 class UI:
+    tmp = '{:<15} {:<15} {:<}'
+    
+    def __init__(self, silent: bool = False) -> None:
+        if not silent:
+            print()
+            print('BLACKJACK!')
+            print()
+            print(self.tmp.format('Player', 'Action', 'Hand'))
+            print('\u2500' * 50)
+    
     def update(self, event:str, player:str, hand: cards.Hand = None) -> None:
         """Update the UI.
         
@@ -29,13 +39,13 @@ class UI:
         if hand:
             handstr = ' '.join([str(card) for card in hand])
         if event == 'deal':
-            msg = f'{player} was dealt {handstr}.'
+            msg = self.tmp.format(player,  'Initial deal.', handstr)
         if event == 'flip':
-            msg = f'{player} flips their card. Hand now {handstr}.'
+            msg = self.tmp.format(player, 'Flipped card.', handstr)
         if event == 'hit':
-            msg = f'{player} hits. Hand now {handstr}.'
+            msg = self.tmp.format(player, 'Hit.', handstr)
         if event == 'stand':
-            msg = f'{player} stands.'
+            msg = self.tmp.format(player, 'Stand.', '')
         print(msg)
 
 
@@ -44,12 +54,9 @@ def dealer_only():
     ui = UI()
     deck = cards.Deck.build(6)
     deck.shuffle()
-    dealer = players.Player()
+    dealer = players.Player(name='Dealer')
     dealer.will_hit = partial(players.dealer_will_hit, None)
     game.deal(deck, dealer, ui=ui)
-#     for card in dealer.hands[0]:
-#         print(card, end=' ')
-#     print()
     game.play(deck, dealer, ui=ui)
     print()
 

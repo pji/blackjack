@@ -47,10 +47,10 @@ class GameTestCase(unittest.TestCase):
         ])
         hand = cards.Hand()
         hand.cards = cardlist[::-1]
-        expected = ['deal', 'Dealer', hand]
+        dealer = players.Player()
+        expected = ['deal', dealer, hand]
         
         deck = cards.Deck(cardlist)
-        dealer = players.Player()
         ui = Mock()
         game.deal(deck, dealer, ui=ui)
         
@@ -114,6 +114,7 @@ class GameTestCase(unittest.TestCase):
         the dealer until the dealer stands on a score of 17 or more 
         and update the UI.
         """
+        dealer = players.Player(name='Dealer')
         cardlist = [
             cards.Card(7, 0, cards.UP),
             cards.Card(6, 0, cards.UP),
@@ -131,9 +132,9 @@ class GameTestCase(unittest.TestCase):
         # cards in it when assertEqual() runs, so the expected hand 
         # needs to have all three cards, too.
         expected = [
-            call.update('flip', 'Dealer', expected_hand),
-            call.update('hit', 'Dealer', expected_hand),
-            call.update('stand', 'Dealer'),
+            call.update('flip', dealer, expected_hand),
+            call.update('hit', dealer, expected_hand),
+            call.update('stand', dealer),
         ]
         
         h = cards.Hand([
@@ -143,7 +144,7 @@ class GameTestCase(unittest.TestCase):
         deck = cards.Deck([
             cards.Card(5, 0, cards.DOWN),
         ])
-        dealer = players.Player((h,))
+        dealer.hands = ((h,))
         dealer.will_hit = partial(players.dealer_will_hit, None)
         ui = Mock()
         game.play(deck, dealer, ui=ui)

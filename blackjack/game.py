@@ -21,7 +21,7 @@ def deal(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
     card = deck.draw()
     hand.append(card)
     if ui:
-        ui.update('deal', 'Dealer', hand)
+        ui.update('deal', dealer, hand)
 
 def play(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
     """Perform the play phase of a blackjack game."""
@@ -30,12 +30,12 @@ def play(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
         if card.facing == DOWN:
             card.flip()
             if ui:
-                ui.update('flip', 'Dealer', hand)
+                ui.update('flip', dealer, hand)
     while dealer.will_hit(hand):
         card = deck.draw()
         card.flip()
         hand.append(card)
         if ui:
-            ui.update('hit', 'Dealer', hand)
+            ui.update('hit', dealer, hand)
     if ui:
-        ui.update('stand', 'Dealer')
+        ui.update('stand', dealer)

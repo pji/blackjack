@@ -12,7 +12,7 @@ from io import StringIO
 import sys
 import unittest as ut
 
-from blackjack import cards, cli
+from blackjack import cards, cli, players
 
 
 # Utility functions.
@@ -29,13 +29,34 @@ def capture():
 
 # Tests.
 class UITestCase(ut.TestCase):
+    tmp = '{:<15} {:<15} {:<}\n'
+    
+    def test_initial_banners(self):
+        """When a new UI object is initialized, it should print the 
+        name of the application and the column headers to stdout.
+        """
+        lines = [
+            '\n',
+            'BLACKJACK!\n',
+            '\n',
+            self.tmp.format('Player', 'Action', 'Hand'),
+            '\u2500' * 50 + '\n',
+        ]
+        expected = ''.join(lines)
+        
+        with capture() as (out, err):
+            ui = cli.UI()
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
     def test_update_deal(self):
         """Given a message that cards have been dealt, the update() 
         method should print the result of the deal to stdout.
         """
-        expected = 'Dealer was dealt 7♣ ──.\n'
+        expected = self.tmp.format('Dealer', 'Initial deal.', '7♣ ──')
         
-        ui = cli.UI()
+        ui = cli.UI(True)
         hand = cards.Hand([
             cards.Card(7, 0, cards.UP),
             cards.Card(9, 2, cards.DOWN),
@@ -50,9 +71,9 @@ class UITestCase(ut.TestCase):
         """Given a message a hit decision was made, the update() 
         method should print the result of the hit decision to stdout.
         """
-        expected = 'Dealer hits. Hand now 7♣ 6♣ 5♣.\n'
+        expected = self.tmp.format('Dealer', 'Hit.', '7♣ 6♣ 5♣')
         
-        ui = cli.UI()
+        ui = cli.UI(True)
         hand = cards.Hand([
             cards.Card(7, 0, cards.UP),
             cards.Card(6, 0, cards.UP),
@@ -68,9 +89,9 @@ class UITestCase(ut.TestCase):
         """Given an event that a stand decision was made, the update() 
         method should print the decision to stdout.
         """
-        expected = 'Dealer stands.\n'
+        expected = self.tmp.format('Dealer', 'Stand.', '')
         
-        ui = cli.UI()
+        ui = cli.UI(True)
         event = 'stand'
         player = 'Dealer'
         hand = cards.Hand([
@@ -87,9 +108,9 @@ class UITestCase(ut.TestCase):
         """Given an event that there was a card flipped, the update() 
         method should print the hand to stdout.
         """
-        expected = 'Dealer flips their card. Hand now 7♣ 6♣.\n'
+        expected = self.tmp.format('Dealer', 'Flipped card.', '7♣ 6♣')
         
-        ui = cli.UI()
+        ui = cli.UI(True)
         hand = cards.Hand([
             cards.Card(7, 0, cards.UP),
             cards.Card(6, 0, cards.UP),
@@ -99,3 +120,23 @@ class UITestCase(ut.TestCase):
         actual = out.getvalue()
         
         self.assertEqual(expected, actual)
+    
+    def test_use_player_name(self):
+        """If update() is given a player.Player object rather than 
+        a string for the name field, update() should use the name 
+        of that player.
+        """
+        expected = self.tmp.format('Dealer', 'Initial deal.', '7♣ ──')
+        
+        ui = cli.UI(True)
+        player = players.Player(name='Dealer')
+        hand = cards.Hand([
+            cards.Card(7, 0, cards.UP),
+            cards.Card(9, 2, cards.DOWN),
+        ])
+        with capture() as (out, err):
+            ui.update('deal', player, hand)
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+

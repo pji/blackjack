@@ -41,6 +41,38 @@ class PlayerTestCase(unittest.TestCase):
         actual = obj.hands
         
         self.assertEqual(expected, actual)
+    
+    def test_name(self):
+        """If passed a name, the name attribute should be initialized 
+        with that name.
+        """
+        expected = 'Spam'
+        
+        p = players.Player(name=expected)
+        actual = p.name
+        
+        self.assertEqual(expected, actual)
+    
+    def test___str__(self):
+        """__str__() should return the name of the Player object."""
+        expected = 'Spam'
+        
+        p = players.Player(name=expected)
+        actual = p.__str__()
+        
+        self.assertEqual(expected, actual)
+    
+    def test___format__(self):
+        """__format__() should return as though it was called on the 
+        value of the name attribute.
+        """
+        tmp = '{:<6}'
+        expected = tmp.format('spam')
+        
+        p = players.Player(name='spam')
+        actual = tmp.format(p)
+        
+        self.assertEqual(expected, actual)
 
 
 class dealer_will_hitTestCase(unittest.TestCase):
@@ -103,5 +135,4 @@ class dealer_will_hitTestCase(unittest.TestCase):
         actual_h1 = players.dealer_will_hit(None, h1)
         actual_h2 = players.dealer_will_hit(None, h2)
         
-        self.assertEqual(expected, actual_h1)        
-        
+        self.assertEqual(expected, actual_h1)

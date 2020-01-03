@@ -32,7 +32,7 @@ def dealer_will_hit(self, hand):
 
 class Player:
     """A blackjack player."""
-    def __init__(self, hands: tuple = ()) -> None:
+    def __init__(self, hands: tuple = (), name: str = 'Player') -> None:
         """Initialize and instance of the class.
         
         :param hands: The player's hands of blackjack.
@@ -40,3 +40,10 @@ class Player:
         :rtype: None.
         """
         self.hands = hands
+        self.name = name
+    
+    def __str__(self):
+        return self.name
+    
+    def __format__(self, format_spec):
+        return self.name.__format__(format_spec)
