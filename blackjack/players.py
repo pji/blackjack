@@ -24,7 +24,7 @@ def dealer_will_hit(self, hand):
     :return: The hit decision. True to hit. False to stand.
     :rtype: Bool.
     """
-    score = hand.score()[0]
+    score = sorted(hand.score())[-1]
     if score >= 17:
         return STAND
     return HIT

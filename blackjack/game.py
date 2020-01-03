@@ -11,7 +11,7 @@ from blackjack.cards import Deck, Hand
 from blackjack.players import Player
 
 
-def deal(deck: Deck, dealer: Player, players: list = None) -> None:
+def deal(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
     """Perform the initial deal of a blackjack game."""
     card = deck.draw()
     card.flip()
@@ -20,10 +20,15 @@ def deal(deck: Deck, dealer: Player, players: list = None) -> None:
     
     card = deck.draw()
     hand.append(card)
+    if ui:
+        ui.update('deal', 'Dealer', hand)
 
-def play(deck: Deck, dealer: Player, players: list = None) -> None:
+def play(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
     """Perform the play phase of a blackjack game."""
     hand = dealer.hands[0]
     while dealer.will_hit(hand):
         card = deck.draw()
+        card.flip()
         hand.append(card)
+        if ui:
+            ui.update('hit', 'Dealer', hand)

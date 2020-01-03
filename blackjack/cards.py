@@ -163,6 +163,9 @@ class Pile(MutableSequence):
             return self.cards == other.cards
         return NotImplemented
     
+    def __repr__(self):
+        return 'Hand' + str([str(card) for card in self.cards])
+    
     # Sized protocol.
     def __len__(self):
         return len(self.cards)

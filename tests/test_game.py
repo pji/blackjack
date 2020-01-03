@@ -9,6 +9,7 @@ This module contains the unit tests for the blackjack.game module.
 """
 from functools import partial
 import unittest
+from unittest.mock import Mock
 
 from blackjack import cards, game, players
 
@@ -34,6 +35,26 @@ class GameTestCase(unittest.TestCase):
         self.assertEqual(expected_hand_len, actual_hand_len)
         self.assertEqual(expected_dealer_facing, actual_dealer_facing)
         self.assertEqual(expected_deck_size, actual_deck_size)
+    
+    def test_deal_with_ui(self):
+        """Given a deck, dealer, and UI, deal() should deal an initial 
+        hand of blackjack to the dealer from the deck and update the 
+        UI.
+        """
+        cardlist = cards.Deck([
+            cards.Card(11, 0),
+            cards.Card(11, 3),
+        ])
+        hand = cards.Hand()
+        hand.cards = cardlist[::-1]
+        expected = ['deal', 'Dealer', hand]
+        
+        deck = cards.Deck(cardlist)
+        dealer = players.Player()
+        ui = Mock()
+        game.deal(deck, dealer, ui=ui)
+        
+        ui.update.assert_called_with(*expected)
     
     def test_play_bust(self):
         """Given a deck and a dealer with a dealt hand, play() should 
@@ -87,4 +108,29 @@ class GameTestCase(unittest.TestCase):
         actual = d.hands[0].cards
         
         self.assertEqual(expected, actual)
+    
+    def test_play_with_ui(self):
+        """Given a deck, dealer, and UI, play() should deal cards to 
+        the dealer until the dealer stands on a score of 17 or more 
+        and update the UI.
+        """
+        cardlist = [
+            cards.Card(7, 0, cards.UP),
+            cards.Card(6, 0, cards.UP),
+            cards.Card(5, 0, cards.UP),            
+        ]
+        expected = ['hit', 'Dealer', cards.Hand(cardlist)]
         
+        h = cards.Hand([
+            cards.Card(7, 0, cards.UP),
+            cards.Card(6, 0, cards.UP),
+        ])
+        deck = cards.Deck([
+            cards.Card(5, 0, cards.UP),
+        ])
+        dealer = players.Player((h,))
+        dealer.will_hit = partial(players.dealer_will_hit, None)
+        ui = Mock()
+        game.play(deck, dealer, ui=ui)
+        
+        ui.update.assert_called_with(*expected)

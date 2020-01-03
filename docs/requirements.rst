@@ -290,3 +290,36 @@ something like this:
     a. If the score is >= 17, stand
     b. Otherwise, hit
 4. Return the stand or hit
+
+This is all great, but... the UI needs to be updated with each hit.
+
+
+UI
+--
+I'm starting, and honestly probably ending, with a CLI because I'm old 
+and it reminds me of when I was young. I'll try to avoid baking that 
+into the functioning of the game, so I can switch to a GUI of some 
+kind if I ever feel like it. But, for now, CLI it is.
+
+So, curses would be the obvious solution here, but it's apparently 
+Unix only. No point in editorializing about that here, but it does 
+make me hesitant to use it. For the moment I'll just stick to fairly 
+standard text output. For this initial take, let's do something like:: 
+
+    Dealer was dealt 7♣ ──.
+    Dealer flips their second card to reveal 7♣ 9♥.
+    Dealer hits, getting 5♦.
+    Dealer stands with 7♣ 9♥ 5♦.
+    Play again? (Y/n)
+    >
+
+There are probably two ways to accomplish this without making game 
+have to know things about the UI:
+
+* game's functions exit after each draw.
+* game's functions are coroutines that get called by the UI.
+
+There is probably some way to do it with the first bullet, but it 
+seems more awkward. When I have more than one player, I'd have to 
+have some way of keeping track of where I am in the deal or play 
+process, which the coroutine can handle on its own. 
