@@ -63,3 +63,22 @@ class UITestCase(ut.TestCase):
         actual = out.getvalue()
         
         self.assertEqual(expected, actual)
+    
+    def test_update_play_stand(self):
+        """Given an event that a stand decision was made, the update() 
+        method should print the decision to stdout.
+        """
+        expected = 'Dealer stands.\n'
+        
+        ui = cli.UI()
+        event = 'stand'
+        player = 'Dealer'
+        hand = cards.Hand([
+            cards.Card(11, 0, cards.UP),
+            cards.Card(1, 1, cards.UP),
+        ])
+        with capture() as (out, err):
+            ui.update(event, player, hand)
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)

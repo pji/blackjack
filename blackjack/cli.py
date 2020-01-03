@@ -16,7 +16,7 @@ from blackjack import cards, game, players
 
 # UI object.
 class UI:
-    def update(self, event:str, player:str, hand:cards.Hand) -> None:
+    def update(self, event:str, player:str, hand: cards.Hand = None) -> None:
         """Update the UI.
         
         :param event: The event the UI needs to display.
@@ -26,11 +26,14 @@ class UI:
         :rtype: None.
         """
         msg = None
+        if hand:
+	        handstr = ' '.join([str(card) for card in hand])
         if event == 'deal':
-            msg = f'{player} was dealt {hand[0]} {hand[1]}.'
+            msg = f'{player} was dealt {handstr}.'
         if event == 'hit':
-            handstr = ' '.join([str(card) for card in hand])
             msg = f'{player} hits. Hand now {handstr}.'
+        if event == 'stand':
+        	msg = f'{player} stands.'
         print(msg)
 
 
