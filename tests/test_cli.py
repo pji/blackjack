@@ -89,7 +89,7 @@ class UITestCase(ut.TestCase):
         """Given an event that a stand decision was made, the update() 
         method should print the decision to stdout.
         """
-        expected = self.tmp.format('Dealer', 'Stand.', '')
+        expected = self.tmp.format('Dealer', 'Stand.', '21')
         
         ui = cli.UI(True)
         event = 'stand'
@@ -97,6 +97,26 @@ class UITestCase(ut.TestCase):
         hand = cards.Hand([
             cards.Card(11, 0, cards.UP),
             cards.Card(1, 1, cards.UP),
+        ])
+        with capture() as (out, err):
+            ui.update(event, player, hand)
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
+    def test_update_play_stand_bust(self):
+        """Given an event that a stand decision was made, the update() 
+        method should print the decision to stdout.
+        """
+        expected = self.tmp.format('Dealer', 'Stand.', 'Bust.')
+        
+        ui = cli.UI(True)
+        event = 'stand'
+        player = 'Dealer'
+        hand = cards.Hand([
+            cards.Card(11, 0, cards.UP),
+            cards.Card(7, 1, cards.UP),
+            cards.Card(8, 1, cards.UP),
         ])
         with capture() as (out, err):
             ui.update(event, player, hand)

@@ -52,7 +52,12 @@ class UI:
         if event == 'hit':
             msg = self.tmp.format(player, 'Hit.', handstr)
         if event == 'stand':
-            msg = self.tmp.format(player, 'Stand.', '')
+            scores = [score for score in hand.score() if score <= 21]
+            try:
+                score = scores[-1]
+            except IndexError:
+                score = 'Bust.'
+            msg = self.tmp.format(player, 'Stand.', score)
         print(msg)
 
 

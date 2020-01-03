@@ -134,7 +134,7 @@ class GameTestCase(unittest.TestCase):
         expected = [
             call.update('flip', dealer, expected_hand),
             call.update('hit', dealer, expected_hand),
-            call.update('stand', dealer),
+            call.update('stand', dealer, expected_hand),
         ]
         
         h = cards.Hand([

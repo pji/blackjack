@@ -38,4 +38,4 @@ def play(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
         if ui:
             ui.update('hit', dealer, hand)
     if ui:
-        ui.update('stand', dealer)
+        ui.update('stand', dealer, hand)
