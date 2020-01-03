@@ -10,7 +10,7 @@ cards.
 """
 from collections import OrderedDict
 from collections.abc import MutableSequence
-from copy import copy
+from copy import copy, deepcopy
 from itertools import product
 from random import randrange, shuffle
 
@@ -227,7 +227,7 @@ class Deck(Pile):
         std_deck = [Card(rank, suit, DOWN) for suit, rank 
                     in product(SUITS, ranks)]
         for i in range(num_decks):
-            d.cards.extend(std_deck)
+            d.cards.extend(deepcopy(std_deck))
         return d
     
     def draw(self):

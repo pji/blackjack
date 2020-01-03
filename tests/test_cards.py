@@ -567,6 +567,14 @@ class DeckTestCase(unittest.TestCase):
         for card in d.cards:
             self.assertTrue(isinstance(card, expected_class))
     
+    def test_build_each_card_unique(self):
+        """When build() uses multiple decks, each card should still 
+        be a unique object.
+        """
+        deck = cards.Deck.build(2)
+        for i in range(52):
+            self.assertFalse(deck[i] is deck[i + 52])
+    
     def test_draw_a_card(self):
         """draw() should remove the "top card" of the deck and return 
         it. For performance reasons, "top card" is defined as the 
