@@ -20,11 +20,18 @@ class UI:
     
     def __init__(self, silent: bool = False) -> None:
         if not silent:
-            print()
-            print('BLACKJACK!')
-            print()
-            print(self.tmp.format('Player', 'Action', 'Hand'))
-            print('\u2500' * 50)
+            self.enter()
+    
+    def enter(self):
+        print()
+        print('BLACKJACK!')
+        print()
+        print(self.tmp.format('Player', 'Action', 'Hand'))
+        print('\u2500' * 50)
+    
+    def exit(self):
+        print('\u2500' * 50)
+        print()
     
     def update(self, event:str, player:str, hand: cards.Hand = None) -> None:
         """Update the UI.
@@ -58,7 +65,7 @@ def dealer_only():
     dealer.will_hit = partial(players.dealer_will_hit, None)
     game.deal(deck, dealer, ui=ui)
     game.play(deck, dealer, ui=ui)
-    print()
+    ui.exit()
 
 
 if __name__ == '__main__':

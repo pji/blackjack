@@ -139,4 +139,18 @@ class UITestCase(ut.TestCase):
         actual = out.getvalue()
         
         self.assertEqual(expected, actual)
-
+    
+    def test_exit(self):
+        """exit() should print the closing footers to stdout."""
+        lines = [
+            '\u2500' * 50 + '\n',
+            '\n',
+        ]
+        expected = ''.join(lines)
+        
+        ui = cli.UI(True)
+        with capture() as (out, err):
+            ui.exit()
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
