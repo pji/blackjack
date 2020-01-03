@@ -82,3 +82,20 @@ class UITestCase(ut.TestCase):
         actual = out.getvalue()
         
         self.assertEqual(expected, actual)
+    
+    def test_update_play_flip(self):
+        """Given an event that there was a card flipped, the update() 
+        method should print the hand to stdout.
+        """
+        expected = 'Dealer flips their card. Hand now 7♣ 6♣.\n'
+        
+        ui = cli.UI()
+        hand = cards.Hand([
+            cards.Card(7, 0, cards.UP),
+            cards.Card(6, 0, cards.UP),
+        ])
+        with capture() as (out, err):
+            ui.update('flip', 'Dealer', hand)
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)

@@ -27,13 +27,15 @@ class UI:
         """
         msg = None
         if hand:
-	        handstr = ' '.join([str(card) for card in hand])
+            handstr = ' '.join([str(card) for card in hand])
         if event == 'deal':
             msg = f'{player} was dealt {handstr}.'
+        if event == 'flip':
+            msg = f'{player} flips their card. Hand now {handstr}.'
         if event == 'hit':
             msg = f'{player} hits. Hand now {handstr}.'
         if event == 'stand':
-        	msg = f'{player} stands.'
+            msg = f'{player} stands.'
         print(msg)
 
 
@@ -48,9 +50,6 @@ def dealer_only():
 #     for card in dealer.hands[0]:
 #         print(card, end=' ')
 #     print()
-    for card in dealer.hands[0]:
-        if card.facing == cards.DOWN:
-            card.flip()
     game.play(deck, dealer, ui=ui)
     print()
 

@@ -9,7 +9,7 @@ This module contains the unit tests for the blackjack.game module.
 """
 from functools import partial
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 from blackjack import cards, game, players
 
@@ -117,20 +117,36 @@ class GameTestCase(unittest.TestCase):
         cardlist = [
             cards.Card(7, 0, cards.UP),
             cards.Card(6, 0, cards.UP),
-            cards.Card(5, 0, cards.UP),            
+            cards.Card(5, 0, cards.UP),
         ]
-        expected = ['hit', 'Dealer', cards.Hand(cardlist)]
+        expected_hand = cards.Hand(cardlist)
+        
+        # This looks a little weird. Shouldn't the hand be different 
+        # between the first two call.updates() since the cards in the 
+        # hand will be different at those points?
+        # 
+        # No. game.play() is sending the dealer's hand object to 
+        # ui.update(), and we are testing to make sure the same 
+        # hand is sent. Since objects are mutable, the hand has three 
+        # cards in it when assertEqual() runs, so the expected hand 
+        # needs to have all three cards, too.
+        expected = [
+            call.update('flip', 'Dealer', expected_hand),
+            call.update('hit', 'Dealer', expected_hand),
+            call.update('stand', 'Dealer'),
+        ]
         
         h = cards.Hand([
             cards.Card(7, 0, cards.UP),
-            cards.Card(6, 0, cards.UP),
+            cards.Card(6, 0, cards.DOWN),
         ])
         deck = cards.Deck([
-            cards.Card(5, 0, cards.UP),
+            cards.Card(5, 0, cards.DOWN),
         ])
         dealer = players.Player((h,))
         dealer.will_hit = partial(players.dealer_will_hit, None)
         ui = Mock()
         game.play(deck, dealer, ui=ui)
+        actual = ui.mock_calls
         
-        ui.update.assert_called_with(*expected)
+        self.assertEqual(expected, actual)
