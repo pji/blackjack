@@ -47,3 +47,15 @@ class Player:
     
     def __format__(self, format_spec):
         return self.name.__format__(format_spec)
+
+
+def playerfactory(name, will_hit_func) -> type:
+    """A factory function for Player subclasses."""
+    attrs = {
+        'will_hit': will_hit_func,
+    }
+    return type(name, (Player,), attrs)
+
+
+# Player subclasses.
+Dealer = playerfactory('Dealer', dealer_will_hit)

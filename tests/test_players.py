@@ -136,3 +136,25 @@ class dealer_will_hitTestCase(unittest.TestCase):
         actual_h2 = players.dealer_will_hit(None, h2)
         
         self.assertEqual(expected, actual_h1)
+
+
+class playerfactoryTestCase(unittest.TestCase):
+    def test_player_subclass(self):
+        """playerfactory() should return Player subclasses."""
+        expected = players.Player
+        actual = players.playerfactory('Spam', None)
+        self.assertTrue(issubclass(actual, expected))
+    
+    def test_will_hit(self):
+        """Given a will_hit function, the subclass should have a 
+        will_hit method.
+        """
+        expected = 'spam'
+        
+        def test_method(self, hand):
+            return 'spam'
+        Eggs = players.playerfactory('Eggs', test_method)
+        obj = Eggs()
+        actual = obj.will_hit(None)
+        
+        self.assertEqual(expected, actual)

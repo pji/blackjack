@@ -322,4 +322,20 @@ have to know things about the UI:
 There is probably some way to do it with the first bullet, but it 
 seems more awkward. When I have more than one player, I'd have to 
 have some way of keeping track of where I am in the deal or play 
-process, which the coroutine can handle on its own. 
+process, which the coroutine can handle on its own.
+
+
+Subclassing Player
+------------------
+Is a dealer a subclass of Player, or is it just Player that gets a 
+specific function for will_hit() passed in? Though, the dealer is 
+probably a bad example case for this, since dealers don't have to bet. 
+
+Is an agressive player versus a conservative player difference 
+subclasses of Player, or are they just players with different 
+will_hit() methods patched in? Well, on one had, I'm probably 
+only ever creating one instance of those subclasses at a time if 
+I make them subclasses, which seems like a waste. On the other 
+hand, I've not seen a pattern for monkey-patching instances that 
+is similar to the factory pattern. So, I should go with the factory 
+pattern, probably.
