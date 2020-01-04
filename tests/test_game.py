@@ -36,6 +36,43 @@ class GameTestCase(unittest.TestCase):
         self.assertEqual(expected_dealer_facing, actual_dealer_facing)
         self.assertEqual(expected_deck_size, actual_deck_size)
     
+    def test_deal_with_players(self):
+        """Given a deck, a dealer, and a player, deal() should deal an 
+        initial hand of blackjack to the dealer and the player from 
+        the deck.
+        """
+        expected_cls = cards.Hand
+        expected_hand_len = 2
+        expected_dealer_facing = [cards.UP, cards.DOWN,]
+        expected_player_facing = [cards.UP, cards.UP,]
+        expected_deck_size = 308
+        
+        deck = cards.Deck.build(6)
+        dealer = players.Dealer(name='Dealer')
+        player = players.Dealer(name='Player')
+        game.deal(deck, dealer, (player,))
+        
+        # Dealer
+        actual_hand_len_d = len(dealer.hands[0])
+        actual_dealer_facing = [card.facing for card in dealer.hands[0]]
+        
+        self.assertTrue(isinstance(dealer.hands[0], expected_cls))
+        self.assertEqual(expected_hand_len, actual_hand_len_d)
+        self.assertEqual(expected_dealer_facing, actual_dealer_facing)
+        
+        # Player
+        actual_hand_len_p = len(player.hands[0])
+        actual_player_facing = [card.facing for card in player.hands[0]]
+        
+        self.assertTrue(isinstance(player.hands[0], expected_cls))
+        self.assertEqual(expected_hand_len, actual_hand_len_p)
+        self.assertEqual(expected_player_facing, actual_player_facing)
+        
+        # Deck
+        actual_deck_size = len(deck)
+        
+        self.assertEqual(expected_deck_size, actual_deck_size)        
+    
     def test_deal_with_ui(self):
         """Given a deck, dealer, and UI, deal() should deal an initial 
         hand of blackjack to the dealer from the deck and update the 

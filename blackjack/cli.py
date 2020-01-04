@@ -72,11 +72,25 @@ def dealer_only():
     ui.exit()
 
 
+def one_player():
+    ui = UI()
+    deck = cards.Deck.build(6)
+    deck.shuffle()
+    dealer = players.Dealer(name='Dealer')
+    player = players.Dealer(name='Player')
+    game.deal(deck, dealer, (player,), ui=ui)
+    ui.exit()    
+
+
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Blackjack')
     p.add_argument('-d', '--dealer_only', help='Just a dealer.', 
+                   action='store_true')
+    p.add_argument('-1', '--one_player', help='One player.', 
                    action='store_true')
     args = p.parse_args()
     
     if args.dealer_only:
         dealer_only()
+    if args.one_player:
+        one_player()
