@@ -121,6 +121,42 @@ class GameTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_play_with_players(self):
+        """Given a deck, dealer with a hand, and a player with a hand, 
+        play a round of blackjack.
+        """
+        expected_dhand = cards.Hand([
+            cards.Card(5, 0),
+            cards.Card(5, 1),
+            cards.Card(11, 0),
+        ])
+        expected_phand = cards.Hand([
+            cards.Card(5, 2),
+            cards.Card(5, 3),
+            cards.Card(11, 3),            
+        ])
+        
+        deck = cards.Deck([
+            cards.Card(11, 0, cards.DOWN),
+            cards.Card(11, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer('Dealer')
+        dealer.hands = [cards.Hand([
+            cards.Card(5, 0),
+            cards.Card(5, 1),
+        ]),]
+        player = players.Dealer('Player')
+        player.hands = [cards.Hand([
+            cards.Card(5, 2),
+            cards.Card(5, 3),
+        ]),]
+        game.play(deck, dealer, (player,))
+        actual_dhand = dealer.hands[0]
+        actual_phand = player.hands[0]
+        
+        self.assertEqual(expected_dhand, actual_dhand)
+        self.assertEqual(expected_phand, actual_phand)
+    
     def test_play_17_plus(self):
         """Given a deck and a dealer with a dealt hand, play() should 
         deal cards to the dealer until the dealer stands on a score of 

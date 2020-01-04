@@ -24,10 +24,15 @@ def dealer_will_hit(self, hand):
     :return: The hit decision. True to hit. False to stand.
     :rtype: Bool.
     """
-    score = sorted(hand.score())[-1]
-    if score >= 17:
+    scores = [score for score in sorted(hand.score()) if score <= 21]
+    try:
+        score = scores[-1]
+    except IndexError:
         return STAND
-    return HIT
+    else:
+        if score >= 17:
+            return STAND
+        return HIT
 
 
 class Player:

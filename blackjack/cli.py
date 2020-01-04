@@ -79,6 +79,7 @@ def one_player():
     dealer = players.Dealer(name='Dealer')
     player = players.Dealer(name='Player')
     game.deal(deck, dealer, (player,), ui=ui)
+    game.play(deck, dealer, (player,), ui=ui)
     ui.exit()    
 
 

@@ -41,6 +41,22 @@ def deal(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
 
 def play(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
     """Perform the play phase of a blackjack game."""
+    if not players:
+        players = []
+    
+    # First handle each player.
+    for player in players:
+        hand = player.hands[0]
+        while player.will_hit(hand):
+            card = deck.draw()
+            card.flip()
+            hand.append(card)
+            if ui:
+                ui.update('hit', player, hand)
+        if ui:
+            ui.update('stand', player, hand)
+    
+    # Then handle the dealer.
     hand = dealer.hands[0]
     for card in hand:
         if card.facing == DOWN:
