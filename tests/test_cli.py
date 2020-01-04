@@ -141,6 +141,28 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_update_play_split(self):
+        """Given an event that a hand was split, the update() method 
+        should print the new hands to stdout.
+        """
+        lines = [
+            self.tmp.format('Terry', 'Hand split.', '7♣'),
+            self.tmp.format('', '', '7♦'),
+        ]
+        expected = ''.join(lines)
+        
+        ui = cli.UI(True)
+        player = players.AutoPlayer(name='Terry')
+        hands = (
+            cards.Hand([cards.Card(7, 0),]),
+            cards.Hand([cards.Card(7, 1),]),
+        )
+        with capture() as (out, err):
+            ui.update('split', player, hands)
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
     def test_use_player_name(self):
         """If update() is given a player.Player object rather than 
         a string for the name field, update() should use the name 

@@ -42,15 +42,24 @@ class UI(game.BaseUI):
         :return: None.
         :rtype: None.
         """
+        def get_handstr(hand):
+            return ' '.join([str(card) for card in hand])
+        
         msg = None
-        if hand:
-            handstr = ' '.join([str(card) for card in hand])
+        if hand and isinstance(hand, cards.Hand):
+            handstr = get_handstr(hand)
         if event == 'deal':
             msg = self.tmp.format(player,  'Initial deal.', handstr)
         if event == 'flip':
             msg = self.tmp.format(player, 'Flipped card.', handstr)
         if event == 'hit':
             msg = self.tmp.format(player, 'Hit.', handstr)
+        if event == 'split':
+            lines = [
+                self.tmp.format(player, 'Hand split.', get_handstr(hand[0])),
+                self.tmp.format('', '', get_handstr(hand[1])),
+            ]
+            msg = '\n'.join(lines)
         if event == 'stand':
             scores = [score for score in hand.score() if score <= 21]
             try:
@@ -77,7 +86,7 @@ def one_player():
     deck.shuffle()
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
-    player = players.Dealer(name='Player')
+    player = players.AutoPlayer(name='Player')
     g = game.Game(deck, dealer, (player,), ui=ui)
     g.deal()
     g.play()
@@ -90,8 +99,8 @@ def two_player():
     deck.shuffle()
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
-    p1 = players.Dealer(name='John')
-    p2 = players.Dealer(name='Michael')
+    p1 = players.AutoPlayer(name='John')
+    p2 = players.AutoPlayer(name='Michael')
     g = game.Game(deck, dealer, (p1, p2), ui=ui)
     g.deal()
     g.play()

@@ -85,9 +85,10 @@ class Game:
         Does not handle split aces properly.
         """
         # First handle the players.
-        def hit(player):
+        def hit(player, hand=None):
             """Handle the player's hitting and standing."""
-            hand = player.hands[0]
+            if not hand:
+                hand = player.hands[0]
             while player.will_hit(hand):
                 card = self.deck.draw()
                 card.flip()
@@ -97,7 +98,11 @@ class Game:
         
         # Handle the players.
         for player in self.playerlist:
-            hit(player)
+            if self._split(player.hands[0], player):
+                for hand in player.hands:
+                    hit(player, hand)
+            else:
+                hit(player)
         
         # The dealer has to flip before they hit.
         hand = self.dealer.hands[0]
@@ -115,11 +120,14 @@ class Game:
         :return: Whether the hand was split.
         :rtype: bool
         """
-        if hand[0].rank == hand[1].rank and player.will_split(hand):
-            new_hand1 = Hand([hand[0],])
-            new_hand2 = Hand([hand[1],])
-            player.hands = (new_hand1, new_hand2)
-            self.ui.update('split', player, player.hands)
-            return True
-        return False
-                
+        try:
+            if hand[0].rank == hand[1].rank and player.will_split(hand):
+                new_hand1 = Hand([hand[0],])
+                new_hand2 = Hand([hand[1],])
+                player.hands = (new_hand1, new_hand2)
+                self.ui.update('split', player, player.hands)
+                return True
+            return False
+        except TypeError as ex:
+            print(repr(player))
+            raise ex

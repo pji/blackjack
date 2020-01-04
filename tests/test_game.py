@@ -264,7 +264,7 @@ class GameTestCase(ut.TestCase):
         ])
         expected_phand = cards.Hand([
             cards.Card(5, 2),
-            cards.Card(5, 3),
+            cards.Card(4, 3),
             cards.Card(11, 3),            
         ])
         
@@ -277,10 +277,10 @@ class GameTestCase(ut.TestCase):
             cards.Card(5, 0),
             cards.Card(5, 1),
         ]),]
-        player = players.Dealer('Player')
+        player = players.AutoPlayer('Player')
         player.hands = [cards.Hand([
             cards.Card(5, 2),
-            cards.Card(5, 3),
+            cards.Card(4, 3),
         ]),]
         g = game.Game(deck, dealer, (player,))
         g.play()
@@ -334,10 +334,43 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
-#     def test_play_with_split(self):
-#         """If given a hand that can be split and a player who will 
-#         split that hand, play() should handle both of the hands.
-#         """
+    def test_play_with_split(self):
+        """If given a hand that can be split and a player who will 
+        split that hand, play() should handle both of the hands.
+        """
+        exp_h1 = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(2, 2),
+            cards.Card(9, 3),
+        ])
+        exp_h2 = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(1, 3),
+        ])
+        expected = (exp_h1, exp_h2)
+        
+        hand = cards.Hand([
+            exp_h1[0],
+            exp_h2[0],
+        ])
+        dhand = cards.Hand([
+            cards.Card(10, 0),
+            cards.Card(10, 1),
+        ])
+        player = players.AutoPlayer((hand,), name='Terry')
+        dealer = players.Dealer((dhand,))
+        deck = cards.Deck([
+            exp_h2[1],
+            exp_h1[2],
+            exp_h1[1],
+        ])
+        for card in deck:
+            card.flip()
+        g = game.Game(deck, dealer, (player,))
+        g.play()
+        actual = player.hands
+        
+        self.assertEqual(expected, actual)
     
     # Game._split() tests.
     def test__split_cannot_split(self):
