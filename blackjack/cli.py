@@ -64,7 +64,7 @@ class UI(game.BaseUI):
 # Command scripts.
 def dealer_only():
     ui = UI()
-    g = game.Game(True, ui=ui)
+    g = game.Game(ui=ui)
     g.deck.shuffle()
     g.deal()
     g.play()

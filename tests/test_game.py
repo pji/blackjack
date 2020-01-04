@@ -24,45 +24,70 @@ class GameTestCase(ut.TestCase):
         self.assertTrue('Game' in names)
     
     # Game.__init__() tests.
-    def test_casino_deck_false(self):
-        """If passed False for casino, the Game object should be 
-        initialized with a standard deck.
+    def test_deck_given(self):
+        """If a deck is given, it should be stored in the deck 
+        attribute.
         """
-        expected_len = 52
-        expected_cls = {cards.Card,}
-        expected_casino = False
+        expected = cards.Deck.build()
         
-        g = game.Game(expected_casino)
-        actual_len = len(g.deck)
-        actual_cls = {card.__class__ for card in g.deck}
-        actual_casino = g.casino
+        g = game.Game(expected)
+        actual = g.deck
         
-        self.assertEqual(expected_len, actual_len)
-        self.assertEqual(expected_cls, actual_cls)
-        self.assertEqual(expected_casino, actual_casino)
+        self.assertTrue(expected is actual)
     
-    def test_casino_deck_true(self):
-        """If passed True for casino, the Game object should be 
-        initialized with a casino deck.
+    def test_deck_default(self):
+        """If no deck is given, a casino deck should be created and 
+        stored in the deck attribute.
         """
+        expected_cls = cards.Deck
         expected_len = 52 * 6
-        expected_cls = {cards.Card,}
-        expected_casino = True
         
-        g = game.Game(expected_casino)
+        g = game.Game()
+        actual_cls = g.deck
         actual_len = len(g.deck)
-        actual_cls = {card.__class__ for card in g.deck}
-        actual_casino = g.casino
         
+        self.assertTrue(isinstance(actual_cls, expected_cls))
         self.assertEqual(expected_len, actual_len)
-        self.assertEqual(expected_cls, actual_cls)
-        self.assertEqual(expected_casino, actual_casino)
     
+#     def test_casino_deck_false(self):
+#         """If passed False for casino, the Game object should be 
+#         initialized with a standard deck.
+#         """
+#         expected_len = 52
+#         expected_cls = {cards.Card,}
+#         expected_casino = False
+#         
+#         g = game.Game(expected_casino)
+#         actual_len = len(g.deck)
+#         actual_cls = {card.__class__ for card in g.deck}
+#         actual_casino = g.casino
+#         
+#         self.assertEqual(expected_len, actual_len)
+#         self.assertEqual(expected_cls, actual_cls)
+#         self.assertEqual(expected_casino, actual_casino)
+#     
+#     def test_casino_deck_true(self):
+#         """If passed True for casino, the Game object should be 
+#         initialized with a casino deck.
+#         """
+#         expected_len = 52 * 6
+#         expected_cls = {cards.Card,}
+#         expected_casino = True
+#         
+#         g = game.Game(expected_casino)
+#         actual_len = len(g.deck)
+#         actual_cls = {card.__class__ for card in g.deck}
+#         actual_casino = g.casino
+#         
+#         self.assertEqual(expected_len, actual_len)
+#         self.assertEqual(expected_cls, actual_cls)
+#         self.assertEqual(expected_casino, actual_casino)
+#     
     def test_dealer_default(self):
         """If not passed a dealer, the game should create a dealer."""
         expected = players.Dealer
         
-        g = game.Game(False)
+        g = game.Game()
         actual = g.dealer
         
         self.assertTrue(isinstance(actual, expected))
@@ -72,7 +97,7 @@ class GameTestCase(ut.TestCase):
         expected = 'Eric'
         
         dealer = players.Dealer(name=expected)
-        g = game.Game(False, dealer)
+        g = game.Game(dealer=dealer)
         actual = g.dealer.name
         
         self.assertEqual(expected, actual)
@@ -83,7 +108,7 @@ class GameTestCase(ut.TestCase):
         """
         expected = game.BaseUI
         
-        g = game.Game(True)
+        g = game.Game()
         actual = g.ui
         
         self.assertTrue(isinstance(actual, expected))
@@ -94,7 +119,7 @@ class GameTestCase(ut.TestCase):
             pass
         expected = Spam
         
-        g = game.Game(True, ui=Spam())
+        g = game.Game(ui=Spam())
         actual = g.ui
         
         self.assertTrue(isinstance(actual, expected))
@@ -105,7 +130,7 @@ class GameTestCase(ut.TestCase):
         """
         expected = ()
         
-        g = game.Game(True)
+        g = game.Game()
         actual = g.playerlist
         
         self.assertEqual(expected, actual)
@@ -120,7 +145,7 @@ class GameTestCase(ut.TestCase):
             players.Player(name='Graham'),
         )
         
-        g = game.Game(False, playerlist=expecteds)
+        g = game.Game(playerlist=expecteds)
         actuals = g.playerlist
         
         for expected, actual in zip_longest(expecteds, actuals):
@@ -137,7 +162,7 @@ class GameTestCase(ut.TestCase):
         expected_dealer_facing = [cards.UP, cards.DOWN,]
         expected_deck_size = 310
         
-        g = game.Game(True)
+        g = game.Game()
         g.deal()
         actual_hand_len = len(g.dealer.hands[0])
         actual_dealer_facing = [card.facing for card in g.dealer.hands[0]]
@@ -164,7 +189,7 @@ class GameTestCase(ut.TestCase):
         
         ui = Mock()
         deck = cards.Deck(cardlist)
-        g = game.Game(False, dealer, ui=ui)
+        g = game.Game(dealer=dealer, ui=ui)
         g.deck = deck
         g.deal()
         
@@ -193,7 +218,7 @@ class GameTestCase(ut.TestCase):
             expected[3],
             expected[2],
         ])
-        g = game.Game(False)
+        g = game.Game()
         g.deck = deck
         g.dealer.hands = (h,)
         g.play()
@@ -219,7 +244,7 @@ class GameTestCase(ut.TestCase):
         deck = cards.Deck([
             expected[2],
         ])
-        g = game.Game(True)
+        g = game.Game()
         g.deck = deck
         g.dealer.hands = [h,]
         g.play()
@@ -264,7 +289,7 @@ class GameTestCase(ut.TestCase):
         ])
         dealer.hands = ((h,))
         ui = Mock()
-        g = game.Game(False, dealer, ui=ui)
+        g = game.Game(dealer=dealer, ui=ui)
         g.deck = deck
         g.play()
         actual = ui.mock_calls

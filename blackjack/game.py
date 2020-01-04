@@ -36,7 +36,7 @@ class BaseUI:
 
 class Game:
     """A game of blackjack."""
-    def __init__(self, casino:bool, dealer: Player = None, 
+    def __init__(self, deck: Deck = None, dealer: Player = None, 
                  playerlist: tuple = None, ui: BaseUI = None) -> None:
         """Initialize and instance of the class.
         
@@ -47,11 +47,9 @@ class Game:
         :return: None.
         :rtype: None.
         """
-        self.casino = casino
-        if casino:
-            self.deck = Deck.build(6)
-        else:
-            self.deck = Deck.build()
+        if not deck:
+            deck = Deck.build(6)
+        self.deck = deck
         
         if not playerlist:
             playerlist = ()
