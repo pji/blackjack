@@ -15,7 +15,7 @@ from blackjack import cards, game, players
 
 
 # UI object.
-class UI:
+class UI(game.BaseUI):
     tmp = '{:<15} {:<15} {:<}'
     
     def __init__(self, silent: bool = False) -> None:
@@ -64,11 +64,13 @@ class UI:
 # Command scripts.
 def dealer_only():
     ui = UI()
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    dealer = players.Dealer(name='Dealer')
-    game.deal(deck, dealer, ui=ui)
-    game.play(deck, dealer, ui=ui)
+    g = game.Game(True, ui=ui)
+    g.deal()
+#     deck = cards.Deck.build(6)
+#     deck.shuffle()
+#     dealer = players.Dealer(name='Dealer')
+#     game.deal(deck, dealer, ui=ui)
+#     game.play(deck, dealer, ui=ui)
     ui.exit()
 
 

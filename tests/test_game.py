@@ -9,13 +9,141 @@ This module contains the unit tests for the blackjack.game module.
 """
 from copy import deepcopy
 from functools import partial
-import unittest
+import inspect
+import unittest as ut
 from unittest.mock import Mock, call
 
 from blackjack import cards, game, players
 
 
-class GameTestCase(unittest.TestCase):
+class GameTestCase(ut.TestCase):
+    def test_exists(self):
+        """The class Game should exist in the game module."""
+        names = [item[0] for item in inspect.getmembers(game)]
+        self.assertTrue('Game' in names)
+    
+    # Game.__init__() tests.
+    def test_casino_deck_false(self):
+        """If passed False for casino, the Game object should be 
+        initialized with a standard deck.
+        """
+        expected_len = 52
+        expected_cls = {cards.Card,}
+        expected_casino = False
+        
+        g = game.Game(expected_casino)
+        actual_len = len(g.deck)
+        actual_cls = {card.__class__ for card in g.deck}
+        actual_casino = g.casino
+        
+        self.assertEqual(expected_len, actual_len)
+        self.assertEqual(expected_cls, actual_cls)
+        self.assertEqual(expected_casino, actual_casino)
+    
+    def test_casino_deck_true(self):
+        """If passed True for casino, the Game object should be 
+        initialized with a casino deck.
+        """
+        expected_len = 52 * 6
+        expected_cls = {cards.Card,}
+        expected_casino = True
+        
+        g = game.Game(expected_casino)
+        actual_len = len(g.deck)
+        actual_cls = {card.__class__ for card in g.deck}
+        actual_casino = g.casino
+        
+        self.assertEqual(expected_len, actual_len)
+        self.assertEqual(expected_cls, actual_cls)
+        self.assertEqual(expected_casino, actual_casino)
+    
+    def test_dealer_default(self):
+        """If not passed a dealer, the game should create a dealer."""
+        expected = players.Dealer
+        
+        g = game.Game(False)
+        actual = g.dealer
+        
+        self.assertTrue(isinstance(actual, expected))
+    
+    def test_dealer_given(self):
+        """If given a dealer, the game should use it."""
+        expected = 'Eric'
+        
+        dealer = players.Dealer(name=expected)
+        g = game.Game(False, dealer)
+        actual = g.dealer.name
+        
+        self.assertEqual(expected, actual)
+    
+    def test_ui_default(self):
+        """If no UI is given, the game should create a BaseUI 
+        object.
+        """
+        expected = game.BaseUI
+        
+        g = game.Game(True)
+        actual = g.ui
+        
+        self.assertTrue(isinstance(actual, expected))
+    
+    def test_ui_given(self):
+        """If a UI is given, the game should use it."""
+        class Spam(game.BaseUI):
+            pass
+        expected = Spam
+        
+        g = game.Game(True, ui=Spam())
+        actual = g.ui
+        
+        self.assertTrue(isinstance(actual, expected))
+    
+    # Game.deal() tests.
+    def test_deal(self):
+        """In a Game object with a deck and a dealer, deal() should 
+        deal an initial hand of blackjack to the dealer from the 
+        deck.
+        """
+        expected_cls = cards.Hand
+        expected_hand_len = 2
+        expected_dealer_facing = [cards.UP, cards.DOWN,]
+        expected_deck_size = 310
+        
+        g = game.Game(True)
+        g.deal()
+        actual_hand_len = len(g.dealer.hands[0])
+        actual_dealer_facing = [card.facing for card in g.dealer.hands[0]]
+        actual_deck_size = len(g.deck)
+        
+        self.assertTrue(isinstance(g.dealer.hands[0], expected_cls))
+        self.assertEqual(expected_hand_len, actual_hand_len)
+        self.assertEqual(expected_dealer_facing, actual_dealer_facing)
+        self.assertEqual(expected_deck_size, actual_deck_size)
+    
+    def test_deal_with_ui(self):
+        """In a Game object with a deck and dealer,  deal() should 
+        deal an initial hand of blackjack to the dealer from the deck 
+        and update the UI.
+        """
+        cardlist = cards.Deck([
+            cards.Card(11, 0),
+            cards.Card(11, 3),
+        ])
+        hand = cards.Hand()
+        hand.cards = cardlist[::-1]
+        dealer = players.Player()
+        expected = ['deal', dealer, hand]
+        
+        ui = Mock()
+        deck = cards.Deck(cardlist)
+        g = game.Game(False, dealer, ui=ui)
+        g.deck = deck
+        g.deal()
+        
+        ui.update.assert_called_with(*expected)
+
+
+class GameFunctionsTestCase(ut.TestCase):
     # Test deal()
     def test_deal(self):
         """Given a deck and a dealer, deal() should deal an initial 
