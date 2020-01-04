@@ -65,88 +65,42 @@ class Game:
     
     def deal(self):
         """Deal a round of blackjack."""
+        # First card.
+        for player in self.playerlist:
+            player.hands = (_build_hand(self.deck),)
         self.dealer.hands = (_build_hand(self.deck),)
+        
+        # Second card.
+        for player in self.playerlist:
+            card = self.deck.draw()
+            card.flip()
+            player.hands[0].append(card)
+            self.ui.update('deal', player, player.hands[0])
         self.dealer.hands[0].append(self.deck.draw())
         self.ui.update('deal', self.dealer, self.dealer.hands[0])
     
     def play(self):
         """Play a round of blackjack."""
+        # First handle the players.
+        def hit(player):
+            """Handle the player's hitting and standing."""
+            hand = player.hands[0]
+            while player.will_hit(hand):
+                card = self.deck.draw()
+                card.flip()
+                hand.append(card)
+                self.ui.update('hit', player, hand)
+            self.ui.update('stand', player, hand)
+        
+        # Handle the players.
+        for player in self.playerlist:
+            hit(player)
+        
+        # The dealer has to flip before they hit.
         hand = self.dealer.hands[0]
         for card in hand:
             if card.facing == DOWN:
                 card.flip()
                 self.ui.update('flip', self.dealer, hand)
-        while self.dealer.will_hit(hand):
-            card = self.deck.draw()
-            card.flip()
-            hand.append(card)
-            self.ui.update('hit', self.dealer, hand)
-        self.ui.update('stand', self.dealer, hand)
+        hit(self.dealer)
 
-
-# Public functions.
-def deal(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
-    """Perform the initial deal of a blackjack game."""
-    if not players:
-        players = []
-    
-    # First card to players then dealer.
-    for player in players:
-        player.hands = (_build_hand(deck),)
-    dealer.hands = (_build_hand(deck),)
-    
-    # Second card to players, then face down to dealer.
-    for player in players:
-        card = deck.draw()
-        card.flip()
-        player.hands[0].append(card)
-        if ui:
-            ui.update('deal', player, player.hands[0])
-    dealer.hands[0].append(deck.draw())
-    if ui:
-        ui.update('deal', dealer, dealer.hands[0])
-
-def play(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
-    """Perform the play phase of a blackjack game."""
-    if not players:
-        players = []
-    
-    # First handle each player.
-    for player in players:
-        hand = player.hands[0]
-        while player.will_hit(hand):
-            card = deck.draw()
-            card.flip()
-            hand.append(card)
-            if ui:
-                ui.update('hit', player, hand)
-        if ui:
-            ui.update('stand', player, hand)
-    
-    # Then handle the dealer.
-    hand = dealer.hands[0]
-    for card in hand:
-        if card.facing == DOWN:
-            card.flip()
-            if ui:
-                ui.update('flip', dealer, hand)
-    while dealer.will_hit(hand):
-        card = deck.draw()
-        card.flip()
-        hand.append(card)
-        if ui:
-            ui.update('hit', dealer, hand)
-    if ui:
-        ui.update('stand', dealer, hand)
-
-
-def split(player:Player, hand:Hand) -> None:
-    """If the given hand can be split and the player wants to split, 
-    split the player's hand.
-    
-    :param player: The player whose hand may be able to be split.
-    :param hand: The hand that may be able to be split.
-    :return: None.
-    :rtype: None.
-    """
-    pass

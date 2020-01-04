@@ -75,10 +75,26 @@ def one_player():
     ui = UI()
     deck = cards.Deck.build(6)
     deck.shuffle()
+    deck.random_cut()
     dealer = players.Dealer(name='Dealer')
     player = players.Dealer(name='Player')
-    game.deal(deck, dealer, (player,), ui=ui)
-    game.play(deck, dealer, (player,), ui=ui)
+    g = game.Game(deck, dealer, (player,), ui=ui)
+    g.deal()
+    g.play()
+    ui.exit()    
+
+
+def two_player():
+    ui = UI()
+    deck = cards.Deck.build(6)
+    deck.shuffle()
+    deck.random_cut()
+    dealer = players.Dealer(name='Dealer')
+    p1 = players.Dealer(name='John')
+    p2 = players.Dealer(name='Michael')
+    g = game.Game(deck, dealer, (p1, p2), ui=ui)
+    g.deal()
+    g.play()
     ui.exit()    
 
 
@@ -88,9 +104,13 @@ if __name__ == '__main__':
                    action='store_true')
     p.add_argument('-1', '--one_player', help='One player.', 
                    action='store_true')
+    p.add_argument('-2', '--two_player', help='Two player.', 
+                   action='store_true')
     args = p.parse_args()
     
     if args.dealer_only:
         dealer_only()
     if args.one_player:
         one_player()
+    if args.two_player:
+        two_player()
