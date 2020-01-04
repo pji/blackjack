@@ -63,6 +63,20 @@ class Game:
         self.dealer.hands = (_build_hand(self.deck),)
         self.dealer.hands[0].append(self.deck.draw())
         self.ui.update('deal', self.dealer, self.dealer.hands[0])
+    
+    def play(self):
+        """Play a round of blackjack."""
+        hand = self.dealer.hands[0]
+        for card in hand:
+            if card.facing == DOWN:
+                card.flip()
+                self.ui.update('flip', self.dealer, hand)
+        while self.dealer.will_hit(hand):
+            card = self.deck.draw()
+            card.flip()
+            hand.append(card)
+            self.ui.update('hit', self.dealer, hand)
+        self.ui.update('stand', self.dealer, hand)
 
 
 # Public functions.

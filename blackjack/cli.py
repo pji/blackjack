@@ -65,12 +65,9 @@ class UI(game.BaseUI):
 def dealer_only():
     ui = UI()
     g = game.Game(True, ui=ui)
+    g.deck.shuffle()
     g.deal()
-#     deck = cards.Deck.build(6)
-#     deck.shuffle()
-#     dealer = players.Dealer(name='Dealer')
-#     game.deal(deck, dealer, ui=ui)
-#     game.play(deck, dealer, ui=ui)
+    g.play()
     ui.exit()
 
 
