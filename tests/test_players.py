@@ -7,6 +7,7 @@ This module contains the unit tests for the blackjack.players module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from functools import partial
 import inspect
 import unittest
 
@@ -138,11 +139,46 @@ class dealer_will_hitTestCase(unittest.TestCase):
         self.assertEqual(expected, actual_h1)
 
 
+class always_will_split(unittest.TestCase):
+    def test_paramters(self):
+        """Functions that follow the will_split protocol should 
+        accept the following parameters: hand, player, dealer, 
+        playerlist.
+        """
+        hand = cards.Hand()
+        player = players.Player((hand,), 'John Cleese')
+        dealer = players.Dealer((cards.Hand(),), 'Dealer')
+        playerlist = [
+            player,
+            players.Player((cards.Hand(),), 'Michael Palin')
+        ]
+        
+        player.will_split = partial(players.always_will_split, None)
+        player.will_split(hand, player, dealer, playerlist)
+        
+        # The test was that no exception was raised when will_split 
+        # was called.
+        self.assertTrue(True)
+    
+    def test_always_true(self):
+        """always_will_split() should return True."""
+        hand = cards.Hand()
+        player = players.Player((hand,), 'John Cleese')
+        dealer = players.Dealer((cards.Hand(),), 'Dealer')
+        playerlist = [
+            player,
+        ]
+        player.will_split = partial(players.always_will_split, None)
+        actual = player.will_split(hand, player, dealer, playerlist)
+        
+        self.assertTrue(actual)
+
+
 class playerfactoryTestCase(unittest.TestCase):
     def test_player_subclass(self):
         """playerfactory() should return Player subclasses."""
         expected = players.Player
-        actual = players.playerfactory('Spam', None)
+        actual = players.playerfactory('Spam', None, None)
         self.assertTrue(issubclass(actual, expected))
     
     def test_will_hit(self):
@@ -153,8 +189,22 @@ class playerfactoryTestCase(unittest.TestCase):
         
         def test_method(self, hand):
             return 'spam'
-        Eggs = players.playerfactory('Eggs', test_method)
+        Eggs = players.playerfactory('Eggs', test_method, None)
         obj = Eggs()
         actual = obj.will_hit(None)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_will_split(self):
+        """Given a will_split function, the subclass should have a 
+        will_split method.
+        """
+        expected = False
+        
+        def test_method(self, hand, player, dealer, playerlist):
+            return False
+        Spam = players.playerfactory('Spam', None, test_method)
+        obj = Spam()
+        actual = obj.will_split(None, None, None, None)
         
         self.assertEqual(expected, actual)

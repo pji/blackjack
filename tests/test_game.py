@@ -7,6 +7,7 @@ This module contains the unit tests for the blackjack.game module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from copy import deepcopy
 from functools import partial
 import unittest
 from unittest.mock import Mock, call
@@ -15,6 +16,7 @@ from blackjack import cards, game, players
 
 
 class GameTestCase(unittest.TestCase):
+    # Test deal()
     def test_deal(self):
         """Given a deck and a dealer, deal() should deal an initial 
         hand of blackjack to the dealer from the deck.
@@ -93,6 +95,7 @@ class GameTestCase(unittest.TestCase):
         
         ui.update.assert_called_with(*expected)
     
+    # Test play().
     def test_play_bust(self):
         """Given a deck and a dealer with a dealt hand, play() should 
         deal cards to the dealer until the dealer stands on a bust.
@@ -224,3 +227,22 @@ class GameTestCase(unittest.TestCase):
         actual = ui.mock_calls
         
         self.assertEqual(expected, actual)
+    
+    # Test split().
+    def test_split_no_splits(self):
+        """Given a player and a hand, split should determine if the 
+        player's hand can be split. If not, it should exit.
+        """
+        expected_h1 = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(2, 1),
+        ])
+        expected_len = 1
+        
+        p1 = players.Player((deepcopy(expected_h1),), 'Player1')
+        game.split(p1, p1.hands[0])
+        actual_h1 = p1.hands[0]
+        actual_len1 = len(p1.hands)
+        
+        self.assertEqual(expected_h1, actual_h1)
+        self.assertEqual(expected_len, actual_len1)

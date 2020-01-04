@@ -16,25 +16,7 @@ HIT = True
 STAND = False
 
 
-# will_hit functions.
-def dealer_will_hit(self, hand):
-    """Determine whether the player will hit or stand on the hand.
-    
-    :param hand: The hand to make the decision on.
-    :return: The hit decision. True to hit. False to stand.
-    :rtype: Bool.
-    """
-    scores = [score for score in sorted(hand.score()) if score <= 21]
-    try:
-        score = scores[-1]
-    except IndexError:
-        return STAND
-    else:
-        if score >= 17:
-            return STAND
-        return HIT
-
-
+# Base class.
 class Player:
     """A blackjack player."""
     def __init__(self, hands: tuple = (), name: str = 'Player') -> None:
@@ -54,13 +36,49 @@ class Player:
         return self.name.__format__(format_spec)
 
 
-def playerfactory(name, will_hit_func) -> type:
+# will_hit functions.
+def dealer_will_hit(self, hand):
+    """Determine whether the player will hit or stand on the hand.
+    
+    :param hand: The hand to make the decision on.
+    :return: The hit decision. True to hit. False to stand.
+    :rtype: Bool.
+    """
+    scores = [score for score in sorted(hand.score()) if score <= 21]
+    try:
+        score = scores[-1]
+    except IndexError:
+        return STAND
+    else:
+        if score >= 17:
+            return STAND
+        return HIT
+
+
+# will_split functions.
+def always_will_split(self, hand:Hand, player:Player, dealer:Player, 
+                      playerlist:list) -> bool:
+    """The player will always split where possible.
+    
+    :param hand: The hand that may be split.
+    :param player: The player determining whether to split.
+    :param dealer: The dealer.
+    :param playerlist: The list of players.
+    :return: The decision whether to split.
+    :rtype: bool
+    """
+    return True
+    
+
+def playerfactory(name, will_hit_func, will_split_func) -> type:
     """A factory function for Player subclasses."""
     attrs = {
         'will_hit': will_hit_func,
+        'will_split': will_split_func,
     }
     return type(name, (Player,), attrs)
 
 
 # Player subclasses.
-Dealer = playerfactory('Dealer', dealer_will_hit)
+Dealer = playerfactory('Dealer', dealer_will_hit, None)
+AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split)

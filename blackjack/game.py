@@ -71,3 +71,15 @@ def play(deck: Deck, dealer: Player, players: list = None, ui = None) -> None:
             ui.update('hit', dealer, hand)
     if ui:
         ui.update('stand', dealer, hand)
+
+
+def split(player:Player, hand:Hand) -> None:
+    """If the given hand can be split and the player wants to split, 
+    split the player's hand.
+    
+    :param player: The player whose hand may be able to be split.
+    :param hand: The hand that may be able to be split.
+    :return: None.
+    :rtype: None.
+    """
+    pass

@@ -339,3 +339,54 @@ I make them subclasses, which seems like a waste. On the other
 hand, I've not seen a pattern for monkey-patching instances that 
 is similar to the factory pattern. So, I should go with the factory 
 pattern, probably.
+
+
+Making Decisions
+----------------
+I'm going to have computer players, and I want to have some ability 
+for them to act both rationally and irrationally. The more information 
+these computer players have, the more things they can base their 
+decisions on. But, the more information that the computer players 
+have, the more information is going to have to be moved around by the 
+game.
+
+The current issue is this: what information does a Player need to make 
+the will_split decision? This boils down to the question:
+
+    Does the player think that paying the extra $BET to split the hand 
+    will improve their chances to meet their goal (likely to win)?
+
+Here is information that is definitely relevant:
+
+*   The player's hand
+*   The dealer's hand
+*   The cost of the $BET
+*   The amount of money the player has left
+*   The cards that have been seen since the last shuffle
+
+It's that last one that is the trickiest. 
+
+It tells you how likely you 
+are to draw a card that you need. If you are likely to get the cards 
+you need and the dealer isn't, then the split is likely a better idea 
+than if you are less likely to get the cards you need than the dealer 
+is. So, to get computer-perfect play, it's important.
+
+But, it's, basically, all the information in the game. That's a lot 
+to be tracking through the various functions and methods involved. 
+Right now, I don't even have a way to record what happened with 
+previous games, so I'd need to implement that plus pass in every 
+visible hand just to send to the split() function.
+
+Maybe this is where game needs to be an object rather than a series 
+of functions. That would allow the game state to be saved as 
+attributes that a split() method could access if needed, but ignore 
+otherwise. I was trying not to complicate the game by making it a 
+class, but it seems like there are definite benefits to doing so.
+
+And, heck, if I'm making it a class anyway, I might as well make it 
+a context manager.
+
+OK, that wasn't where I was expecting this to go, but it does simplify 
+the signature of split() quite a bit. The signature of will_split is 
+probably still fairly complicated, though.
