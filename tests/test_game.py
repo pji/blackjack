@@ -10,6 +10,7 @@ This module contains the unit tests for the blackjack.game module.
 from copy import deepcopy
 from functools import partial
 import inspect
+from itertools import zip_longest
 import unittest as ut
 from unittest.mock import Mock, call
 
@@ -97,6 +98,33 @@ class GameTestCase(ut.TestCase):
         actual = g.ui
         
         self.assertTrue(isinstance(actual, expected))
+    
+    def test_playerlist_default(self):
+        """If not given players, the playerlist attribute should be 
+        initialized to an empty tuple.
+        """
+        expected = ()
+        
+        g = game.Game(True)
+        actual = g.playerlist
+        
+        self.assertEqual(expected, actual)
+    
+    def test_playerlist_given(self):
+        """If given a list of players, that list should be stored in 
+        the playerlist attribute.
+        """
+        expecteds = (
+            players.Player(name='John'),
+            players.Player(name='Michael'),
+            players.Player(name='Graham'),
+        )
+        
+        g = game.Game(False, playerlist=expecteds)
+        actuals = g.playerlist
+        
+        for expected, actual in zip_longest(expecteds, actuals):
+            self.assertTrue(expected is actual)
     
     # Game.deal() tests.
     def test_deal(self):
