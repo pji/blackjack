@@ -80,7 +80,10 @@ class Game:
         self.ui.update('deal', self.dealer, self.dealer.hands[0])
     
     def play(self):
-        """Play a round of blackjack."""
+        """Play a round of blackjack.
+        
+        Does not hanele split aces properly.
+        """
         # First handle the players.
         def hit(player):
             """Handle the player's hitting and standing."""
@@ -103,4 +106,17 @@ class Game:
                 card.flip()
                 self.ui.update('flip', self.dealer, hand)
         hit(self.dealer)
-
+    
+    def _split(self, hand: Hand, player: Player) -> None:
+        """Handle the splitting decision on a hand.
+                
+        :param hand: The hand to determine whether to split.
+        :param player: The player who owns the hand.
+        :return: None.
+        :rtype: None.
+        """
+        if hand[0].rank == hand[1].rank and player.will_split(hand):
+            new_hand1 = Hand([hand[0],])
+            new_hand2 = Hand([hand[1],])
+            player.hands = (new_hand1, new_hand2)
+                

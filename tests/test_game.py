@@ -7,7 +7,7 @@ This module contains the unit tests for the blackjack.game module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
-from copy import deepcopy
+from copy import copy, deepcopy
 from functools import partial
 import inspect
 from itertools import zip_longest
@@ -333,3 +333,43 @@ class GameTestCase(ut.TestCase):
         actual = ui.mock_calls
         
         self.assertEqual(expected, actual)
+    
+    # Game._split() tests.
+    def test__split_cannot_split(self):
+        """Given a hand and a player, if the hand cannot be split, 
+        _split() should not split it.
+        """
+        expected_h1 = [cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(2, 1),
+        ]),]
+        
+        p1 = players.AutoPlayer(copy(expected_h1), name='John')
+        playerlist = [p1,]
+        g = game.Game(None, None, playerlist)
+        g._split(expected_h1[0], p1)
+        actual_h1 = p1.hands
+        
+        self.assertEqual(expected_h1, actual_h1)
+    
+    def test__split_does_split(self):
+        """Given a hand and a player, if the hand can be split and the 
+        player says to split, the hand should be split.
+        """
+        expected = (
+            cards.Hand([cards.Card(11, 3),]),
+            cards.Hand([cards.Card(11, 1),]),
+        )
+        
+        h1 = [cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(11, 1),
+        ]),]
+        p1 = players.AutoPlayer(copy(h1), name='John')
+        playerlist = [p1,]
+        g = game.Game(None, None, playerlist)
+        g._split(h1[0], p1)
+        actual = p1.hands
+        
+        self.assertEqual(expected, actual)
+    

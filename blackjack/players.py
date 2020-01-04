@@ -56,14 +56,10 @@ def dealer_will_hit(self, hand):
 
 
 # will_split functions.
-def always_will_split(self, hand:Hand, player:Player, dealer:Player, 
-                      playerlist:list) -> bool:
+def always_will_split(self, hand:Hand, *args, **kwargs) -> bool:
     """The player will always split where possible.
     
     :param hand: The hand that may be split.
-    :param player: The player determining whether to split.
-    :param dealer: The dealer.
-    :param playerlist: The list of players.
     :return: The decision whether to split.
     :rtype: bool
     """
