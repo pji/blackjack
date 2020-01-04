@@ -82,7 +82,7 @@ class Game:
     def play(self):
         """Play a round of blackjack.
         
-        Does not hanele split aces properly.
+        Does not handle split aces properly.
         """
         # First handle the players.
         def hit(player):
@@ -112,11 +112,14 @@ class Game:
                 
         :param hand: The hand to determine whether to split.
         :param player: The player who owns the hand.
-        :return: None.
-        :rtype: None.
+        :return: Whether the hand was split.
+        :rtype: bool
         """
         if hand[0].rank == hand[1].rank and player.will_split(hand):
             new_hand1 = Hand([hand[0],])
             new_hand2 = Hand([hand[1],])
             player.hands = (new_hand1, new_hand2)
+            self.ui.update('split', player, player.hands)
+            return True
+        return False
                 

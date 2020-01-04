@@ -32,6 +32,10 @@ class Player:
     def __str__(self):
         return self.name
     
+    def __repr__(self):
+        cls = self.__class__
+        return f'{cls.__name__}[{self.name!r}]'
+    
     def __format__(self, format_spec):
         return self.name.__format__(format_spec)
 

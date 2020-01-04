@@ -334,32 +334,41 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+#     def test_play_with_split(self):
+#         """If given a hand that can be split and a player who will 
+#         split that hand, play() should handle both of the hands.
+#         """
+    
     # Game._split() tests.
     def test__split_cannot_split(self):
         """Given a hand and a player, if the hand cannot be split, 
-        _split() should not split it.
+        _split() should not split it and return false.
         """
         expected_h1 = [cards.Hand([
             cards.Card(11, 3),
             cards.Card(2, 1),
         ]),]
+        expected_return = False
         
         p1 = players.AutoPlayer(copy(expected_h1), name='John')
         playerlist = [p1,]
         g = game.Game(None, None, playerlist)
-        g._split(expected_h1[0], p1)
+        actual_return = g._split(expected_h1[0], p1)
         actual_h1 = p1.hands
         
         self.assertEqual(expected_h1, actual_h1)
+        self.assertEqual(expected_return, actual_return)
     
     def test__split_does_split(self):
         """Given a hand and a player, if the hand can be split and the 
-        player says to split, the hand should be split.
+        player says to split, the hand should be split, and the method 
+        should return True.
         """
-        expected = (
+        expected_hands = (
             cards.Hand([cards.Card(11, 3),]),
             cards.Hand([cards.Card(11, 1),]),
         )
+        expected_return = True
         
         h1 = [cards.Hand([
             cards.Card(11, 3),
@@ -368,8 +377,29 @@ class GameTestCase(ut.TestCase):
         p1 = players.AutoPlayer(copy(h1), name='John')
         playerlist = [p1,]
         g = game.Game(None, None, playerlist)
-        g._split(h1[0], p1)
-        actual = p1.hands
+        actual_return = g._split(h1[0], p1)
+        actual_hands = p1.hands
         
-        self.assertEqual(expected, actual)
+        self.assertEqual(expected_hands, actual_hands)
+        self.assertEqual(expected_return, actual_return)
     
+    def test__split_with_ui(self):
+        """If _split() splits the hand, it should send the event, 
+        the player, and the new hand to the UI.
+        """
+        hands = (
+            cards.Hand([cards.Card(11, 3),]),
+            cards.Hand([cards.Card(11, 1),]),
+        )
+        h1 = [cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(11, 1),
+        ]),]
+        p1 = players.AutoPlayer(copy(h1), name='John')
+        expected = ('split', p1, hands)
+        
+        playerlist = [p1,]
+        g = game.Game(None, None, playerlist, ui=Mock())
+        _ = g._split(h1[0], p1)
+
+        g.ui.update.assert_called_with(*expected)
