@@ -521,3 +521,4 @@ class GameTestCase(ut.TestCase):
         actual = ui.mock_calls
         
         self.assertEqual(expected, actual)
+    

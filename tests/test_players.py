@@ -54,6 +54,17 @@ class PlayerTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_chips(self):
+        """If passed a number of chips, that number should be stored 
+        in the chips attribute.
+        """
+        expected = 200
+        
+        p = players.Player(chips=expected)
+        actual = p.chips
+        
+        self.assertEqual(expected, actual)
+    
     def test___str__(self):
         """__str__() should return the name of the Player object."""
         expected = 'Spam'

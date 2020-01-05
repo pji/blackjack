@@ -390,3 +390,18 @@ a context manager.
 OK, that wasn't where I was expecting this to go, but it does simplify 
 the signature of split() quite a bit. The signature of will_split is 
 probably still fairly complicated, though.
+
+Betting
+-------
+It wouldn't be blackjack without betting. With regards to betting the 
+following will be needed:
+
+* Give each player a number of chips.
+* Track the player's chips.
+* Set the buy-in for the game.
+* Subtract the buy-in from each player's chip total.
+* Subtract the extra bet on a split.
+* Pay out when the player wins.
+* Pay out x1.5 when the player wins with a blackjack.
+* Pay out normally when the player wins with a 21 on split aces.
+* 

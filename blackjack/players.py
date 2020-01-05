@@ -19,15 +19,19 @@ STAND = False
 # Base class.
 class Player:
     """A blackjack player."""
-    def __init__(self, hands: tuple = (), name: str = 'Player') -> None:
+    def __init__(self, hands: tuple = (), name: str = 'Player', 
+                 chips: int = 0) -> None:
         """Initialize and instance of the class.
         
         :param hands: The player's hands of blackjack.
+        :param name: The player's name.
+        :param chips: The chips the player has for betting.
         :return: None.
         :rtype: None.
         """
         self.hands = hands
         self.name = name
+        self.chips = chips
     
     def __str__(self):
         return self.name
