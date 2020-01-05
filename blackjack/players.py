@@ -85,15 +85,17 @@ def always_will_buyin(self, game) -> bool:
     return True
 
 
-def playerfactory(name, will_hit_func, will_split_func) -> type:
+def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn) -> type:
     """A factory function for Player subclasses."""
     attrs = {
-        'will_hit': will_hit_func,
-        'will_split': will_split_func,
+        'will_hit': will_hit_fn,
+        'will_split': will_split_fn,
+        'will_buyin': will_buyin_fn,
     }
     return type(name, (Player,), attrs)
 
 
 # Player subclasses.
-Dealer = playerfactory('Dealer', dealer_will_hit, None)
-AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split)
+Dealer = playerfactory('Dealer', dealer_will_hit, None, None)
+AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
+                            None)

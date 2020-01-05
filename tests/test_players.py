@@ -214,7 +214,7 @@ class playerfactoryTestCase(unittest.TestCase):
     def test_player_subclass(self):
         """playerfactory() should return Player subclasses."""
         expected = players.Player
-        actual = players.playerfactory('Spam', None, None)
+        actual = players.playerfactory('Spam', None, None, None)
         self.assertTrue(issubclass(actual, expected))
     
     def test_will_hit(self):
@@ -225,7 +225,7 @@ class playerfactoryTestCase(unittest.TestCase):
         
         def test_method(self, hand):
             return 'spam'
-        Eggs = players.playerfactory('Eggs', test_method, None)
+        Eggs = players.playerfactory('Eggs', test_method, None, None)
         obj = Eggs()
         actual = obj.will_hit(None)
         
@@ -239,8 +239,22 @@ class playerfactoryTestCase(unittest.TestCase):
         
         def test_method(self, hand, player, dealer, playerlist):
             return False
-        Spam = players.playerfactory('Spam', None, test_method)
+        Spam = players.playerfactory('Spam', None, test_method, None)
         obj = Spam()
         actual = obj.will_split(None, None, None, None)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_will_buyin(self):
+        """Given a will_buyin function, the subclass should have a 
+        will_buyin method.
+        """
+        expected = False
+        
+        def test_method(self, game):
+            return False
+        Spam = players.playerfactory('Spam', None, None, test_method)
+        obj = Spam()
+        actual = obj.will_buyin(None)
         
         self.assertEqual(expected, actual)
