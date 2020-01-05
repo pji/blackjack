@@ -372,6 +372,43 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_play_with_ace_split(self):
+        """Given a hand with two aces and a player who will split that 
+        hand, play() should split the hand and hit each of the split 
+        hands only once before standing.
+        """
+        exp_h1 = cards.Hand([
+            cards.Card(1, 0),
+            cards.Card(2, 2),
+        ])
+        exp_h2 = cards.Hand([
+            cards.Card(1, 3),
+            cards.Card(1, 3),
+        ])
+        expected = (exp_h1, exp_h2)
+        
+        hand = cards.Hand([
+            exp_h1[0],
+            exp_h2[0],
+        ])
+        dhand = cards.Hand([
+            cards.Card(10, 0),
+            cards.Card(10, 1),
+        ])
+        player = players.AutoPlayer((hand,), name='Terry')
+        dealer = players.Dealer((dhand,))
+        deck = cards.Deck([
+            exp_h2[1],
+            exp_h1[1],
+        ])
+        for card in deck:
+            card.flip()
+        g = game.Game(deck, dealer, (player,))
+        g.play()
+        actual = player.hands
+        
+        self.assertEqual(expected, actual)
+    
     # Game._split() tests.
     def test__split_cannot_split(self):
         """Given a hand and a player, if the hand cannot be split, 
@@ -436,3 +473,51 @@ class GameTestCase(ut.TestCase):
         _ = g._split(h1[0], p1)
 
         g.ui.update.assert_called_with(*expected)
+    
+    # Test Game._ace_split_hit()
+    def test__ace_split_hit(self):
+        """Given a hand with an ace that had been split, 
+        _ace_split_hit() should give hand one hit and then 
+        stand.
+        """
+        expected = cards.Hand([
+            cards.Card(1, 3),
+            cards.Card(11, 0, cards.DOWN),
+        ])
+        
+        deck = cards.Deck([
+            expected[1],
+        ])
+        hand = cards.Hand([
+            expected[0],
+        ])
+        player = players.AutoPlayer((hand,), name='Eric')
+        g = game.Game(deck, None, (player,))
+        g._ace_split_hit(player, hand)
+        actual = player.hands[0]
+        
+        self.assertEqual(expected, actual)
+    
+    def test__ace_split_hit_ui(self):
+        """Given a hand with an ace that had been split, 
+        _ace_split_hit() should send an event to the UI 
+        for the single hit and the stand.
+        """
+        hand = cards.Hand([
+            cards.Card(1, 3),
+        ])
+        player = players.AutoPlayer([hand,], name='John')
+        expected = [
+            call.update('hit', player, hand),
+            call.update('stand', player, hand),
+        ]
+        
+        deck = cards.Deck([
+            cards.Card(11, 0, cards.DOWN),
+        ])
+        ui = Mock()
+        g = game.Game(deck, None, (player,), ui)
+        g._ace_split_hit(player, hand)
+        actual = ui.mock_calls
+        
+        self.assertEqual(expected, actual)
