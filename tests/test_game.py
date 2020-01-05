@@ -544,9 +544,27 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
-#     def test_buyin_take_payment(self):
-#         """In a Game with players who will buy-in and a buy-in, 
-#         buyin() should take the buy-in from the player's chips 
-#         totals.
+    # Test Game.start().
+    def test_start_take_payment(self):
+        """In a Game with players who will buy-in and a buy-in, 
+        buyin() should take the buy-in from the player's chips 
+        totals.
+        """
+        expected = 180.00
+        
+        p1 = players.AutoPlayer([], 'John', 200)
+        p2 = players.AutoPlayer([], 'Michael', 200)
+        playerlist = [p1, p2]
+        g = game.Game(None, None, playerlist, None, 20.00)
+        g.start()
+        actual_p1 = p1.chips
+        actual_p2 = p2.chips
+        
+        self.assertEqual(expected, actual_p1)
+        self.assertEqual(expected, actual_p2)
+    
+#     def test_start_buyin_ui(self):
+#         """When a player buys into the round, start() should send that 
+#         event to the UI.
 #         """
-#         raise NotImplementedError
+#         pass

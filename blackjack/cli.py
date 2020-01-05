@@ -33,7 +33,7 @@ class UI(game.BaseUI):
         print('\u2500' * 50)
         print()
     
-    def update(self, event:str, player:str, hand: cards.Hand = None) -> None:
+    def update(self, event:str, player:str, detail: object) -> None:
         """Update the UI.
         
         :param event: The event the UI needs to display.
@@ -46,8 +46,10 @@ class UI(game.BaseUI):
             return ' '.join([str(card) for card in hand])
         
         msg = None
-        if hand and isinstance(hand, cards.Hand):
-            handstr = get_handstr(hand)
+        if detail and isinstance(detail, cards.Hand):
+            handstr = get_handstr(detail)
+        if event == 'buyin':
+            msg = self.tmp.format(player, 'Initial bet.', detail)
         if event == 'deal':
             msg = self.tmp.format(player,  'Initial deal.', handstr)
         if event == 'flip':
@@ -56,12 +58,12 @@ class UI(game.BaseUI):
             msg = self.tmp.format(player, 'Hit.', handstr)
         if event == 'split':
             lines = [
-                self.tmp.format(player, 'Hand split.', get_handstr(hand[0])),
-                self.tmp.format('', '', get_handstr(hand[1])),
+                self.tmp.format(player, 'Hand split.', get_handstr(detail[0])),
+                self.tmp.format('', '', get_handstr(detail[1])),
             ]
             msg = '\n'.join(lines)
         if event == 'stand':
-            scores = [score for score in hand.score() if score <= 21]
+            scores = [score for score in detail.score() if score <= 21]
             try:
                 score = scores[-1]
             except IndexError:

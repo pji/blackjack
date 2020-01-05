@@ -66,6 +66,11 @@ class Game:
         
         self.buyin = buyin
     
+    def start(self):
+        """Start a round of blackjack."""
+        for player in self.playerlist:
+            player.chips -= self.buyin
+    
     def deal(self):
         """Deal a round of blackjack."""
         # First card.

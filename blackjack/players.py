@@ -98,4 +98,4 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn) -> type:
 # Player subclasses.
 Dealer = playerfactory('Dealer', dealer_will_hit, None, None)
 AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
-                            None)
+                            always_will_buyin)

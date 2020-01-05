@@ -163,6 +163,22 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_update_buyin(self):
+        """Given an event that a player bought into the round, the 
+        update() method should print the buyin to stdout.
+        """
+        bet = 20
+        expected = self.tmp.format('John', 'Initial bet.', bet)
+        
+        ui = cli.UI(True)
+        p1 = players.AutoPlayer(name='John', chips=bet)
+#         g = game.Game(None, None, (p1,), ui, 20.00)
+        with capture() as (out, err):
+            ui.update('buyin', p1, bet)
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
     def test_use_player_name(self):
         """If update() is given a player.Player object rather than 
         a string for the name field, update() should use the name 
