@@ -398,10 +398,22 @@ following will be needed:
 
 * Give each player a number of chips.
 * Track the player's chips.
+* Get a decision from the player whether to buy in.
 * Set the buy-in for the game.
 * Subtract the buy-in from each player's chip total.
 * Subtract the extra bet on a split.
 * Pay out when the player wins.
 * Pay out x1.5 when the player wins with a blackjack.
 * Pay out normally when the player wins with a 21 on split aces.
-* 
+* Allow the player to double down on a starting total of 9, 10, or 11. 
+* Allow the player to buy insurance on a dealer with an ace showing.
+* Pay out insurance if the dealer has a blackjack.
+
+Should subtracting the buy-in be part of Game.deal() or should there 
+be a new phase, which is something like Game.buyin()? Doing it in 
+deal() would tie the betting to getting the cards directly. However, 
+I think I'm going to want a phase where computer players without chips 
+can bow out and maybe be replaced. Since buying-in would be the last 
+step of that proces, I think having this separate buy-in/wallet 
+checking phase is useful. I'll call it buyin() for now, but maybe 
+their are better names I can come up with in the future.

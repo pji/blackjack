@@ -74,6 +74,17 @@ def always_will_split(self, hand:Hand, *args, **kwargs) -> bool:
     return True
     
 
+# will_buyin functions.
+def always_will_buyin(self, game) -> bool:
+    """The player will always try to buy into a game.
+    
+    :param game: The game to buy into.
+    :return: Whether to buy into the game.
+    :rtype: bool
+    """
+    return True
+
+
 def playerfactory(name, will_hit_func, will_split_func) -> type:
     """A factory function for Player subclasses."""
     attrs = {

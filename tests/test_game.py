@@ -117,6 +117,28 @@ class GameTestCase(ut.TestCase):
         for expected, actual in zip_longest(expecteds, actuals):
             self.assertTrue(expected is actual)
     
+    def test_buyin_given(self):
+        """If given a value for buyin, that value should be stored in 
+        the buyin attribute.
+        """
+        expected = 500.00
+        
+        g = game.Game(buyin=expected)
+        actual = g.buyin
+        
+        self.assertEqual(expected, actual)
+    
+    def test_buyin_default(self):
+        """If no value is given for buyin, the value of the buyin 
+        attribute should default to zero.
+        """
+        expected = 0
+        
+        g = game.Game()
+        actual = g.buyin
+        
+        self.assertEqual(expected, actual)
+    
     # Game.deal() tests.
     def test_deal(self):
         """In a Game object with a deck and a dealer, deal() should 
@@ -522,3 +544,9 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+#     def test_buyin_take_payment(self):
+#         """In a Game with players who will buy-in and a buy-in, 
+#         buyin() should take the buy-in from the player's chips 
+#         totals.
+#         """
+#         raise NotImplementedError

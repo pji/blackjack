@@ -37,7 +37,8 @@ class BaseUI:
 class Game:
     """A game of blackjack."""
     def __init__(self, deck: Deck = None, dealer: Player = None, 
-                 playerlist: tuple = None, ui: BaseUI = None) -> None:
+                 playerlist: tuple = None, ui: BaseUI = None, 
+                 buyin: float = 0) -> None:
         """Initialize and instance of the class.
         
         :param casino: Whether the game is using a casino deck.
@@ -62,6 +63,8 @@ class Game:
         if not ui:
             ui = BaseUI()
         self.ui = ui
+        
+        self.buyin = buyin
     
     def deal(self):
         """Deal a round of blackjack."""

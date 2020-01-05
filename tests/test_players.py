@@ -11,7 +11,7 @@ from functools import partial
 import inspect
 import unittest
 
-from blackjack import cards, players
+from blackjack import cards, players, game
 
 
 class PlayerTestCase(unittest.TestCase):
@@ -181,6 +181,31 @@ class always_will_split(unittest.TestCase):
         ]
         player.will_split = partial(players.always_will_split, None)
         actual = player.will_split(hand, player, dealer, playerlist)
+        
+        self.assertTrue(actual)
+
+
+class always_will_buyin(unittest.TestCase):
+    def test_parameters(self):
+        """Functions that follow the will_buyin protocol should 
+        accept the following parameter: game.
+        """
+        player = players.Player()
+        g = game.Game()
+        
+        player.will_buyin = partial(players.always_will_buyin, None)
+        player.will_buyin(game)
+        
+        # The test was that no exception was raised when will_buyin 
+        # was called.
+        self.assertTrue(True)
+    
+    def test_always_true(self):
+        """always_will_buyin() will always return True."""
+        g = game.Game()
+        p = players.Player()
+        p.will_buyin = partial(players.always_will_buyin, None)
+        actual = p.will_buyin(g)
         
         self.assertTrue(actual)
 
