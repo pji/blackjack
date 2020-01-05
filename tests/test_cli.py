@@ -168,13 +168,13 @@ class UITestCase(ut.TestCase):
         update() method should print the buyin to stdout.
         """
         bet = 20
-        expected = self.tmp.format('John', 'Initial bet.', bet)
+        fmt = '{} ({})'.format(bet, bet - bet)
+        expected = self.tmp.format('John', 'Initial bet.', fmt)
         
         ui = cli.UI(True)
         p1 = players.AutoPlayer(name='John', chips=bet)
-#         g = game.Game(None, None, (p1,), ui, 20.00)
         with capture() as (out, err):
-            ui.update('buyin', p1, bet)
+            ui.update('buyin', p1, [bet, bet - bet])
         actual = out.getvalue()
         
         self.assertEqual(expected, actual)

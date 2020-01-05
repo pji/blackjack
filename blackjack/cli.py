@@ -49,7 +49,8 @@ class UI(game.BaseUI):
         if detail and isinstance(detail, cards.Hand):
             handstr = get_handstr(detail)
         if event == 'buyin':
-            msg = self.tmp.format(player, 'Initial bet.', detail)
+            fmt = '{} ({})'.format(*detail)
+            msg = self.tmp.format(player, 'Initial bet.', fmt)
         if event == 'deal':
             msg = self.tmp.format(player,  'Initial deal.', handstr)
         if event == 'flip':
@@ -88,8 +89,9 @@ def one_player():
     deck.shuffle()
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
-    player = players.AutoPlayer(name='Player')
-    g = game.Game(deck, dealer, (player,), ui=ui)
+    player = players.AutoPlayer(name='Player', chips=200)
+    g = game.Game(deck, dealer, (player,), ui=ui, buyin=2)
+    g.start()
     g.deal()
     g.play()
     ui.exit()    
@@ -101,9 +103,10 @@ def two_player():
     deck.shuffle()
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
-    p1 = players.AutoPlayer(name='John')
-    p2 = players.AutoPlayer(name='Michael')
-    g = game.Game(deck, dealer, (p1, p2), ui=ui)
+    p1 = players.AutoPlayer(name='John', chips=200)
+    p2 = players.AutoPlayer(name='Michael', chips=152)
+    g = game.Game(deck, dealer, (p1, p2), ui=ui, buyin=2)
+    g.start()
     g.deal()
     g.play()
     ui.exit()    

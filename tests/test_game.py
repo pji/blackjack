@@ -563,8 +563,23 @@ class GameTestCase(ut.TestCase):
         self.assertEqual(expected, actual_p1)
         self.assertEqual(expected, actual_p2)
     
-#     def test_start_buyin_ui(self):
-#         """When a player buys into the round, start() should send that 
-#         event to the UI.
-#         """
-#         pass
+    def test_start_buyin_ui(self):
+        """When a player buys into the round, start() should send that 
+        event to the UI.
+        """
+        buyin = 20.00
+        chips = 200
+        p1 = players.AutoPlayer([], 'John', chips)
+        p2 = players.AutoPlayer([], 'Michael', chips)
+        expected = [
+            call.update('buyin', p1, [buyin, chips - buyin]),
+            call.update('buyin', p2, [buyin, chips - buyin]),
+        ]
+        
+        playerlist = [p1, p2]
+        ui = Mock()
+        g = game.Game(None, None, playerlist, ui, buyin)
+        g.start()
+        actual = ui.mock_calls
+        
+        self.assertEqual(expected, actual)        

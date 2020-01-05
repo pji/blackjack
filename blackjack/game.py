@@ -70,6 +70,7 @@ class Game:
         """Start a round of blackjack."""
         for player in self.playerlist:
             player.chips -= self.buyin
+            self.ui.update('buyin', player, [self.buyin, player.chips])
     
     def deal(self):
         """Deal a round of blackjack."""
