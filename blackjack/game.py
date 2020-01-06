@@ -84,8 +84,16 @@ class Game:
             for phand in player.hands:
                 dhand = self.dealer.hands[0]
                 result = self._compare_score(dhand, phand)
-                if result == True:
+                if (result == True 
+                        and phand.is_blackjack() 
+                        and len(player.hands) == 2):
                     player.chips += 2 * self.buyin
+                elif result == True and phand.is_blackjack():
+                    player.chips += 2.5 * self.buyin
+                elif result == True:
+                    player.chips += 2 * self.buyin
+                elif result == None:
+                    player.chips += self.buyin
     
     def deal(self):
         """Deal a round of blackjack."""

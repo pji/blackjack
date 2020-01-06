@@ -454,6 +454,97 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_end_player_loses(self):
+        """If the player loses, the player loses their initial bet."""
+        expected = 0
+        
+        phand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(9, 0),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
+        dhand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Game(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_tie(self):
+        """If the player ties, the player gets back their initial 
+        bet.
+        """
+        expected = 20
+        
+        phand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(10, 0),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
+        dhand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Game(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_player_blackjack(self):
+        """If the player wins with a blackjack, they get two and a 
+        half times their initial bet back.
+        """
+        expected = 50
+        
+        phand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(10, 0),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Game(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_player_split_not_blackjack(self):
+        """If the hand was split from aces it cannot be counted as 
+        a blackjack.
+        """
+        expected = 40
+        
+        hand1 = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(10, 0),
+        ])
+        hand2 = cards.Hand([
+            cards.Card(1, 2),
+            cards.Card(2, 0),
+            cards.Card(9, 1),
+        ])
+        player = players.Player([hand1, hand2], 'Michael', 0)
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Game(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
+        
+        self.assertEqual(expected, actual)
+    
     # Game._split() tests.
     def test__split_cannot_split(self):
         """Given a hand and a player, if the hand cannot be split, 
