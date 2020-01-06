@@ -82,18 +82,22 @@ class Game:
         """End a round of blackjack."""
         for player in self.playerlist:
             for phand in player.hands:
+                payout = 0
                 dhand = self.dealer.hands[0]
                 result = self._compare_score(dhand, phand)
                 if (result == True 
                         and phand.is_blackjack() 
                         and len(player.hands) == 2):
-                    player.chips += 2 * self.buyin
+                    payout = 2 * self.buyin
                 elif result == True and phand.is_blackjack():
-                    player.chips += 2.5 * self.buyin
+                    payout = 2.5 * self.buyin
                 elif result == True:
-                    player.chips += 2 * self.buyin
+                    payout = 2 * self.buyin
                 elif result == None:
-                    player.chips += self.buyin
+                    payout = self.buyin
+                if payout:
+                    player.chips += payout
+                    self.ui.update('payout', player, [payout, player.chips])
     
     def deal(self):
         """Deal a round of blackjack."""

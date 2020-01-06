@@ -57,6 +57,9 @@ class UI(game.BaseUI):
             msg = self.tmp.format(player, 'Flipped card.', handstr)
         if event == 'hit':
             msg = self.tmp.format(player, 'Hit.', handstr)
+        if event == 'payout':
+            fmt = '{} ({})'.format(*detail)
+            msg = self.tmp.format(player, 'Wins.', fmt)
         if event == 'remove':
             msg = self.tmp.format(player, 'Walks away.', '')
         if event == 'split':
@@ -72,6 +75,8 @@ class UI(game.BaseUI):
             except IndexError:
                 score = 'Bust.'
             msg = self.tmp.format(player, 'Stand.', score)
+        if not msg:
+            raise NotImplementedError
         print(msg)
 
 
