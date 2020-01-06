@@ -57,6 +57,8 @@ class UI(game.BaseUI):
             msg = self.tmp.format(player, 'Flipped card.', handstr)
         if event == 'hit':
             msg = self.tmp.format(player, 'Hit.', handstr)
+        if event == 'remove':
+            msg = self.tmp.format(player, 'Walks away.', '')
         if event == 'split':
             lines = [
                 self.tmp.format(player, 'Hand split.', get_handstr(detail[0])),

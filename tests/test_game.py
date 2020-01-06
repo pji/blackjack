@@ -563,6 +563,19 @@ class GameTestCase(ut.TestCase):
         self.assertEqual(expected, actual_p1)
         self.assertEqual(expected, actual_p2)
     
+    def test_start_too_few_chips(self):
+        """If a player tries to buy into a game but does not have 
+        enough chips, start() should remove them from the game.
+        """
+        expected = []
+        
+        p1 = players.Player(name='John', chips = 1)
+        g = game.Game(None, None, [p1,], None, 20)
+        g.start()
+        actual = g.playerlist
+        
+        self.assertEqual(expected, actual)
+    
     def test_start_buyin_ui(self):
         """When a player buys into the round, start() should send that 
         event to the UI.
@@ -583,3 +596,30 @@ class GameTestCase(ut.TestCase):
         actual = ui.mock_calls
         
         self.assertEqual(expected, actual)        
+    
+    def test_start_remove_ui(self):
+        """When a player is removed, start() should send that event to 
+        the UI.
+        """
+        p1 = players.AutoPlayer([], 'Eric', 1)
+        expected = ['remove', p1, '']
+        
+        ui = Mock()
+        g = game.Game(playerlist=(p1,), ui=ui, buyin=20)
+        g.start()
+        
+        ui.update.assert_called_with(*expected)
+    
+    # Test Game._remove_player().
+    def test__remove_player(self):
+        """Given player, _remove_player() should remove that player 
+        from the playlist attribute.
+        """
+        expected = []
+        
+        p1 = players.Player(name='John', chips = 1)
+        g = game.Game(None, None, [p1,], None, 20)
+        g._remove_player(p1)
+        actual = g.playerlist
+        
+        self.assertEqual(expected, actual)

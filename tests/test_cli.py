@@ -179,6 +179,20 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_update_remove(self):
+        """Given an event that a player was removed from the game, the 
+        update() method should print the removal to stdout.
+        """
+        expected = self.tmp.format('Graham', 'Walks away.', '')
+        
+        ui = cli.UI(True)
+        p1 = players.AutoPlayer(name='Graham')
+        with capture() as (out, err):
+            ui.update('remove', p1, None)
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
     def test_use_player_name(self):
         """If update() is given a player.Player object rather than 
         a string for the name field, update() should use the name 

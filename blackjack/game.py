@@ -69,8 +69,12 @@ class Game:
     def start(self):
         """Start a round of blackjack."""
         for player in self.playerlist:
-            player.chips -= self.buyin
-            self.ui.update('buyin', player, [self.buyin, player.chips])
+            if player.chips > self.buyin:
+                player.chips -= self.buyin
+                self.ui.update('buyin', player, [self.buyin, player.chips])
+            else:
+                self._remove_player(player)
+                self.ui.update('remove', player, '')
     
     def deal(self):
         """Deal a round of blackjack."""
@@ -128,6 +132,12 @@ class Game:
         hand.append(card)
         self.ui.update('hit', player, hand)
         self.ui.update('stand', player, hand)
+    
+    def _remove_player(self, player: Player) -> None:
+        """Remove a player from the game."""
+        playerlist = list(self.playerlist)
+        playerlist.remove(player)
+        self.playerlist = playerlist
     
     def _split(self, hand: Hand, player: Player) -> None:
         """Handle the splitting decision on a hand.
