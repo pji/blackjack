@@ -93,6 +93,19 @@ class dealer_will_hitTestCase(unittest.TestCase):
         names = [item[0] for item in inspect.getmembers(players)]
         self.assertTrue('dealer_will_hit' in names)
     
+    def test_is_will_hit(self):
+        """A will_hit function should accept a Player, a Hand, and a 
+        Game objects.
+        """
+        player = players.Player()
+        hand = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(11, 3),
+        ])
+        g = game.Game()
+        _ = players.dealer_will_hit(player, hand, g)
+        
+    
     def test_stand_on_bust(self):
         """If the hand is bust, dealer_will_hit() should return 
         False.
@@ -158,14 +171,9 @@ class always_will_split(unittest.TestCase):
         """
         hand = cards.Hand()
         player = players.Player((hand,), 'John Cleese')
-        dealer = players.Dealer((cards.Hand(),), 'Dealer')
-        playerlist = [
-            player,
-            players.Player((cards.Hand(),), 'Michael Palin')
-        ]
-        
+        g = game.Game()
         player.will_split = partial(players.always_will_split, None)
-        player.will_split(hand, player, dealer, playerlist)
+        player.will_split(hand, g)
         
         # The test was that no exception was raised when will_split 
         # was called.
@@ -175,12 +183,8 @@ class always_will_split(unittest.TestCase):
         """always_will_split() should return True."""
         hand = cards.Hand()
         player = players.Player((hand,), 'John Cleese')
-        dealer = players.Dealer((cards.Hand(),), 'Dealer')
-        playerlist = [
-            player,
-        ]
         player.will_split = partial(players.always_will_split, None)
-        actual = player.will_split(hand, player, dealer, playerlist)
+        actual = player.will_split(hand)
         
         self.assertTrue(actual)
 
@@ -206,6 +210,56 @@ class always_will_buyin(unittest.TestCase):
         p = players.Player()
         p.will_buyin = partial(players.always_will_buyin, None)
         actual = p.will_buyin(g)
+        
+        self.assertTrue(actual)
+
+
+class will_double_down_alwaysTestCase(unittest.TestCase):
+    def test_parameters(self):
+        """Functions that follow the will_double_down protocol should 
+        accept the following parameters: self, hand, game.
+        """
+        player = players.Player()
+        hand = cards.Hand()
+        g = game.Game()
+        
+        _ = players.will_double_down_always(player, hand, game)
+        
+        # The test was that no exception was raised when will_buyin 
+        # was called.
+        self.assertTrue(True)
+    
+    def test_always_true(self):
+        """will_double_down_always() will always return True."""
+        g = game.Game()
+        h = cards.Hand()
+        p = players.Player()
+        actual = players.will_double_down_always(p, h, g)
+        
+        self.assertTrue(actual)
+
+
+class will_insure_alwaysTestCase(unittest.TestCase):
+    def test_parameters(self):
+        """Functions that follow the will_insure protocol should 
+        accept the following parameters: self, hand, game.
+        """
+        player = players.Player()
+        hand = cards.Hand()
+        g = game.Game()
+        
+        _ = players.will_insure_always(player, hand, game)
+        
+        # The test was that no exception was raised when will_buyin 
+        # was called.
+        self.assertTrue(True)
+    
+    def test_always_true(self):
+        """will_double_down_always() will always return True."""
+        g = game.Game()
+        h = cards.Hand()
+        p = players.Player()
+        actual = players.will_insure_always(p, h, g)
         
         self.assertTrue(actual)
 

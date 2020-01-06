@@ -45,7 +45,14 @@ class Player:
 
 
 # will_hit functions.
-def dealer_will_hit(self, hand):
+# will_hit functions determine whether the player will hit or stand. 
+# They must accept the following parameters:
+#   * self
+#   * A cards.Hand object
+#   * A game.Game object
+# 
+# And they must return a bool.
+def dealer_will_hit(self, hand:Hand, the_game=None) -> bool:
     """Determine whether the player will hit or stand on the hand.
     
     :param hand: The hand to make the decision on.
@@ -64,7 +71,14 @@ def dealer_will_hit(self, hand):
 
 
 # will_split functions.
-def always_will_split(self, hand:Hand, *args, **kwargs) -> bool:
+# will_split functions determine whether the player will split a hand. 
+# They must accept the following parameters:
+#   * self
+#   * A cards.Hand object
+#   * A game.Game object
+# 
+# And they must return a bool.
+def always_will_split(self, hand:Hand, the_game=None) -> bool:
     """The player will always split where possible.
     
     :param hand: The hand that may be split.
@@ -75,11 +89,58 @@ def always_will_split(self, hand:Hand, *args, **kwargs) -> bool:
     
 
 # will_buyin functions.
-def always_will_buyin(self, game) -> bool:
+# will_buyin functions determine whether the player will buy into the 
+# next round. They must accept the following parameters:
+#   * self
+#   * A cards.Hand object
+#   * A game.Game object
+# 
+# And they must return a bool.
+def always_will_buyin(self, the_game) -> bool:
     """The player will always try to buy into a game.
     
     :param game: The game to buy into.
     :return: Whether to buy into the game.
+    :rtype: bool
+    """
+    return True
+
+
+# will_double_down functions.
+# will_double_down functions determine whether the player will double 
+# down on a hand. They must accept the following parameters:
+#   * self
+#   * A cards.Hand object
+#   * A game.Game object
+# 
+# And they must return a bool.
+def will_double_down_always(self, hand:Hand, the_game) -> bool:
+    """The player will always double down.
+    
+    :param hand: The hand to make the decision on.
+    :param the_game: The information about the current game to use 
+        to make a decision.
+    :return: A decision whether to double down.
+    :rtype: bool
+    """
+    return True
+
+
+# will_insure functions.
+# will_insure functions determine whether the player will buy 
+# insurance for a hand. They must accept the following parameters:
+#   * self
+#   * A cards.Hand object
+#   * A game.Game object
+# 
+# And they must return a bool or a float.
+def will_insure_always(self, hand:Hand, the_game) -> bool:
+    """The player will always buy insurance.
+    
+    :param hand: The hand to make the decision on.
+    :param the_game: The information about the current game to use 
+        to make a decision.
+    :return: A decision whether to double down.
     :rtype: bool
     """
     return True

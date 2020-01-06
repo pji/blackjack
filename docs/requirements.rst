@@ -337,12 +337,12 @@ will_hit() methods patched in? Well, on one had, I'm probably
 only ever creating one instance of those subclasses at a time if 
 I make them subclasses, which seems like a waste. On the other 
 hand, I've not seen a pattern for monkey-patching instances that 
-is similar to the factory pattern. So, I should go with the factory 
-pattern, probably.
+is similar to the class factory pattern. So, I should go with the 
+class factory pattern, probably.
 
 
-Making Decisions
-----------------
+Making Decisions: will_split
+----------------------------
 I'm going to have computer players, and I want to have some ability 
 for them to act both rationally and irrationally. The more information 
 these computer players have, the more things they can base their 
@@ -391,6 +391,7 @@ OK, that wasn't where I was expecting this to go, but it does simplify
 the signature of split() quite a bit. The signature of will_split is 
 probably still fairly complicated, though.
 
+
 Betting
 -------
 It wouldn't be blackjack without betting. With regards to betting the 
@@ -417,3 +418,48 @@ can bow out and maybe be replaced. Since buying-in would be the last
 step of that proces, I think having this separate buy-in/wallet 
 checking phase is useful. I'll call it buyin() for now, but maybe 
 their are better names I can come up with in the future.
+
+
+Making Decisions Revisited
+--------------------------
+Let's list out all the decisions a player needs to make:
+
+* Whether to buy into the round.
+* Whether to hit or stand.
+* Whether to split.
+* Whether to double down.
+* Whether to insure.
+
+So, as Player is designed right now, that's five different methods:
+
+* will_buyin
+* will_hit
+* will_split
+* will_double_down
+* will_insure
+
+I think keeping them a methods still works. That is a lot of them, 
+though, for my playerfactory(). Maybe I need to review the purpose 
+of the Factory pattern to make sure I'm not misusing it. That said, 
+I do want to be able to randomly mix strategies in computer players, 
+and having a playerfactory() seems like the best way to do that.
+
+Some research later....
+
+The factories I'm creating are class factories, which I picked up from 
+*Fluent Python.* The general factory pattern, though, is an object 
+factory. I can't really find a lot on when to use a class factory 
+versus manually defining the classes. Given I eventually want to 
+implement randomizing which of the strategies a computer player can 
+have, I think it makes sence to continue to use the class factory, 
+even though it is probably way too complex for my needs at the 
+moment.
+
+Having five types of decision methods to pass into the factory does 
+feel excessive, though. Thats just a lot of functions that are going 
+to be sitting in players. Maybe I split those out into their own 
+module? I'm not really sure that helps, though. Maybe instead of a 
+class, players should have just been a dictionary, but then I 
+couldn't have had descriptors to validate deserialization after a 
+save is loaded. Enh. I'll keep going with this route, and we'll see 
+where it goes.
