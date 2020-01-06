@@ -7,6 +7,8 @@ The module contains the main game loop for blackjack.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from typing import Union
+
 from blackjack.cards import Deck, DOWN, Hand
 from blackjack.players import Dealer, Player
 
@@ -76,6 +78,15 @@ class Game:
                 self._remove_player(player)
                 self.ui.update('remove', player, '')
     
+    def end(self):
+        """End a round of blackjack."""
+        for player in self.playerlist:
+            for phand in player.hands:
+                dhand = self.dealer.hands[0]
+                result = self._compare_score(dhand, phand)
+                if result == True:
+                    player.chips += 2 * self.buyin
+    
     def deal(self):
         """Deal a round of blackjack."""
         # First card.
@@ -132,6 +143,32 @@ class Game:
         hand.append(card)
         self.ui.update('hit', player, hand)
         self.ui.update('stand', player, hand)
+    
+    def _compare_score(self, d_hand: Hand, p_hand: Hand) -> Union[None, bool]:
+        """Determine if the player's hand won.
+        
+        :param d_hand: The dealer's hand.
+        :param p_hand: The player's hand.
+        :return: True if the player wins, False if the dealer wins, 
+            and None if it's a tie.
+        :rtype: None, bool
+        """
+        def filter_scores(hand):
+            return [score for score in hand.score() if score <= 21]
+        
+        try:
+            p_score = filter_scores(p_hand)[-1]
+        except IndexError:
+            return False
+        try:
+            d_score = filter_scores(d_hand)[-1]
+        except IndexError:
+            return True
+        if p_score > d_score:
+            return True
+        if p_score < d_score:
+            return False
+        return None
     
     def _remove_player(self, player: Player) -> None:
         """Remove a player from the game."""

@@ -431,6 +431,29 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    # Test Game.end().
+    def test_end_player_wins(self):
+        """If the player wins, the player gets double their initial 
+        bet.
+        """
+        expected = 40
+        
+        phand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(10, 0),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Game(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
+        
+        self.assertEqual(expected, actual)
+    
     # Game._split() tests.
     def test__split_cannot_split(self):
         """Given a hand and a player, if the hand cannot be split, 
@@ -623,3 +646,124 @@ class GameTestCase(ut.TestCase):
         actual = g.playerlist
         
         self.assertEqual(expected, actual)
+    
+    # Test Game._compare_score().
+    def test__compare_score_player_win(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return True if the player's score is higher.
+        """
+        expected = True
+        
+        p_hand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(11, 3),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(7, 2),
+        ])
+        g = game.Game()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+    
+    def test__compare_score_player_lose(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return False if the player's score is lower.
+        """
+        expected = False
+        
+        p_hand = cards.Hand([
+            cards.Card(3, 1),
+            cards.Card(11, 3),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(7, 2),
+        ])
+        g = game.Game()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+        
+    def test__compare_score_player_bust(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return False if the player busts.
+        """
+        expected = False
+        
+        p_hand = cards.Hand([
+            cards.Card(3, 1),
+            cards.Card(11, 3),
+            cards.Card(12, 2),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(7, 2),
+        ])
+        g = game.Game()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+        
+    def test__compare_score_dealer_bust(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return True if the dealer busts.
+        """
+        expected = True
+        
+        p_hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(12, 2),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(6, 1),
+            cards.Card(7, 2),
+        ])
+        g = game.Game()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+        
+    def test__compare_score_tie(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return None if it is a tie.
+        """
+        expected = None
+        
+        p_hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(12, 2),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(5, 1),
+            cards.Card(5, 2),
+        ])
+        g = game.Game()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+        
+    def test__compare_score_dealer_wins_busts(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return True if the dealer busts.
+        """
+        expected = False
+        
+        p_hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(12, 2),
+            cards.Card(13, 0),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(6, 1),
+            cards.Card(7, 2),
+        ])
+        g = game.Game()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+         
