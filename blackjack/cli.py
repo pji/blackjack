@@ -101,7 +101,8 @@ def one_player():
     g.start()
     g.deal()
     g.play()
-    ui.exit()    
+    g.end()
+    ui.exit()
 
 
 def two_player():
@@ -116,6 +117,7 @@ def two_player():
     g.start()
     g.deal()
     g.play()
+    g.end()
     ui.exit()    
 
 
