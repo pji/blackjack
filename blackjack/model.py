@@ -9,6 +9,7 @@ data model.
 :license: MIT, see LICENSE for more details.
 """
 from abc import ABC, abstractmethod
+from typing import Union
 
 class _BaseDescriptor:
     """A basic data descriptor."""
@@ -77,5 +78,35 @@ def validate_bool(self, value):
     raise ValueError(self.msg.format(reason))
 
 
+def validate_yesno(self, value):
+    """Validate yes/no responses from a UI."""
+    if isinstance(value, bool):
+        return value
+    normal = value.lower()
+    if normal == 'y' or normal == 'yes':
+        return True
+    if normal == 'n' or normal == 'no':
+        return False
+    reason = 'Not "yes" or "no".'
+    raise ValueError(self.msg.format(reason))
+        
+
+
 # Common validator functions.
 Boolean = valfactory('Boolean', validate_bool, 'Invalid bool({}).')
+YesNo = valfactory('YesNo', validate_yesno, 'Invalid yes/no answer ({}).')
+
+
+# Common trusted objects.
+class IsYes:
+    """User input that is either yes or no."""
+    value = YesNo('value')
+    
+    def __init__(self, value: Union[str, bool]):
+        """Initialize and instance of the class.
+        
+        :param value: Whether the answer was yes.
+        :return: None.
+        :rtype: None.
+        """
+        self.value = value

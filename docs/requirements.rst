@@ -463,3 +463,29 @@ class, players should have just been a dictionary, but then I
 couldn't have had descriptors to validate deserialization after a 
 save is loaded. Enh. I'll keep going with this route, and we'll see 
 where it goes.
+
+
+Handling Input
+--------------
+Input cannot be trusted. So, if I'm going to be accepting input from 
+the user, it needs to be validated. The validation design is to use 
+trusted objects with data descriptors. So, how does this work with a 
+simple case like getting input whether you want another game?
+
+* Prompt for new game.
+* Receive input as string from user. It should be a Y or N.
+* UI.input() then places that string into the instantiation of a YesNo 
+  object.
+* The input is stored in the "value" attribute.
+* The data descriptor validates the input and converts it to a bool.
+* The YesNo object is then returned from UI.input().
+
+YesNo is probably a common enough thing that it can live in model. But 
+ones that hold information specific to a different module, should live 
+in that module.
+
+Is this overkill? Maybe. I could just handle the validation in the 
+method that's handling the input rather than creating a class. But, 
+data descriptors are the validation pattern, and I'd rather not have 
+multiple ways I'm doing validation. So, potential overkill it is, 
+then.

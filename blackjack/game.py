@@ -32,7 +32,10 @@ class BaseUI:
     def exit(self):
         pass
     
-    def update(self, event, player, hand):
+    def input(self, event, detail=None, default=None):
+        return default
+    
+    def update(self, event, player, detail):
         pass
 
 

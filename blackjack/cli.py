@@ -33,6 +33,18 @@ class UI(game.BaseUI):
         print('\u2500' * 50)
         print()
     
+    def input(self, event, details=None, default=None):
+        """Get user input from the UI.
+        
+        :param event: The event you need input for.
+        :param details: (Optional.) Details specific to the event.
+        :param default: (Optional.) The default value for the input. 
+            This is mainly to make input easier to test.
+        :return: The input received from the UI.
+        :rtype: Any. (May need an response object in the future.)
+        """
+        pass
+    
     def update(self, event:str, player:str, detail: object) -> None:
         """Update the UI.
         

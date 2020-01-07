@@ -242,3 +242,69 @@ class validate_boolTestCase(unittest.TestCase):
         
         with self.assertRaises(expected):
             _ = model.validate_bool(Spam(), 'eggs')
+
+
+class validate_yesnoTestCase(unittest.TestCase):
+    def test_valid_yes(self):
+        """If passed a valid value, validate_yesno should return True 
+        for values related to 'yes.'"""
+        expected = True
+        
+        value1 = 'Y'
+        value2 = 'y'
+        value3 = 'Yes'
+        value4 = True
+        actual1 = model.validate_yesno(None, value1)
+        actual2 = model.validate_yesno(None, value2)
+        actual3 = model.validate_yesno(None, value3)
+        actual4 = model.validate_yesno(None, value4)
+        
+        self.assertEqual(expected, actual1)
+        self.assertEqual(expected, actual2)
+        self.assertEqual(expected, actual3)
+        self.assertEqual(expected, actual4)
+    
+    def test_valid_no(self):
+        """If passed a valid value, validate_yesno should return True 
+        for values related to 'yes.'"""
+        expected = False
+        
+        value1 = 'n'
+        value2 = 'N'
+        value3 = 'No'
+        value4 = False
+        actual1 = model.validate_yesno(None, value1)
+        actual2 = model.validate_yesno(None, value2)
+        actual3 = model.validate_yesno(None, value3)
+        actual4 = model.validate_yesno(None, value4)
+        
+        self.assertEqual(expected, actual1)
+        self.assertEqual(expected, actual2)
+        self.assertEqual(expected, actual3)
+        self.assertEqual(expected, actual4)
+    
+    def test_invalid_value(self):
+        """If passed an invalid value, validate_yesno should reject it 
+        by raising a ValueError.
+        """
+        expected = ValueError
+        
+        class Spam:
+            msg = '{}'
+        
+        with self.assertRaises(expected):
+            _ = model.validate_yesno(Spam(), 'eggs')
+
+
+# Common trusted object tests.
+class YesNoTestCase(unittest.TestCase):
+    def test_exists(self):
+        """A function named validate_bool should exist."""
+        names = [item[0] for item in inspect.getmembers(model)]
+        self.assertTrue('IsYes' in names)
+    
+    def test___init__(self):
+        """Given a yes or no on initialization, IsYes should store the 
+        value in the value attribute.
+        """
+    
