@@ -32,6 +32,7 @@ class Player:
         self.hands = hands
         self.name = name
         self.chips = chips
+        self.insured = 0
     
     def __str__(self):
         return self.name
@@ -143,22 +144,24 @@ def will_insure_always(self, hand:Hand, the_game) -> bool:
     :return: A decision whether to double down.
     :rtype: bool
     """
-    return True
+    return the_game.buyin / 2
 
 
 def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn, 
-                  will_double_down) -> type:
+                  will_double_down, will_insure) -> type:
     """A factory function for Player subclasses."""
     attrs = {
         'will_hit': will_hit_fn,
         'will_split': will_split_fn,
         'will_buyin': will_buyin_fn,
         'will_double_down': will_double_down,
+        'will_insure': will_insure,
     }
     return type(name, (Player,), attrs)
 
 
 # Player subclasses.
-Dealer = playerfactory('Dealer', dealer_will_hit, None, None, None)
+Dealer = playerfactory('Dealer', dealer_will_hit, None, None, None, None)
 AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
-                            always_will_buyin, will_double_down_always)
+                            always_will_buyin, will_double_down_always, 
+                            will_insure_always)

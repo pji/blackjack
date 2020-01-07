@@ -68,6 +68,11 @@ class Game:
         
         self.buyin = buyin
     
+    def __repr__(self):
+        cls = self.__class__
+        return (f'{cls.__name__}[{self.deck!r}, {self.dealer}, {self.playlist},'
+                f'{ui}, {buyin}')
+    
     def start(self):
         """Start a round of blackjack."""
         for player in self.playerlist:

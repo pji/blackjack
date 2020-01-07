@@ -677,13 +677,6 @@ class HandTestCase(unittest.TestCase):
         hand = cards.Hand()
         self.assertFalse(hand.doubled_down)
     
-    def test_insured_initialized(self):
-        """Hand objects should have an insured attribute that is 
-        initialized to False.
-        """
-        hand = cards.Hand()
-        self.assertFalse(hand.insured)
-    
     def test_append(self):
         """Given a Card object, append() should append that card to 
         cards.

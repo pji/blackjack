@@ -267,7 +267,6 @@ class Hand(Pile):
         """Initialize an instance of the class."""
         super().__init__(*args, **kwargs)
         self.doubled_down = False
-        self.insured = False
     
     def append(self, item):
         self.cards.append(item)

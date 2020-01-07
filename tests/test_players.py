@@ -65,6 +65,15 @@ class PlayerTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_insured(self):
+        """Player objects should initialize the insured attribute to 
+        zero.
+        """
+        expected = 0
+        player = players.Player()
+        actual = player.insured
+        self.assertEqual(expected, actual)
+    
     def test___str__(self):
         """__str__() should return the name of the Player object."""
         expected = 'Spam'
@@ -248,27 +257,30 @@ class will_insure_alwaysTestCase(unittest.TestCase):
         hand = cards.Hand()
         g = game.Game()
         
-        _ = players.will_insure_always(player, hand, game)
+        _ = players.will_insure_always(player, hand, g)
         
         # The test was that no exception was raised when will_buyin 
         # was called.
         self.assertTrue(True)
     
     def test_always_true(self):
-        """will_double_down_always() will always return True."""
-        g = game.Game()
+        """will_double_down_always() will always return the maximum 
+        bet, which is half of the game's buy in."""
+        expected = 10
+        
         h = cards.Hand()
         p = players.Player()
+        g = game.Game(None, None, (p,), None, 20)
         actual = players.will_insure_always(p, h, g)
         
-        self.assertTrue(actual)
+        self.assertEqual(expected, actual)
 
 
 class playerfactoryTestCase(unittest.TestCase):
     def test_player_subclass(self):
         """playerfactory() should return Player subclasses."""
         expected = players.Player
-        actual = players.playerfactory('Spam', None, None, None, None)
+        actual = players.playerfactory('Spam', None, None, None, None, None)
         self.assertTrue(issubclass(actual, expected))
     
     def test_will_hit(self):
@@ -277,9 +289,9 @@ class playerfactoryTestCase(unittest.TestCase):
         """
         expected = 'spam'
         
-        def test_method(self, hand):
+        def func(self, hand):
             return 'spam'
-        Eggs = players.playerfactory('Eggs', test_method, None, None, None)
+        Eggs = players.playerfactory('Eggs', func, None, None, None, None)
         obj = Eggs()
         actual = obj.will_hit(None)
         
@@ -291,9 +303,9 @@ class playerfactoryTestCase(unittest.TestCase):
         """
         expected = False
         
-        def test_method(self, hand, the_game):
+        def func(self, hand, the_game):
             return False
-        Spam = players.playerfactory('Spam', None, test_method, None, None)
+        Spam = players.playerfactory('Spam', None, func, None, None, None)
         obj = Spam()
         actual = obj.will_split(None, None)
         
@@ -305,9 +317,9 @@ class playerfactoryTestCase(unittest.TestCase):
         """
         expected = False
         
-        def test_method(self, game):
+        def func(self, game):
             return False
-        Spam = players.playerfactory('Spam', None, None, test_method, None)
+        Spam = players.playerfactory('Spam', None, None, func, None, None)
         obj = Spam()
         actual = obj.will_buyin(None)
         
@@ -319,10 +331,24 @@ class playerfactoryTestCase(unittest.TestCase):
         """
         expected = False
         
-        def test_method(self, game):
+        def func(self, game):
             return False
-        Spam = players.playerfactory('Spam', None, None, None, test_method)
+        Spam = players.playerfactory('Spam', None, None, None, func, None)
         obj = Spam()
         actual = obj.will_double_down(None)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_will_insure(self):
+        """Given a will_insure function, the subclass should have a 
+        will_insure method.
+        """
+        expected = 20
+        
+        def func(self, game):
+            return 20
+        Spam = players.playerfactory('Spam', None, None, None, None, func)
+        obj = Spam()
+        actual = obj.will_insure(None)
         
         self.assertEqual(expected, actual)
