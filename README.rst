@@ -30,7 +30,6 @@ Still To Do
 -----------
 The following features are on the to-do list:
 
-* Handle insurance
 * Allow multiple rounds to be played.
 * Create more automated players with different behavior.
 * Let the user control a player.

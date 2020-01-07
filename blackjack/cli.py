@@ -63,6 +63,9 @@ class UI(game.BaseUI):
         if event == 'insured':
             fmt = '{} ({})'.format(*detail)
             msg = self.tmp.format(player, 'Insured.', fmt)
+        if event == 'insurepay':
+            fmt = '{} ({})'.format(*detail)
+            msg = self.tmp.format(player, 'Insurance pay out.', fmt)
         if event == 'payout':
             fmt = '{} ({})'.format(*detail)
             msg = self.tmp.format(player, 'Wins.', fmt)

@@ -91,7 +91,7 @@ class Game:
                 payout = player.insured * 2
                 if payout:
                     player.chips += payout
-#                     self.ui.update('insurepay', player, [payout, player.chips])
+                    self.ui.update('insurepay', player, [payout, player.chips])
             for phand in player.hands:
                 payout = 0
                 result = self._compare_score(dhand, phand)

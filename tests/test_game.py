@@ -674,23 +674,24 @@ class GameTestCase(ut.TestCase):
         """If the player was insured and the dealer had a blackjack, 
         the insurance pay out should double the insurance amount.
         """
-        expected = 20
-        
         phand = cards.Hand([
             cards.Card(4, 1),
             cards.Card(6, 2),
             cards.Card(10, 0),
         ])
         player = players.AutoPlayer((phand,), 'John', 0)
+        expected = [call.update('insurepay', player, [20, 20])]
+        
         player.insured = 10
         dhand = cards.Hand([
             cards.Card(1, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Game(None, dealer, (player,), None, 20)
+        ui = Mock()
+        g = game.Game(None, dealer, (player,), ui, 20)
         g.end()
-        actual = player.chips
+        actual = ui.mock_calls
         
         self.assertEqual(expected, actual)
     

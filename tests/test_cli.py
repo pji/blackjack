@@ -232,7 +232,7 @@ class UITestCase(ut.TestCase):
         method should print the insured event to stdout.
         """
         fmt = '{} ({})'.format(10, 220)
-        expected = self.tmp.format('Graham', 'Insured.', '10 (220)')
+        expected = self.tmp.format('Graham', 'Insured.', fmt)
         
         ui = cli.UI(True)
         hand = cards.Hand([
@@ -242,6 +242,25 @@ class UITestCase(ut.TestCase):
         p1 = players.AutoPlayer((hand,), 'Graham', 220)
         with capture() as (out, err):
             ui.update('insured', p1, [10, 220])
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
+    def test_update_insurepay(self):
+        """Given an event that a player was payed out on insurance, 
+        the update() method should print that event to stdout.
+        """
+        fmt = '{} ({})'.format(20, 220)
+        expected = self.tmp.format('Graham', 'Insurance pay out.', fmt)
+        
+        ui = cli.UI(True)
+        hand = cards.Hand([
+            cards.Card(4, 3),
+            cards.Card(7, 1),
+        ])
+        p1 = players.AutoPlayer((hand,), 'Graham', 220)
+        with capture() as (out, err):
+            ui.update('insurepay', p1, [20, 220])
         actual = out.getvalue()
         
         self.assertEqual(expected, actual)
