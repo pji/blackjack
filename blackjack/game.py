@@ -91,6 +91,8 @@ class Game:
                     payout = 2 * self.buyin
                 elif result == True and phand.is_blackjack():
                     payout = 2.5 * self.buyin
+                elif result == True and phand.doubled_down:
+                    payout = 4 * self.buyin
                 elif result == True:
                     payout = 2 * self.buyin
                 elif result == None:

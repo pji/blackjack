@@ -612,6 +612,31 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_end_with_double_down(self):
+        """If the hand was doubled down, the pay out should quadruple 
+        the initial bet.
+        """
+        expected = 80
+        
+        phand = cards.Hand([
+            cards.Card(4, 1),
+            cards.Card(6, 2),
+            cards.Card(10, 0),
+        ])
+        phand.doubled_down = True
+        player = players.AutoPlayer((phand,), 'John', 0)
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Game(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
+        
+        self.assertEqual(expected, actual)
+        
+    
     # Game._split() tests.
     def test__split_cannot_split(self):
         """Given a hand and a player, if the hand cannot be split, 
