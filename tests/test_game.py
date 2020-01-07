@@ -635,7 +635,6 @@ class GameTestCase(ut.TestCase):
         actual = player.chips
         
         self.assertEqual(expected, actual)
-        
     
     # Game._split() tests.
     def test__split_cannot_split(self):
