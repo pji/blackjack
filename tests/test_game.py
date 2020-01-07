@@ -431,6 +431,38 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_play_with_double_down(self):
+        """Given a hand with a value from 9 to 11 and a player who 
+        will double down, play() should hit the hand once and stand.
+        """
+        expected_hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+            cards.Card(11, 0),
+        ])
+        expected_dd = True
+        
+        hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+        ])
+        player = players.AutoPlayer([hand,], 'Eric', 20)
+        deck = cards.Deck([
+            cards.Card(11, 0, cards.DOWN),
+        ])
+        dhand = cards.Hand([
+            cards.Card(10, 0),
+            cards.Card(7, 1),
+        ])
+        dealer = players.Dealer([dhand,], 'Dealer')
+        g = game.Game(deck, dealer, (player,), None, 20)
+        g.play()
+        actual_hand = player.hands[0]
+        actual_dd = player.hands[0].doubled_down
+        
+        self.assertEqual(expected_hand, actual_hand)
+        self.assertEqual(expected_dd, actual_dd)
+    
     # Test Game.end().
     def test_end_player_wins(self):
         """If the player wins, the player gets double their initial 
@@ -892,4 +924,43 @@ class GameTestCase(ut.TestCase):
         actual = g._compare_score(d_hand, p_hand)
         
         self.assertEqual(expected, actual)
-         
+    
+    # Test Game._double_down().
+    def test__double_down(self):
+        """Given a hand and a player who will double down and can 
+        double down, _double_down() should set the doubled_down 
+        attribute on the hand and take the player's additional bet.
+        """
+        expected_dd = True
+        expected_chips = 0
+        
+        hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+        ])
+        player = players.AutoPlayer([hand,], 'Eric', 20)
+        g = game.Game(None, None, (player,), None, 20)
+        g._double_down(player, hand)
+        actual_dd = hand.doubled_down
+        actual_chips = player.chips
+        
+        self.assertEqual(expected_dd, actual_dd)
+        self.assertEqual(expected_chips, actual_chips)
+    
+    def test__double_down_ui(self):
+        """If the player doubles down, _double_down() should send that 
+        event to the UI.
+        """
+        hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+        ])
+        player = players.AutoPlayer([hand,], 'Eric', 20)
+        expected = ['doubled', player, [20, 0]]
+
+        ui = Mock()
+        g = game.Game(None, None, (player,), ui, 20)
+        g._double_down(player, hand)
+        
+        ui.update.assert_called_with(*expected)
+        

@@ -268,7 +268,7 @@ class playerfactoryTestCase(unittest.TestCase):
     def test_player_subclass(self):
         """playerfactory() should return Player subclasses."""
         expected = players.Player
-        actual = players.playerfactory('Spam', None, None, None)
+        actual = players.playerfactory('Spam', None, None, None, None)
         self.assertTrue(issubclass(actual, expected))
     
     def test_will_hit(self):
@@ -279,7 +279,7 @@ class playerfactoryTestCase(unittest.TestCase):
         
         def test_method(self, hand):
             return 'spam'
-        Eggs = players.playerfactory('Eggs', test_method, None, None)
+        Eggs = players.playerfactory('Eggs', test_method, None, None, None)
         obj = Eggs()
         actual = obj.will_hit(None)
         
@@ -291,11 +291,11 @@ class playerfactoryTestCase(unittest.TestCase):
         """
         expected = False
         
-        def test_method(self, hand, player, dealer, playerlist):
+        def test_method(self, hand, the_game):
             return False
-        Spam = players.playerfactory('Spam', None, test_method, None)
+        Spam = players.playerfactory('Spam', None, test_method, None, None)
         obj = Spam()
-        actual = obj.will_split(None, None, None, None)
+        actual = obj.will_split(None, None)
         
         self.assertEqual(expected, actual)
     
@@ -307,8 +307,22 @@ class playerfactoryTestCase(unittest.TestCase):
         
         def test_method(self, game):
             return False
-        Spam = players.playerfactory('Spam', None, None, test_method)
+        Spam = players.playerfactory('Spam', None, None, test_method, None)
         obj = Spam()
         actual = obj.will_buyin(None)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_will_double_down(self):
+        """Given a will_double_down function, the subclass should 
+        have a will_double_down method.
+        """
+        expected = False
+        
+        def test_method(self, game):
+            return False
+        Spam = players.playerfactory('Spam', None, None, None, test_method)
+        obj = Spam()
+        actual = obj.will_double_down(None)
         
         self.assertEqual(expected, actual)

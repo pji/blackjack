@@ -208,6 +208,25 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_update_doubled(self):
+        """Given an event that a player doubled down on a hand, the 
+        update() method should print the double down event to stdout.
+        """
+        fmt = '{} ({})'.format(40, 220)
+        expected = self.tmp.format('Graham', 'Doubled down.', '40 (220)')
+        
+        ui = cli.UI(True)
+        hand = cards.Hand([
+            cards.Card(4, 3),
+            cards.Card(7, 1),
+        ])
+        p1 = players.AutoPlayer((hand,), 'Graham', 220)
+        with capture() as (out, err):
+            ui.update('doubled', p1, [40, 220])
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
     def test_use_player_name(self):
         """If update() is given a player.Player object rather than 
         a string for the name field, update() should use the name 

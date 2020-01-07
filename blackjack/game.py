@@ -138,10 +138,15 @@ class Game:
                         self._ace_split_hit(player, hand)
                     else:
                         hit(player, hand)
+            
+            # Double down decision.
+            elif self._double_down(player, player.hands[0]):
+                self._ace_plit_hit(player, hand)
+            
+            # Standard hit decision.
             else:
                 hit(player)
         
-        # Double down decision.
         # Insurance decision.
         
         # The dealer has to flip before they hit.
@@ -153,7 +158,14 @@ class Game:
         hit(self.dealer)
     
     def _ace_split_hit(self, player: Player, hand: Hand) -> None:
-        """Handle a hand made by splitting a pair of aces."""
+        """Handle a hand made by splitting a pair of aces. It also 
+        handles hands hit after doubling down.
+        
+        :param player: The player who owns the hand.
+        :param hand: The hand to hit.
+        :return: None.
+        :rtype: None.
+        """
         card = self.deck.draw()
         card.flip()
         hand.append(card)
@@ -185,6 +197,21 @@ class Game:
         if p_score < d_score:
             return False
         return None
+    
+    def _double_down(self, player: Player, hand: Hand) -> None:
+        """Handle the double down decision on a hand.
+        
+        :param player: The player who owns the hand.
+        :param hand: The hand to make the decision on.
+        :return: None.
+        :rtype: None.
+        """
+        scores = [score for score in hand.score() if score < 12 and score > 8]
+        if (scores and player.will_double_down(hand, self) 
+                   and player.chips >= self.buyin):
+            hand.doubled_down = True
+            player.chips -= self.buyin
+            self.ui.update('doubled', player, [self.buyin, player.chips])
     
     def _remove_player(self, player: Player) -> None:
         """Remove a player from the game."""

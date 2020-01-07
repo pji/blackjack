@@ -263,6 +263,11 @@ class Hand(Pile):
     Bicycle rules for Blackjack at bicyclecards.com, so it doesn't 
     implement that rule.
     """
+    def __init__(self, *args, **kwargs) -> None:
+        """Initialize an instance of the class."""
+        super().__init__(*args, **kwargs)
+        self.doubled_down = False
+    
     def append(self, item):
         self.cards.append(item)
     

@@ -670,6 +670,13 @@ class HandTestCase(unittest.TestCase):
         actual = cards.Hand
         self.assertTrue(issubclass(actual, expected))
     
+    def test_doubled_down_initialized(self):
+        """Hand objects should have a doubled_down attribute that 
+        is initialized to False.
+        """
+        hand = cards.Hand()
+        self.assertFalse(hand.doubled_down)
+    
     def test_append(self):
         """Given a Card object, append() should append that card to 
         cards.

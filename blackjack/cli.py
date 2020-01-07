@@ -53,6 +53,9 @@ class UI(game.BaseUI):
             msg = self.tmp.format(player, 'Initial bet.', fmt)
         if event == 'deal':
             msg = self.tmp.format(player,  'Initial deal.', handstr)
+        if event == 'doubled':
+            fmt = '{} ({})'.format(*detail)
+            msg = self.tmp.format(player, 'Doubled down.', fmt)
         if event == 'flip':
             msg = self.tmp.format(player, 'Flipped card.', handstr)
         if event == 'hit':
@@ -76,7 +79,8 @@ class UI(game.BaseUI):
                 score = 'Bust.'
             msg = self.tmp.format(player, 'Stand.', score)
         if not msg:
-            raise NotImplementedError
+            reason = 'Invalid event sent to UI.update().'
+            raise NotImplementedError(reason)
         print(msg)
 
 
