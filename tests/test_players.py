@@ -257,13 +257,13 @@ class will_insure_alwaysTestCase(unittest.TestCase):
         hand = cards.Hand()
         g = game.Game()
         
-        _ = players.will_insure_always(player, hand, g)
+        _ = players.will_insure_always(player, g)
         
         # The test was that no exception was raised when will_buyin 
         # was called.
         self.assertTrue(True)
     
-    def test_always_true(self):
+    def test_always_max(self):
         """will_double_down_always() will always return the maximum 
         bet, which is half of the game's buy in."""
         expected = 10
@@ -271,7 +271,35 @@ class will_insure_alwaysTestCase(unittest.TestCase):
         h = cards.Hand()
         p = players.Player()
         g = game.Game(None, None, (p,), None, 20)
-        actual = players.will_insure_always(p, h, g)
+        actual = players.will_insure_always(p, g)
+        
+        self.assertEqual(expected, actual)
+
+
+class will_insure_neverTestCase(unittest.TestCase):
+    def test_parameters(self):
+        """Functions that follow the will_insure protocol should 
+        accept the following parameters: self, game.
+        """
+        player = players.Player()
+        hand = cards.Hand()
+        g = game.Game()
+        
+        _ = players.will_insure_never(player, g)
+        
+        # The test was that no exception was raised when will_buyin 
+        # was called.
+        self.assertTrue(True)
+    
+    def test_always_zero(self):
+        """will_double_down_always() will always return the maximum 
+        bet, which is half of the game's buy in."""
+        expected = 10
+        
+        h = cards.Hand()
+        p = players.Player()
+        g = game.Game(None, None, (p,), None, 20)
+        actual = players.will_insure_always(p, g)
         
         self.assertEqual(expected, actual)
 

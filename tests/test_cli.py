@@ -227,6 +227,25 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_update_insured(self):
+        """Given an event that a player bought insurance, the update() 
+        method should print the insured event to stdout.
+        """
+        fmt = '{} ({})'.format(10, 220)
+        expected = self.tmp.format('Graham', 'Insured.', '10 (220)')
+        
+        ui = cli.UI(True)
+        hand = cards.Hand([
+            cards.Card(4, 3),
+            cards.Card(7, 1),
+        ])
+        p1 = players.AutoPlayer((hand,), 'Graham', 220)
+        with capture() as (out, err):
+            ui.update('insured', p1, [10, 220])
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
     def test_use_player_name(self):
         """If update() is given a player.Player object rather than 
         a string for the name field, update() should use the name 

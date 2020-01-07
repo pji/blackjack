@@ -463,6 +463,40 @@ class GameTestCase(ut.TestCase):
         self.assertEqual(expected_hand, actual_hand)
         self.assertEqual(expected_dd, actual_dd)
     
+    def test_play_with_double_down(self):
+        """Given a dealer hand with an ace showing an a player who 
+        will insure, play() should insure the player then play the 
+        round as usual.
+        """
+        expected_hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+            cards.Card(11, 0),
+        ])
+        expected_insured = 10
+        
+        hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+        ])
+        player = players.AutoPlayer([hand,], 'Eric', 20)
+        deck = cards.Deck([
+            cards.Card(8, 1, cards.DOWN),
+            cards.Card(11, 0, cards.DOWN),
+        ])
+        dhand = cards.Hand([
+            cards.Card(1, 0),
+            cards.Card(7, 1, cards.DOWN),
+        ])
+        dealer = players.Dealer([dhand,], 'Dealer')
+        g = game.Game(deck, dealer, (player,), None, 20)
+        g.play()
+        actual_hand = player.hands[0]
+        actual_insured = player.insured
+        
+        self.assertEqual(expected_hand, actual_hand)
+        self.assertEqual(expected_insured, actual_insured)
+    
     # Test Game.end().
     def test_end_player_wins(self):
         """If the player wins, the player gets double their initial 
@@ -627,6 +661,30 @@ class GameTestCase(ut.TestCase):
         player = players.AutoPlayer((phand,), 'John', 0)
         dhand = cards.Hand([
             cards.Card(7, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Game(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_with_insured(self):
+        """If the player was insured and the dealer had a blackjack, 
+        the insurance pay out should double the insurance amount.
+        """
+        expected = 20
+        
+        phand = cards.Hand([
+            cards.Card(4, 1),
+            cards.Card(6, 2),
+            cards.Card(10, 0),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
+        player.insured = 10
+        dhand = cards.Hand([
+            cards.Card(1, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
@@ -987,4 +1045,65 @@ class GameTestCase(ut.TestCase):
         g._double_down(player, hand)
         
         ui.update.assert_called_with(*expected)
+    
+    def test__insure(self):
+        """Given a dealer hand a player can ensure and a player who 
+        will insure, _insure() should set the insured attribute on 
+        the player and take the player's additional bet.
+        """
+        expected_insured = 10
+        expected_chips = 0
         
+        dhand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        player = players.AutoPlayer(cards.Hand(), 'Eric', 10)
+        g = game.Game(None, dealer, (player,), None, 20)
+        g._insure(player)
+        actual_insured = player.insured
+        actual_chips = player.chips
+        
+        self.assertEqual(expected_insured, actual_insured)
+        self.assertEqual(expected_chips, actual_chips)
+    
+    def test__insure_zero(self):
+        """Given a dealer hand a player can ensure and a player who 
+        will insure, _insure() should set the insured attribute on 
+        the player and take the player's additional bet.
+        """
+        expected_insured = 0
+        expected_chips = 10
+        
+        dhand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        player = players.BetterPlayer(cards.Hand(), 'Eric', 10)
+        g = game.Game(None, dealer, (player,), None, 20)
+        g._insure(player)
+        actual_insured = player.insured
+        actual_chips = player.chips
+        
+        self.assertEqual(expected_insured, actual_insured)
+        self.assertEqual(expected_chips, actual_chips)
+    
+    def test__insure_ui(self):
+        """If the player insures, _insure() should send that 
+        event to the UI.
+        """
+        dhand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        player = players.AutoPlayer(None, 'Eric', 20)
+        expected = ['insured', player, [10, 10]]
+
+        ui = Mock()
+        g = game.Game(None, dealer, (player,), ui, 20)
+        g._insure(player)
+        
+        ui.update.assert_called_with(*expected)

@@ -85,10 +85,15 @@ class Game:
     
     def end(self):
         """End a round of blackjack."""
+        dhand = self.dealer.hands[0]
         for player in self.playerlist:
+            if player.insured and dhand.is_blackjack():
+                payout = player.insured * 2
+                if payout:
+                    player.chips += payout
+#                     self.ui.update('insurepay', player, [payout, player.chips])
             for phand in player.hands:
                 payout = 0
-                dhand = self.dealer.hands[0]
                 result = self._compare_score(dhand, phand)
                 if (result == True 
                         and phand.is_blackjack() 
@@ -124,7 +129,6 @@ class Game:
     
     def play(self):
         """Play a round of blackjack."""
-        # First handle the players.
         def hit(player, hand=None):
             """Handle the player's hitting and standing."""
             if not hand:
@@ -138,6 +142,9 @@ class Game:
         
         # Handle the players.
         for player in self.playerlist:
+            # Insurance decision.
+            self._insure(player)
+            
             # Split decision.
             if self._split(player.hands[0], player):
                 for hand in player.hands:
@@ -219,6 +226,25 @@ class Game:
             hand.doubled_down = True
             player.chips -= self.buyin
             self.ui.update('doubled', player, [self.buyin, player.chips])
+    
+    def _insure(self, player: Player) -> None:
+        """Handle the insurance decision for a player.
+        
+        :param player: The player who can insure.
+        :return: None.
+        :rtype: None.
+        """
+        if self.dealer.hands[0][0].rank == 1:
+            cost = player.will_insure(self)
+            if cost:
+                if cost > player.chips:
+                    cost = player.chips
+                if cost > self.buyin / 2:
+                    cost = self.buyin / 2
+                player.insured = cost
+                player.chips -= cost
+                self.ui.update('insured', player, [cost, player.chips])
+            
     
     def _remove_player(self, player: Player) -> None:
         """Remove a player from the game."""

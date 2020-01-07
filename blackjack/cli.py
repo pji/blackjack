@@ -60,6 +60,9 @@ class UI(game.BaseUI):
             msg = self.tmp.format(player, 'Flipped card.', handstr)
         if event == 'hit':
             msg = self.tmp.format(player, 'Hit.', handstr)
+        if event == 'insured':
+            fmt = '{} ({})'.format(*detail)
+            msg = self.tmp.format(player, 'Insured.', fmt)
         if event == 'payout':
             fmt = '{} ({})'.format(*detail)
             msg = self.tmp.format(player, 'Wins.', fmt)

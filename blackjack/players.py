@@ -135,8 +135,8 @@ def will_double_down_always(self, hand:Hand, the_game) -> bool:
 #   * A game.Game object
 # 
 # And they must return a bool or a float.
-def will_insure_always(self, hand:Hand, the_game) -> bool:
-    """The player will always buy insurance.
+def will_insure_always(self, the_game) -> bool:
+    """The player will always buy the most insurance.
     
     :param hand: The hand to make the decision on.
     :param the_game: The information about the current game to use 
@@ -145,6 +145,17 @@ def will_insure_always(self, hand:Hand, the_game) -> bool:
     :rtype: bool
     """
     return the_game.buyin / 2
+
+def will_insure_never(self, the_game) -> bool:
+    """The player will never buy insurance.
+    
+    :param hand: The hand to make the decision on.
+    :param the_game: The information about the current game to use 
+        to make a decision.
+    :return: A decision whether to double down.
+    :rtype: bool
+    """
+    return 0
 
 
 def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn, 
@@ -163,5 +174,8 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
 # Player subclasses.
 Dealer = playerfactory('Dealer', dealer_will_hit, None, None, None, None)
 AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
-                            always_will_buyin, will_double_down_always, 
-                            will_insure_always)
+                           always_will_buyin, will_double_down_always, 
+                           will_insure_always)
+BetterPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
+                             always_will_buyin, will_double_down_always, 
+                             will_insure_never)
