@@ -30,7 +30,6 @@ Still To Do
 -----------
 The following features are on the to-do list:
 
-* Allow multiple rounds to be played.
 * Create more automated players with different behavior.
 * Let the user control a player.
 * Add UI that updates information in place rather than listing events.

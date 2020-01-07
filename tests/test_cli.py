@@ -11,8 +11,9 @@ from contextlib import contextmanager
 from io import StringIO
 import sys
 import unittest as ut
+from unittest.mock import patch
 
-from blackjack import cards, cli, players
+from blackjack import cards, cli, model, players
 
 
 # Utility functions.
@@ -38,9 +39,9 @@ class UITestCase(ut.TestCase):
         lines = [
             '\n',
             'BLACKJACK!\n',
-            '\n',
-            self.tmp.format('Player', 'Action', 'Hand'),
-            '\u2500' * 50 + '\n',
+#             '\n',
+#             self.tmp.format('Player', 'Action', 'Hand'),
+#             '\u2500' * 50 + '\n',
         ]
         expected = ''.join(lines)
         
@@ -50,6 +51,27 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    # Test enter().
+    def test_enter(self):
+        """enter() should print the headers for the game output."""
+        lines = [
+#             '\n',
+#             'BLACKJACK!\n',
+            '\n',
+            self.tmp.format('Player', 'Action', 'Hand'),
+            '\u2500' * 50 + '\n',
+        ]
+        expected = ''.join(lines)
+        
+        with capture() as (out, err):
+            ui = cli.UI(True)
+            ui.enter()
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
+    
+    # Test UI.update().
     def test_update_deal(self):
         """Given a message that cards have been dealt, the update() 
         method should print the result of the deal to stdout.
@@ -284,6 +306,24 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    # Test UI.input()
+    @patch('blackjack.cli.input')
+    def test_input_new_round(self, mock_input):
+        """Given an event to prompt for a new game, the input() method 
+        should prompt the user to see if they want to play a new game 
+        and return the response.
+        """
+        mock_input.return_value = 'yes'
+        expected_call = 'Another round? > '
+        expected_return = model.IsYes(True)
+        
+        ui = cli.UI(True)
+        actual_return = ui.input('nextgame')
+        
+        self.assertEqual(expected_return.value, actual_return.value)
+        mock_input.assert_called_with(expected_call)
+    
+    # Test UI.exit().
     def test_exit(self):
         """exit() should print the closing footers to stdout."""
         lines = [

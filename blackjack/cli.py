@@ -11,7 +11,7 @@ a command line interface.
 import argparse
 from functools import partial
 
-from blackjack import cards, game, players
+from blackjack import cards, game, model, players
 
 
 # UI object.
@@ -20,11 +20,10 @@ class UI(game.BaseUI):
     
     def __init__(self, silent: bool = False) -> None:
         if not silent:
-            self.enter()
+            print()
+            print('BLACKJACK!')
     
     def enter(self):
-        print()
-        print('BLACKJACK!')
         print()
         print(self.tmp.format('Player', 'Action', 'Hand'))
         print('\u2500' * 50)
@@ -43,7 +42,12 @@ class UI(game.BaseUI):
         :return: The input received from the UI.
         :rtype: Any. (May need an response object in the future.)
         """
-        pass
+        response = None
+        if event == 'nextgame':
+            prompt = 'Another round? > '
+            untrusted = input(prompt)
+            response = model.IsYes(untrusted)
+        return response
     
     def update(self, event:str, player:str, detail: object) -> None:
         """Update the UI.
@@ -114,21 +118,26 @@ def dealer_only():
 
 def one_player():
     ui = UI()
+    play = True
     deck = cards.Deck.build(6)
     deck.shuffle()
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
     player = players.AutoPlayer(name='Player', chips=200)
     g = game.Game(deck, dealer, (player,), ui=ui, buyin=2)
-    g.start()
-    g.deal()
-    g.play()
-    g.end()
-    ui.exit()
+    while play:
+        ui.enter()
+        g.start()
+        g.deal()
+        g.play()
+        g.end()
+        ui.exit()
+        play = ui.input('nextgame').value
 
 
 def two_player():
     ui = UI()
+    play = True
     deck = cards.Deck.build(6)
     deck.shuffle()
     deck.random_cut()
@@ -136,11 +145,14 @@ def two_player():
     p1 = players.AutoPlayer(name='John', chips=200)
     p2 = players.AutoPlayer(name='Michael', chips=152)
     g = game.Game(deck, dealer, (p1, p2), ui=ui, buyin=2)
-    g.start()
-    g.deal()
-    g.play()
-    g.end()
-    ui.exit()    
+    while play:
+        ui.enter()
+        g.start()
+        g.deal()
+        g.play()
+        g.end()
+        ui.exit()
+        play = ui.input('nextgame').value
 
 
 if __name__ == '__main__':
