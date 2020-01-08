@@ -90,6 +90,7 @@ class Game:
         """End a round of blackjack."""
         dhand = self.dealer.hands[0]
         for player in self.playerlist:
+            event = 'payout'
             if player.insured and dhand.is_blackjack():
                 payout = player.insured * 2
                 if payout:
@@ -114,7 +115,7 @@ class Game:
                     payout = self.buyin
                 if payout:
                     player.chips += payout
-                    self.ui.update('payout', player, [payout, player.chips])
+                    self.ui.update(event, player, [payout, player.chips])
     
     def deal(self):
         """Deal a round of blackjack."""

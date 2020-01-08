@@ -216,16 +216,31 @@ class UITestCase(ut.TestCase):
         self.assertEqual(expected, actual)
         
     def test_update_end_wins(self):
-        """Given an event that a player was removed from the game, the 
-        update() method should print the removal to stdout.
+        """Given an event that a player won, the 
+        update() method should print victory to stdout.
         """
         fmt = '{} ({})'.format(40, 220)
-        expected = self.tmp.format('Graham', 'Wins.', '40 (220)')
+        expected = self.tmp.format('Graham', 'Wins.', fmt)
         
         ui = cli.UI(True)
         p1 = players.AutoPlayer(name='Graham')
         with capture() as (out, err):
             ui.update('payout', p1, [40, 220])
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
+    def test_update_end_tie(self):
+        """Given an event that a player tied the dealer, the 
+        update() method should print the tie to stdout.
+        """
+        fmt = '{} ({})'.format(20, 220)
+        expected = self.tmp.format('Graham', 'Stand-off.', fmt)
+        
+        ui = cli.UI(True)
+        p1 = players.AutoPlayer(name='Graham')
+        with capture() as (out, err):
+            ui.update('tie', p1, [20, 220])
         actual = out.getvalue()
         
         self.assertEqual(expected, actual)

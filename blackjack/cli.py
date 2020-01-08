@@ -100,6 +100,9 @@ class UI(game.BaseUI):
             except IndexError:
                 score = 'Bust.'
             msg = self.tmp.format(player, 'Stand.', score)
+        if event == 'tie':
+            fmt = '{} ({})'.format(*detail)
+            msg = self.tmp.format(player, 'Stand-off.', fmt)
         if not msg:
             reason = 'Invalid event sent to UI.update().'
             raise NotImplementedError(reason)
