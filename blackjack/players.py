@@ -94,7 +94,7 @@ def will_hit_recommended(self, hand:Hand, the_game) -> bool:
 #   * A game.Game object
 # 
 # And they must return a bool.
-def always_will_split(self, hand:Hand, the_game=None) -> bool:
+def always_will_split(self, hand:Hand, the_game) -> bool:
     """The player will always split where possible.
     
     :param hand: The hand that may be split.
@@ -103,7 +103,7 @@ def always_will_split(self, hand:Hand, the_game=None) -> bool:
     """
     return True
 
-def will_split_recommended(self, hand:Hand, the_game=None) -> bool:
+def will_split_recommended(self, hand:Hand, the_game) -> bool:
     """Make a split decision as recommended by bicycle.com."""
     dhand = the_game.dealer.hands[0]
     if hand[0].rank == 1 or hand[0].rank == 8:

@@ -267,7 +267,7 @@ class Game:
         :return: Whether the hand was split.
         :rtype: bool
         """
-        if hand[0].rank == hand[1].rank and player.will_split(hand):
+        if hand[0].rank == hand[1].rank and player.will_split(hand, self):
             new_hand1 = Hand([hand[0],])
             new_hand2 = Hand([hand[1],])
             player.hands = (new_hand1, new_hand2)

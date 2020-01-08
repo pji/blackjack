@@ -276,7 +276,7 @@ class always_will_splitTestCase(unittest.TestCase):
         hand = cards.Hand()
         player = players.Player((hand,), 'John Cleese')
         player.will_split = partial(players.always_will_split, None)
-        actual = player.will_split(hand)
+        actual = player.will_split(hand, None)
         
         self.assertTrue(actual)
 
