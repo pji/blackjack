@@ -112,6 +112,7 @@ class Game:
                 elif result == None and dhand.is_blackjack():
                     pass
                 elif result == None:
+                    event = 'tie'
                     payout = self.buyin
                 if payout:
                     player.chips += payout

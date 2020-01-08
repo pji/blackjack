@@ -12,7 +12,7 @@ from functools import partial
 import inspect
 from itertools import zip_longest
 import unittest as ut
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, patch
 
 from blackjack import cards, game, players
 
@@ -540,17 +540,19 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_end_tie(self):
+    @patch('blackjack.game.BaseUI.update')
+    def test_end_tie(self, mock_update):
         """If the player ties, the player gets back their initial 
         bet.
         """
-        expected = 20
-        
         phand = cards.Hand([
             cards.Card(10, 1),
             cards.Card(10, 0),
         ])
         player = players.AutoPlayer((phand,), 'John', 0)
+        expected = 20
+        expected_call = ['tie', player, [20, 20]]
+        
         dhand = cards.Hand([
             cards.Card(10, 3),
             cards.Card(11, 0),
@@ -561,6 +563,7 @@ class GameTestCase(ut.TestCase):
         actual = player.chips
         
         self.assertEqual(expected, actual)
+        mock_update.assert_called_with(*expected_call)
     
     def test_end_player_blackjack(self):
         """If the player wins with a blackjack, they get two and a 
