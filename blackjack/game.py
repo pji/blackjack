@@ -216,7 +216,8 @@ class Game:
         """
         scores = [score for score in hand.score() if score < 12 and score > 8]
         if (scores and player.will_double_down(hand, self) 
-                   and player.chips >= self.buyin):
+                   and player.chips >= self.buyin
+                   and not hand.is_blackjack()):
             hand.doubled_down = True
             player.chips -= self.buyin
             self.ui.update('doubled', player, [self.buyin, player.chips])

@@ -281,6 +281,118 @@ class always_will_splitTestCase(unittest.TestCase):
         self.assertTrue(actual)
 
 
+class will_split_recommendedTestCase(unittest.TestCase):
+    def test_split_ace_or_8(self):
+        """Always split aces or eights."""
+        expected = True
+        
+        hand = cards.Hand([
+            cards.Card(1, 2),
+            cards.Card(1, 1),
+        ])
+        player = players.Player((hand,), 'Graham')
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(10, 0, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual = players.will_split_recommended(player, hand, g)
+        
+        self.assertEqual(expected, actual)
+        
+    def test_split_4_5_or_8(self):
+        """Never split fours, fives, or eights."""
+        expected = False
+        
+        hand = cards.Hand([
+            cards.Card(10, 2),
+            cards.Card(10, 1),
+        ])
+        player = players.Player((hand,), 'Graham')
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(10, 0, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual = players.will_split_recommended(player, hand, g)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_split_2_3_or_7(self):
+        """Split twos, threes, and sevens if the dealer's card is 
+        seven or less.
+        """
+        expected1 = True
+        expected2 = False
+        
+        hand = cards.Hand([
+            cards.Card(2, 2),
+            cards.Card(2, 1),
+        ])
+        player = players.Player((hand,), 'Graham')
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(10, 0, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual1 = players.will_split_recommended(player, hand, g)
+        
+        self.assertEqual(expected1, actual1)
+        
+        hand = cards.Hand([
+            cards.Card(2, 2),
+            cards.Card(2, 1),
+        ])
+        player = players.Player((hand,), 'Graham')
+        dhand = cards.Hand([
+            cards.Card(8, 3),
+            cards.Card(10, 0, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual2 = players.will_split_recommended(player, hand, g)
+        
+        self.assertEqual(expected2, actual2)
+    
+    def test_split_6(self):
+        """Split sixes if dealer's card is two through six."""
+        expected1 = True
+        expected2 = False
+        
+        hand = cards.Hand([
+            cards.Card(6, 2),
+            cards.Card(6, 1),
+        ])
+        player = players.Player((hand,), 'Graham')
+        dhand = cards.Hand([
+            cards.Card(6, 3),
+            cards.Card(10, 0, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual1 = players.will_split_recommended(player, hand, g)
+        
+        self.assertEqual(expected1, actual1)
+        
+        hand = cards.Hand([
+            cards.Card(6, 2),
+            cards.Card(6, 1),
+        ])
+        player = players.Player((hand,), 'Graham')
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(10, 0, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual2 = players.will_split_recommended(player, hand, g)
+        
+        self.assertEqual(expected2, actual2)
+
+
 class always_will_buyin(unittest.TestCase):
     def test_parameters(self):
         """Functions that follow the will_buyin protocol should 

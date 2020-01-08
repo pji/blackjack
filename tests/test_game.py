@@ -569,13 +569,13 @@ class GameTestCase(ut.TestCase):
         expected = 50
         
         phand = cards.Hand([
-            cards.Card(1, 1),
-            cards.Card(10, 0),
+            cards.Card(1, 3),
+            cards.Card(12, 1),
         ])
         player = players.AutoPlayer((phand,), 'John', 0)
         dhand = cards.Hand([
-            cards.Card(7, 3),
-            cards.Card(11, 0),
+            cards.Card(13, 0),
+            cards.Card(12, 3),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
         g = game.Game(None, dealer, (player,), None, 20)
@@ -1070,6 +1070,27 @@ class GameTestCase(ut.TestCase):
         
         ui.update.assert_called_with(*expected)
     
+    def test__double_down_not_on_blackjack(self):
+        """If player has a blackjack, _double_down() should not allow 
+        the hand to be doubled down.
+        """
+        expected_dd = False
+        expected_chips = 20
+        
+        hand = cards.Hand([
+            cards.Card(1, 2),
+            cards.Card(13, 3),
+        ])
+        player = players.AutoPlayer([hand,], 'Eric', 20)
+        g = game.Game(None, None, (player,), None, 20)
+        g._double_down(player, hand)
+        actual_dd = hand.doubled_down
+        actual_chips = player.chips
+        
+        self.assertEqual(expected_dd, actual_dd)
+        self.assertEqual(expected_chips, actual_chips)
+    
+    # Test Game._insure()
     def test__insure(self):
         """Given a dealer hand a player can ensure and a player who 
         will insure, _insure() should set the insured attribute on 

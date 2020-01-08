@@ -70,7 +70,6 @@ def dealer_will_hit(self, hand:Hand, the_game=None) -> bool:
             return STAND
         return HIT
 
-
 def will_hit_recommended(self, hand:Hand, the_game) -> bool:
     """Make hit decisions as recommended by bicycle.com."""
     dhand = the_game.dealer.hands[0]
@@ -102,7 +101,25 @@ def always_will_split(self, hand:Hand, the_game=None) -> bool:
     :rtype: bool
     """
     return True
-    
+
+def will_split_recommended(self, hand:Hand, the_game=None) -> bool:
+    """Make a split decision as recommended by bicycle.com."""
+    dhand = the_game.dealer.hands[0]
+    if hand[0].rank == 1 or hand[0].rank == 8:
+        return True
+    elif hand[0].rank == 4 or hand[0].rank == 5 or hand[0].rank >= 10:
+        return False
+    elif hand[0].rank == 2 or hand[0].rank == 3 or hand[0].rank >= 7:
+        if dhand[0].rank < 8 or dhand[0].rank == 1:
+            return True
+        else:
+            return False
+    else:
+        if dhand[0].rank > 1 and dhand[0].rank < 7:
+            return True
+        else:
+            return False
+
 
 # will_buyin functions.
 # will_buyin functions determine whether the player will buy into the 
@@ -192,5 +209,5 @@ AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
                            always_will_buyin, will_double_down_always, 
                            will_insure_always)
 BetterPlayer = playerfactory('AutoPlayer', will_hit_recommended, 
-                             always_will_split, always_will_buyin, 
+                             will_split_recommended, always_will_buyin, 
                              will_double_down_always, will_insure_never)
