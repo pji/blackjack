@@ -223,10 +223,11 @@ class Deck(Pile):
         :rtype: Deck
         """
         d = cls()
+        d.size = num_decks
         ranks = reversed(RANKS)
         std_deck = [Card(rank, suit, DOWN) for suit, rank 
                     in product(SUITS, ranks)]
-        for i in range(num_decks):
+        for i in range(d.size):
             d.cards.extend(deepcopy(std_deck))
         return d
     

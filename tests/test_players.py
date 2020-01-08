@@ -443,6 +443,145 @@ class will_double_down_alwaysTestCase(unittest.TestCase):
         self.assertTrue(actual)
 
 
+class will_double_down_recommendedTestCase(unittest.TestCase):
+    def test_double_down_if_11(self):
+        """If the player's hand is 11, player should double down."""
+        expected = True
+        
+        phand = cards.Hand([
+            cards.Card(5, 0),
+            cards.Card(6, 0),
+        ])
+        player = players.Player((phand,), 'Terry')
+        dhand = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(8, 3),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual = players.will_double_down_recommended(player, phand, g)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_double_down_on_10(self):
+        """If player's hand is 10 and the dealer's card is a 9 or 
+        less, the player should double down.
+        """
+        expected = True
+        
+        phand = cards.Hand([
+            cards.Card(4, 0),
+            cards.Card(6, 0),
+        ])
+        player = players.Player((phand,), 'Terry')
+        dhand = cards.Hand([
+            cards.Card(9, 0),
+            cards.Card(8, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual = players.will_double_down_recommended(player, phand, g)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_not_double_down_on_10_dealer_10_or_1(self):
+        """If the player's hand is 10 and the dealer's card is a 10 or 
+        an ace, the player should not double down.
+        """
+        expected = False
+        
+        phand = cards.Hand([
+            cards.Card(4, 0),
+            cards.Card(6, 0),
+        ])
+        player = players.Player((phand,), 'Terry')
+        dhand = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(8, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual = players.will_double_down_recommended(player, phand, g)
+        
+        self.assertEqual(expected, actual)
+        
+        expected = False
+        
+        phand = cards.Hand([
+            cards.Card(4, 0),
+            cards.Card(6, 0),
+        ])
+        player = players.Player((phand,), 'Terry')
+        dhand = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(8, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual = players.will_double_down_recommended(player, phand, g)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_double_down_on_9(self):
+        """If player's hand is 9 and the dealer's card is a 2-6, the
+         player should double down.
+        """
+        expected = True
+        
+        phand = cards.Hand([
+            cards.Card(4, 0),
+            cards.Card(5, 0),
+        ])
+        player = players.Player((phand,), 'Terry')
+        dhand = cards.Hand([
+            cards.Card(6, 0),
+            cards.Card(8, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual = players.will_double_down_recommended(player, phand, g)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_double_down_on_10(self):
+        """If player's hand is 10 and the dealer's card is a 9 or 
+        less, the player should double down.
+        """
+        expected = False
+        
+        phand = cards.Hand([
+            cards.Card(4, 0),
+            cards.Card(5, 0),
+        ])
+        player = players.Player((phand,), 'Terry')
+        dhand = cards.Hand([
+            cards.Card(1, 0),
+            cards.Card(8, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual = players.will_double_down_recommended(player, phand, g)
+        
+        self.assertEqual(expected, actual)
+        
+        expected = False
+        
+        phand = cards.Hand([
+            cards.Card(4, 0),
+            cards.Card(5, 0),
+        ])
+        player = players.Player((phand,), 'Terry')
+        dhand = cards.Hand([
+            cards.Card(7, 0),
+            cards.Card(8, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, None)
+        actual = players.will_double_down_recommended(player, phand, g)
+        
+        self.assertEqual(expected, actual)
+
+
 class will_insure_alwaysTestCase(unittest.TestCase):
     def test_parameters(self):
         """Functions that follow the will_insure protocol should 

@@ -159,7 +159,24 @@ def will_double_down_always(self, hand:Hand, the_game) -> bool:
     """
     return True
 
-# def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
+def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
+    """The player will follow the double down recommendation from 
+    bicycle.com.
+    :param hand: The hand to make the decision on.
+    :param the_game: The information about the current game to use 
+        to make a decision.
+    :return: A decision whether to double down.
+    :rtype: bool
+    """
+    scores = [score for score in hand.score() if score <= 21]
+    dcard = the_game.dealer.hands[0][0]
+    if 11 in scores:
+        return True
+    elif 10 in scores and dcard.rank < 10 and dcard.rank > 1:
+        return True
+    elif 9 in scores and dcard.rank >= 2 and dcard.rank <= 6:
+        return True
+    return False
 
 
 # will_insure functions.
@@ -213,4 +230,4 @@ AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
                            will_insure_always)
 BetterPlayer = playerfactory('AutoPlayer', will_hit_recommended, 
                              will_split_recommended, always_will_buyin, 
-                             will_double_down_always, will_insure_never)
+                             will_double_down_recommended, will_insure_never)

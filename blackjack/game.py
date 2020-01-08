@@ -122,16 +122,16 @@ class Game:
         """Deal a round of blackjack."""
         # First card.
         for player in self.playerlist:
-            player.hands = (_build_hand(self.deck),)
-        self.dealer.hands = (_build_hand(self.deck),)
+            player.hands = (self._build_hand(),)
+        self.dealer.hands = (self._build_hand(),)
         
         # Second card.
         for player in self.playerlist:
-            card = self.deck.draw()
+            card = self._draw()
             card.flip()
             player.hands[0].append(card)
             self.ui.update('deal', player, player.hands[0])
-        self.dealer.hands[0].append(self.deck.draw())
+        self.dealer.hands[0].append(self._draw())
         self.ui.update('deal', self.dealer, self.dealer.hands[0])
     
     def play(self):
@@ -176,12 +176,18 @@ class Game:
         :return: None.
         :rtype: None.
         """
-        card = self.deck.draw()
+        card = self._draw()
         card.flip()
         hand.append(card)
         self.ui.update('hit', player, hand)
         self.ui.update('stand', player, hand)
     
+    def _build_hand(self):
+        """create the initial hand and deal a card into it."""
+        card = self._draw()
+        card.flip()
+        return Hand([card,])
+
     def _compare_score(self, d_hand: Hand, p_hand: Hand) -> Union[None, bool]:
         """Determine if the player's hand won.
         
@@ -224,12 +230,22 @@ class Game:
             player.chips -= self.buyin
             self.ui.update('doubled', player, [self.buyin, player.chips])
     
+    def _draw(self):
+        """Draw a card from the game deck."""
+        if not self.deck:
+            deck = Deck.build(self.deck.size)
+            deck.shuffle()
+            if deck.size > 3:
+                deck.random_cut()
+            self.deck = deck
+        return self.deck.draw()
+    
     def _hit(self, player, hand=None):
         """Handle the player's hitting and standing."""
         if not hand:
             hand = player.hands[0]
         while player.will_hit(hand, self):
-            card = self.deck.draw()
+            card = self._draw()
             card.flip()
             hand.append(card)
             self.ui.update('hit', player, hand)

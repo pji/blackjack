@@ -531,12 +531,16 @@ class DeckTestCase(unittest.TestCase):
         """Pile.build() should return an instance of deck that 
         contains the cards needed for a blackjack game.
         """
-        expected_size = 52
+        expected_len = 52
+        expected_size = 1
         expected_class = cards.Card
         
-        d = cards.Deck.build()
-        actual_size = len(d.cards)
         
+        d = cards.Deck.build()
+        actual_len = len(d.cards)
+        actual_size = d.size
+        
+        self.assertEqual(expected_len, actual_len)
         self.assertEqual(expected_size, actual_size)
         for card in d.cards:
             self.assertTrue(isinstance(card, expected_class))
@@ -556,13 +560,15 @@ class DeckTestCase(unittest.TestCase):
         should return a Pile object that contains cards from that many 
         standard decks.
         """
-        num_decks = 6
-        expected_size = 52 * num_decks
+        expected_size = 6
+        expected_len = 52 * expected_size
         expected_class = cards.Card
         
-        d = cards.Deck.build(6)
-        actual_size = len(d.cards)
+        d = cards.Deck.build(expected_size)
+        actual_len = len(d.cards)
+        actual_size = d.size
         
+        self.assertEqual(expected_len, actual_len)
         self.assertEqual(expected_size, actual_size)
         for card in d.cards:
             self.assertTrue(isinstance(card, expected_class))

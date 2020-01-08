@@ -1155,3 +1155,27 @@ class GameTestCase(ut.TestCase):
         g._insure(player)
         
         ui.update.assert_called_with(*expected)
+    
+    # Test Game._draw().
+    def test__draw_deck_with_cards(self):
+        """Draw a the top card from the game deck."""
+        deck = cards.Deck.build(6)
+        expected = deck[-1]
+        
+        g = game.Game(deck)
+        actual = g._draw()
+        
+        self.assertEqual(expected, actual)
+    
+    def test__draw_deck_with_no_cards(self):
+        """If the game deck has no card, create, shuffle, and cut a 
+        new deck, then draw.
+        """
+        expected = cards.Card
+        
+        g = game.Game()
+        g.deck = cards.Deck([])
+        g.deck.size = 6
+        actual = g._draw()
+        
+        self.assertTrue(isinstance(actual, expected))

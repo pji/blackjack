@@ -44,11 +44,34 @@ class UI(game.BaseUI):
         """
         response = None
         if event == 'nextgame':
-            prompt = 'Another round? > '
-            untrusted = input(prompt)
-            response = model.IsYes(untrusted)
+            response = self._nextgame()
         return response
     
+    def _nextgame(self) -> model.IsYes:
+        """Run the nextgame input event."""
+        response = None
+        
+        # Repeat the prompt until you get a valid response.
+        while not response:
+            prompt = 'Another round? > '
+            untrusted = input(prompt)
+            
+            # Allow the response to default to true. Saves typing when 
+            # playing. 
+            if not untrusted:
+                untrusted = True
+            
+            # Determine if the input is valid.
+            try:
+                response = model.IsYes(untrusted)
+            
+            # If it's not valid, the ValueError will be caught, 
+            # response won't be set, so the prompt will be repeated.
+            except ValueError:
+                pass
+        
+        return response
+        
     def update(self, event:str, player:str, detail: object) -> None:
         """Update the UI.
         
@@ -146,7 +169,7 @@ def two_player():
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
     p1 = players.AutoPlayer(name='John', chips=200)
-    p2 = players.BetterPlayer(name='Michael', chips=152)
+    p2 = players.BetterPlayer(name='Michael', chips=200)
     g = game.Game(deck, dealer, (p1, p2), ui=ui, buyin=2)
     while play:
         ui.enter()
