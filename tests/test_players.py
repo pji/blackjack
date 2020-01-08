@@ -235,6 +235,47 @@ class will_hit_recommended(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_hit_soft_if_not_18(self):
+        """If the player's hand contains an ace and is less than 19, 
+        the player should hit.
+        """
+        expected = True
+        
+        phand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(7, 2),
+        ])
+        player = players.Player(phand, 'John')
+        dhand = cards.Hand([
+            cards.Card(2, 1),
+            cards.Card(2, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, 20)
+        actual = players.will_hit_recommended(None, phand, g)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_do_not_hit_soft_19(self):
+        """If the player's hand is a soft 19, don't hit."""
+        expected = False
+        
+        phand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(6, 2),
+            cards.Card(2, 2),
+        ])
+        player = players.Player(phand, 'John')
+        dhand = cards.Hand([
+            cards.Card(2, 1),
+            cards.Card(2, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, 20)
+        actual = players.will_hit_recommended(None, phand, g)
+        
+        self.assertEqual(expected, actual)
+    
     def test_stand(self):
         """If the situation doesn't match the above criteria, stand."""
         expected = False

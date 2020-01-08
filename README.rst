@@ -30,7 +30,6 @@ Still To Do
 -----------
 The following features are on the to-do list:
 
-* Handle soft hands in will_hit_recommended().
 * Let the user control a player.
 * Add UI that updates information in place rather than listing events.
 * Create a kick-off script at root to ease starting the script
