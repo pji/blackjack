@@ -302,6 +302,24 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_update_shuffled(self):
+        """Given an event that the game reshuffled the deck, the 
+        update() method should print that event to stdout.
+        """
+        expected = self.tmp.format('Dealer', 'Shuffled deck.', '')
+        
+        ui = cli.UI(True)
+        hand = cards.Hand([
+            cards.Card(4, 3),
+            cards.Card(7, 1),
+        ])
+        d = players.Dealer((hand,), 'Dealer', 220)
+        with capture() as (out, err):
+            ui.update('shuffled', d, None)
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
     def test_use_player_name(self):
         """If update() is given a player.Player object rather than 
         a string for the name field, update() should use the name 

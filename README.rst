@@ -30,7 +30,6 @@ Still To Do
 -----------
 The following features are on the to-do list:
 
-* Add new deck event to the UI.
 * Handle soft hands in will_hit_recommended().
 * Let the user control a player.
 * Add UI that updates information in place rather than listing events.

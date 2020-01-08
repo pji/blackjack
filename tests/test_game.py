@@ -1179,3 +1179,22 @@ class GameTestCase(ut.TestCase):
         actual = g._draw()
         
         self.assertTrue(isinstance(actual, expected))
+    
+    def test__draw_ui(self):
+        """If the player insures, _insure() should send that 
+        event to the UI.
+        """
+        dhand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        expected = ['shuffled', dealer, '']
+
+        ui = Mock()
+        g = game.Game(None, dealer, None, ui, 20)
+        g.deck = cards.Deck([])
+        g.deck.size = 6
+        _ = g._draw()
+        
+        ui.update.assert_called_with(*expected)

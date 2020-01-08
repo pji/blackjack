@@ -110,6 +110,8 @@ class UI(game.BaseUI):
             msg = self.tmp.format(player, 'Wins.', fmt)
         if event == 'remove':
             msg = self.tmp.format(player, 'Walks away.', '')
+        if event == 'shuffled':
+            msg = self.tmp.format(player, 'Shuffled deck.', '')
         if event == 'split':
             lines = [
                 self.tmp.format(player, 'Hand split.', get_handstr(detail[0])),

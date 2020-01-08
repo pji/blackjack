@@ -238,6 +238,7 @@ class Game:
             if deck.size > 3:
                 deck.random_cut()
             self.deck = deck
+            self.ui.update('shuffled', self.dealer, '')
         return self.deck.draw()
     
     def _hit(self, player, hand=None):
