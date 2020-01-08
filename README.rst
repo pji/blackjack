@@ -30,10 +30,24 @@ Still To Do
 -----------
 The following features are on the to-do list:
 
-* Create more automated players with different behavior.
+* Add will_double_down_recommened().
+* Handle soft hands in will_hit_recommended().
 * Let the user control a player.
 * Add UI that updates information in place rather than listing events.
 * Create a kick-off script at root to ease starting the script
+* New deck after the current deck is exhausted.
+* Save game state.
+* Restore game state.
+
+The following features are on the nice-to-have list:
+
+* Add optional card count to display.
+* Add will_*_never functions.
+* Add will_*_random functions.
+* Add random computer player construction.
+* Add random computer players joining and leaving game.
+* Add card counting computer players.
+* Add casino catching and removing card counting players.
 
 
 Testing

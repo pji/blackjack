@@ -74,6 +74,7 @@ def will_hit_recommended(self, hand:Hand, the_game) -> bool:
     """Make hit decisions as recommended by bicycle.com."""
     dhand = the_game.dealer.hands[0]
     scores = hand.score()
+    # Still needs to handle soft hands.
     if dhand[0].rank >= 7 or dhand[0].rank == 1:
         scores = [score for score in scores if score < 17]
     elif dhand[0].rank <= 3:
@@ -157,6 +158,8 @@ def will_double_down_always(self, hand:Hand, the_game) -> bool:
     :rtype: bool
     """
     return True
+
+# def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
 
 
 # will_insure functions.
