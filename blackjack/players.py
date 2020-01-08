@@ -74,7 +74,10 @@ def will_hit_recommended(self, hand:Hand, the_game) -> bool:
     """Make hit decisions as recommended by bicycle.com."""
     dhand = the_game.dealer.hands[0]
     scores = [score for score in hand.score() if score <= 21]
-    score = scores.pop()
+    try:
+        score = scores.pop()
+    except IndexError:
+        return False
     if scores and score <= 18:
         return True
     elif (dhand[0].rank >= 7 or dhand[0].rank == 1) and score < 17:

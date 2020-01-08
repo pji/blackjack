@@ -294,6 +294,27 @@ class will_hit_recommended(unittest.TestCase):
         actual = players.will_hit_recommended(None, phand, g)
         
         self.assertEqual(expected, actual)
+    
+    def test_stand_bust(self):
+        """If the hand is bust, stand."""
+        expected = False
+        
+        phand = cards.Hand([
+            cards.Card(8, 2),
+            cards.Card(6, 1),
+            cards.Card(2, 1),
+            cards.Card(7, 2),
+        ])
+        player = players.Player(phand, 'John')
+        dhand = cards.Hand([
+            cards.Card(5, 1),
+            cards.Card(2, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, 20)
+        actual = players.will_hit_recommended(None, phand, g)
+        
+        self.assertEqual(expected, actual)
 
 
 class always_will_splitTestCase(unittest.TestCase):
