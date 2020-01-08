@@ -113,7 +113,6 @@ class dealer_will_hitTestCase(unittest.TestCase):
         ])
         g = game.Game()
         _ = players.dealer_will_hit(player, hand, g)
-        
     
     def test_stand_on_bust(self):
         """If the hand is bust, dealer_will_hit() should return 
@@ -172,7 +171,91 @@ class dealer_will_hitTestCase(unittest.TestCase):
         self.assertEqual(expected, actual_h1)
 
 
-class always_will_split(unittest.TestCase):
+class will_hit_recommended(unittest.TestCase):
+    def test_dealer_card_good_hit_if_not_17(self):
+        """If the dealer's up card is 7-11, the player should hit 
+        until their hand's total is 17 or greater.
+        """
+        expected = True
+        
+        phand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(6, 2),
+        ])
+        player = players.Player(phand, 'John')
+        dhand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(2, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, 20)
+        actual = players.will_hit_recommended(None, phand, g)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_dealer_card_fair_hit_if_not_13(self):
+        """If the dealer's up card is 2-3, the player should hit 
+        until their hand's total is 17 or greater.
+        """
+        expected = True
+        
+        phand = cards.Hand([
+            cards.Card(5, 1),
+            cards.Card(7, 2),
+        ])
+        player = players.Player(phand, 'John')
+        dhand = cards.Hand([
+            cards.Card(2, 1),
+            cards.Card(2, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, 20)
+        actual = players.will_hit_recommended(None, phand, g)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_dealer_card_poor_hit_if_not_12(self):
+        """If the dealer's up card is 2-3, the player should hit 
+        until their hand's total is 17 or greater.
+        """
+        expected = True
+        
+        phand = cards.Hand([
+            cards.Card(4, 1),
+            cards.Card(7, 2),
+        ])
+        player = players.Player(phand, 'John')
+        dhand = cards.Hand([
+            cards.Card(5, 1),
+            cards.Card(2, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, 20)
+        actual = players.will_hit_recommended(None, phand, g)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_stand(self):
+        """If the situation doesn't match the above criteria, stand."""
+        expected = False
+        
+        phand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(11, 2),
+        ])
+        player = players.Player(phand, 'John')
+        dhand = cards.Hand([
+            cards.Card(5, 1),
+            cards.Card(2, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, (player,), None, 20)
+        actual = players.will_hit_recommended(None, phand, g)
+        
+        self.assertEqual(expected, actual)
+
+
+class always_will_splitTestCase(unittest.TestCase):
     def test_paramters(self):
         """Functions that follow the will_split protocol should 
         accept the following parameters: hand, player, dealer, 

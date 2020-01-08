@@ -108,6 +108,8 @@ class Game:
                     payout = 4 * self.buyin
                 elif result == True:
                     payout = 2 * self.buyin
+                elif result == None and dhand.is_blackjack():
+                    pass
                 elif result == None:
                     payout = self.buyin
                 if payout:
@@ -132,17 +134,6 @@ class Game:
     
     def play(self):
         """Play a round of blackjack."""
-        def hit(player, hand=None):
-            """Handle the player's hitting and standing."""
-            if not hand:
-                hand = player.hands[0]
-            while player.will_hit(hand):
-                card = self.deck.draw()
-                card.flip()
-                hand.append(card)
-                self.ui.update('hit', player, hand)
-            self.ui.update('stand', player, hand)
-        
         # Handle the players.
         for player in self.playerlist:
             # Insurance decision.
@@ -154,7 +145,7 @@ class Game:
                     if hand[0].rank == 1:
                         self._ace_split_hit(player, hand)
                     else:
-                        hit(player, hand)
+                        self._hit(player, hand)
             
             # Double down decision.
             elif self._double_down(player, player.hands[0]):
@@ -162,7 +153,7 @@ class Game:
             
             # Standard hit decision.
             else:
-                hit(player)
+                self._hit(player)
         
         # Insurance decision.
         
@@ -172,7 +163,7 @@ class Game:
             if card.facing == DOWN:
                 card.flip()
                 self.ui.update('flip', self.dealer, hand)
-        hit(self.dealer)
+        self._hit(self.dealer)
     
     def _ace_split_hit(self, player: Player, hand: Hand) -> None:
         """Handle a hand made by splitting a pair of aces. It also 
@@ -230,6 +221,17 @@ class Game:
             player.chips -= self.buyin
             self.ui.update('doubled', player, [self.buyin, player.chips])
     
+    def _hit(self, player, hand=None):
+        """Handle the player's hitting and standing."""
+        if not hand:
+            hand = player.hands[0]
+        while player.will_hit(hand, self):
+            card = self.deck.draw()
+            card.flip()
+            hand.append(card)
+            self.ui.update('hit', player, hand)
+        self.ui.update('stand', player, hand)
+
     def _insure(self, player: Player) -> None:
         """Handle the insurance decision for a player.
         
@@ -247,7 +249,6 @@ class Game:
                 player.insured = cost
                 player.chips -= cost
                 self.ui.update('insured', player, [cost, player.chips])
-            
     
     def _remove_player(self, player: Player) -> None:
         """Remove a player from the game."""

@@ -495,7 +495,7 @@ class GameTestCase(ut.TestCase):
         actual_insured = player.insured
         
         self.assertEqual(expected_hand, actual_hand)
-        self.assertEqual(expected_insured, actual_insured)
+        self.assertEqual(expected_insured, actual_insured)        
     
     # Test Game.end().
     def test_end_player_wins(self):
@@ -692,6 +692,29 @@ class GameTestCase(ut.TestCase):
         g = game.Game(None, dealer, (player,), ui, 20)
         g.end()
         actual = ui.mock_calls
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_dealer_blackjack_player_21(self):
+        """Given a dealer hand that is a blackjack, all players who 
+        don't have blackjack lose.
+        """
+        expected = 0
+        
+        phand = cards.Hand([
+            cards.Card(2, 1),
+            cards.Card(10, 0),
+            cards.Card(9, 1),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
+        dhand = cards.Hand([
+            cards.Card(1, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Game(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
         
         self.assertEqual(expected, actual)
     

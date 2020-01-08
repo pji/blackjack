@@ -71,6 +71,21 @@ def dealer_will_hit(self, hand:Hand, the_game=None) -> bool:
         return HIT
 
 
+def will_hit_recommended(self, hand:Hand, the_game) -> bool:
+    """Make hit decisions as recommended by bicycle.com."""
+    dhand = the_game.dealer.hands[0]
+    scores = hand.score()
+    if dhand[0].rank >= 7 or dhand[0].rank == 1:
+        scores = [score for score in scores if score < 17]
+    elif dhand[0].rank <= 3:
+        scores = [score for score in scores if score < 13]
+    else:
+        scores = [score for score in scores if score < 12]
+    if scores:
+        return True
+    return False
+
+
 # will_split functions.
 # will_split functions determine whether the player will split a hand. 
 # They must accept the following parameters:
@@ -176,6 +191,6 @@ Dealer = playerfactory('Dealer', dealer_will_hit, None, None, None, None)
 AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
                            always_will_buyin, will_double_down_always, 
                            will_insure_always)
-BetterPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
-                             always_will_buyin, will_double_down_always, 
-                             will_insure_never)
+BetterPlayer = playerfactory('AutoPlayer', will_hit_recommended, 
+                             always_will_split, always_will_buyin, 
+                             will_double_down_always, will_insure_never)

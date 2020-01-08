@@ -143,7 +143,7 @@ def two_player():
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
     p1 = players.AutoPlayer(name='John', chips=200)
-    p2 = players.AutoPlayer(name='Michael', chips=152)
+    p2 = players.BetterPlayer(name='Michael', chips=152)
     g = game.Game(deck, dealer, (p1, p2), ui=ui, buyin=2)
     while play:
         ui.enter()
