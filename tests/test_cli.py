@@ -347,7 +347,7 @@ class UITestCase(ut.TestCase):
         and return the response.
         """
         mock_input.return_value = 'yes'
-        expected_call = 'Another round? > '
+        expected_call = 'Another round? Y/n > '
         expected_return = model.IsYes(True)
         
         ui = cli.UI(True)
@@ -355,6 +355,22 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected_return.value, actual_return.value)
         mock_input.assert_called_with(expected_call)
+    
+    @patch('blackjack.cli.input')
+    def test_input_hit(self, mock_input):
+        """Given a prompt to hit, the input() method should prompt the 
+        user to see if they want to hit and return the response.
+        """
+        mock_input.return_value = 'yes'
+        expected_call = 'Hit? Y/n > '
+        expected_return = model.IsYes(True)
+        
+        ui = cli.UI(True)
+        actual_return = ui.input('hit')
+        
+        self.assertEqual(expected_return.value, actual_return.value)
+        mock_input.assert_called_with(expected_call)
+        
     
     # Test UI.exit().
     def test_exit(self):

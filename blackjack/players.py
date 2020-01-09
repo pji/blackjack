@@ -88,6 +88,10 @@ def will_hit_recommended(self, hand:Hand, the_game) -> bool:
         return True
     return False
 
+def will_hit_user(self, hand:Hand, the_game) -> bool:
+    """Get a hit decision from the user."""
+    is_yes = the_game.ui.input('hit')
+    return is_yes.value
 
 # will_split functions.
 # will_split functions determine whether the player will split a hand. 
@@ -231,6 +235,9 @@ Dealer = playerfactory('Dealer', dealer_will_hit, None, None, None, None)
 AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
                            always_will_buyin, will_double_down_always, 
                            will_insure_always)
-BetterPlayer = playerfactory('AutoPlayer', will_hit_recommended, 
+BetterPlayer = playerfactory('BetterPlayer', will_hit_recommended, 
                              will_split_recommended, always_will_buyin, 
                              will_double_down_recommended, will_insure_never)
+UserPlayer = playerfactory('UserPlayer', will_hit_user, will_split_recommended, 
+                           always_will_buyin, will_double_down_recommended, 
+                           will_insure_never)

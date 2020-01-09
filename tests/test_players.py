@@ -10,8 +10,9 @@ This module contains the unit tests for the blackjack.players module.
 from functools import partial
 import inspect
 import unittest
+from unittest.mock import patch
 
-from blackjack import cards, players, game
+from blackjack import cards, players, game, model
 
 
 class PlayerTestCase(unittest.TestCase):
@@ -171,7 +172,7 @@ class dealer_will_hitTestCase(unittest.TestCase):
         self.assertEqual(expected, actual_h1)
 
 
-class will_hit_recommended(unittest.TestCase):
+class will_hit_recommendedTestCase(unittest.TestCase):
     def test_dealer_card_good_hit_if_not_17(self):
         """If the dealer's up card is 7-11, the player should hit 
         until their hand's total is 17 or greater.
@@ -316,6 +317,36 @@ class will_hit_recommended(unittest.TestCase):
         
         self.assertEqual(expected, actual)
 
+
+class will_hit_userTestCase(unittest.TestCase):
+    @patch('blackjack.game.BaseUI.input')
+    def test_hit(self, mock_input):
+        """When the user chooses to hit, will_hit_user() returns 
+        True.
+        """
+        expected = True
+        
+        mock_input.return_value = model.IsYes(expected)
+        g = game.Game(None, None, None, None, None)
+        actual = players.will_hit_user(None, None, g)
+        
+        mock_input.assert_called()
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.game.BaseUI.input')
+    def test_stand(self, mock_input):
+        """When the user chooses to hit, will_hit_user() returns 
+        True.
+        """
+        expected = False
+        
+        mock_input.return_value = model.IsYes(expected)
+        g = game.Game(None, None, None, None, None)
+        actual = players.will_hit_user(None, None, g)
+        
+        mock_input.assert_called()
+        self.assertEqual(expected, actual)
+    
 
 class always_will_splitTestCase(unittest.TestCase):
     def test_paramters(self):

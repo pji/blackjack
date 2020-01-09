@@ -42,24 +42,25 @@ class UI(game.BaseUI):
         :return: The input received from the UI.
         :rtype: Any. (May need an response object in the future.)
         """
-        response = None
-        if event == 'nextgame':
-            response = self._nextgame()
-        return response
+        prompt = None
+        if event == 'hit':
+            prompt = 'Hit? Y/n > '
+        elif event == 'nextgame':
+            prompt = 'Another round? Y/n > '
+        return self._yesno_prompt(prompt)
     
-    def _nextgame(self) -> model.IsYes:
-        """Run the nextgame input event."""
+    def _yesno_prompt(self, prompt:str, default: bool = True) -> model.IsYes:
+        """Prompt the user for a yes/no answer."""
         response = None
         
         # Repeat the prompt until you get a valid response.
         while not response:
-            prompt = 'Another round? > '
             untrusted = input(prompt)
             
             # Allow the response to default to true. Saves typing when 
             # playing. 
             if not untrusted:
-                untrusted = True
+                untrusted = default
             
             # Determine if the input is valid.
             try:
@@ -183,6 +184,27 @@ def two_player():
         play = ui.input('nextgame').value
 
 
+def three_player():
+    ui = UI()
+    play = True
+    deck = cards.Deck.build(6)
+    deck.shuffle()
+    deck.random_cut()
+    dealer = players.Dealer(name='Dealer')
+    p1 = players.AutoPlayer(name='John', chips=200)
+    p2 = players.BetterPlayer(name='Michael', chips=200)
+    p3 = players.UserPlayer(name='You', chips=200)
+    g = game.Game(deck, dealer, (p1, p2, p3), ui=ui, buyin=2)
+    while play:
+        ui.enter()
+        g.start()
+        g.deal()
+        g.play()
+        g.end()
+        ui.exit()
+        play = ui.input('nextgame').value
+
+
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Blackjack')
     p.add_argument('-d', '--dealer_only', help='Just a dealer.', 
@@ -190,6 +212,8 @@ if __name__ == '__main__':
     p.add_argument('-1', '--one_player', help='One player.', 
                    action='store_true')
     p.add_argument('-2', '--two_player', help='Two player.', 
+                   action='store_true')
+    p.add_argument('-3', '--three_player', help='Three player.', 
                    action='store_true')
     args = p.parse_args()
     
@@ -199,3 +223,5 @@ if __name__ == '__main__':
         one_player()
     if args.two_player:
         two_player()
+    if args.three_player:
+        three_player()
