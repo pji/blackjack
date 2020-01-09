@@ -917,3 +917,36 @@ class make_playerTestCase(unittest.TestCase):
         actual = player.name
         
         self.assertEqual(expected, actual)
+    
+    def test_has_decision_methods(self):
+        """The players created by make_player() should have the 
+        decision methods for Players, such as will_hit and 
+        will_insure.
+        """
+        # As long as no exception is raised, this test passes.
+        phand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(1, 2),
+        ])
+        dhand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(1, 2),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Game(None, dealer, None, None, 0)
+        player = players.make_player()
+        
+        methods = [
+            player.will_hit,
+            player.will_split,
+#             player.will_double_down,
+        ]
+        for method in methods:
+            _ = method(phand, g)
+        
+        methods = [
+            player.will_buyin,
+            player.will_insure,
+        ]
+        for method in methods:
+            _ = method(g)

@@ -8,7 +8,9 @@ players, including the dealer.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from functools import partial
 from random import choice
+from types import MethodType
 
 from blackjack.cards import Hand
 
@@ -49,6 +51,21 @@ class Player:
     
     def __format__(self, format_spec):
         return self.name.__format__(format_spec)
+    
+    def will_hit(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+    
+    def will_split(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+    
+    def will_buyin(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+    
+    def will_double_down(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+    
+    def will_insure(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
 
 
 # will_hit functions.
@@ -255,7 +272,23 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
 def make_player() -> Player:
     """Make a random player for a blackjack game."""
     name = choice(NAMES)
-    return Player(name=name)
+    methods = {
+        'will_hit': choice([will_hit_dealer, will_hit_recommended]),
+        'will_split': choice([will_split_always, will_split_recommended]),
+        'will_buyin': will_buyin_always,
+        'will_double_down': choice([will_double_down_always, 
+                                    will_double_down_recommended]),
+        'will_insure': choice([will_insure_always, will_insure_never]),
+    }
+    player = Player(name=name)
+    
+    # Patches in the randomly chosen methods. type.MethodType has to 
+    # be called here to coerce the functions into methods. Without 
+    # it, Python won't send self to the methods.
+    for method in methods:
+        setattr(player, method, MethodType(methods[method], player))
+    
+    return player
 
 
 # Player subclasses.
