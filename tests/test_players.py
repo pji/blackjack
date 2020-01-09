@@ -97,11 +97,11 @@ class PlayerTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-class dealer_will_hitTestCase(unittest.TestCase):
+class will_hit_dealerTestCase(unittest.TestCase):
     def test_exists(self):
-        """A function named dealer_will_hit() should exist."""
+        """A function named will_hit_dealer() should exist."""
         names = [item[0] for item in inspect.getmembers(players)]
-        self.assertTrue('dealer_will_hit' in names)
+        self.assertTrue('will_hit_dealer' in names)
     
     def test_is_will_hit(self):
         """A will_hit function should accept a Player, a Hand, and a 
@@ -113,10 +113,10 @@ class dealer_will_hitTestCase(unittest.TestCase):
             cards.Card(11, 3),
         ])
         g = game.Game()
-        _ = players.dealer_will_hit(player, hand, g)
+        _ = players.will_hit_dealer(player, hand, g)
     
     def test_stand_on_bust(self):
-        """If the hand is bust, dealer_will_hit() should return 
+        """If the hand is bust, will_hit_dealer() should return 
         False.
         """
         expected = players.STAND
@@ -126,12 +126,12 @@ class dealer_will_hitTestCase(unittest.TestCase):
             cards.Card(4, 2),
             cards.Card(11, 3),
         ])
-        actual = players.dealer_will_hit(None, h)
+        actual = players.will_hit_dealer(None, h)
         
         self.assertEqual(expected, actual)
     
     def test_stand_on_17_plus(self):
-        """If the score of the hand is 17 or greater, dealer_will_hit() 
+        """If the score of the hand is 17 or greater, will_hit_dealer() 
         should return False.
         """
         expected = players.STAND
@@ -145,14 +145,14 @@ class dealer_will_hitTestCase(unittest.TestCase):
             cards.Card(2, 3),
             cards.Card(8, 1),
         ])
-        actual_h1 = players.dealer_will_hit(None, h1)
-        actual_h2 = players.dealer_will_hit(None, h2)
+        actual_h1 = players.will_hit_dealer(None, h1)
+        actual_h2 = players.will_hit_dealer(None, h2)
         
         self.assertEqual(expected, actual_h1)
         self.assertEqual(expected, actual_h2)
     
     def test_hit_on_less_than_17(self):
-        """If the score of the hand is less than 17, dealer_will_hit() 
+        """If the score of the hand is less than 17, will_hit_dealer() 
         should return true.
         """
         expected = players.HIT
@@ -166,8 +166,8 @@ class dealer_will_hitTestCase(unittest.TestCase):
             cards.Card(2, 3),
             cards.Card(8, 1),
         ])
-        actual_h1 = players.dealer_will_hit(None, h1)
-        actual_h2 = players.dealer_will_hit(None, h2)
+        actual_h1 = players.will_hit_dealer(None, h1)
+        actual_h2 = players.will_hit_dealer(None, h2)
         
         self.assertEqual(expected, actual_h1)
 
@@ -336,7 +336,7 @@ class will_hit_userTestCase(unittest.TestCase):
     @patch('blackjack.game.BaseUI.input')
     def test_stand(self, mock_input):
         """When the user chooses to hit, will_hit_user() returns 
-        True.
+        False.
         """
         expected = False
         
@@ -348,7 +348,7 @@ class will_hit_userTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
     
 
-class always_will_splitTestCase(unittest.TestCase):
+class will_split_alwaysTestCase(unittest.TestCase):
     def test_paramters(self):
         """Functions that follow the will_split protocol should 
         accept the following parameters: hand, player, dealer, 
@@ -357,7 +357,7 @@ class always_will_splitTestCase(unittest.TestCase):
         hand = cards.Hand()
         player = players.Player((hand,), 'John Cleese')
         g = game.Game()
-        player.will_split = partial(players.always_will_split, None)
+        player.will_split = partial(players.will_split_always, None)
         player.will_split(hand, g)
         
         # The test was that no exception was raised when will_split 
@@ -365,10 +365,10 @@ class always_will_splitTestCase(unittest.TestCase):
         self.assertTrue(True)
     
     def test_always_true(self):
-        """always_will_split() should return True."""
+        """will_split_always() should return True."""
         hand = cards.Hand()
         player = players.Player((hand,), 'John Cleese')
-        player.will_split = partial(players.always_will_split, None)
+        player.will_split = partial(players.will_split_always, None)
         actual = player.will_split(hand, None)
         
         self.assertTrue(actual)
@@ -485,6 +485,36 @@ class will_split_recommendedTestCase(unittest.TestCase):
         
         self.assertEqual(expected2, actual2)
 
+
+class will_split_userTestCase(unittest.TestCase):
+    @patch('blackjack.game.BaseUI.input')
+    def test_split(self, mock_input):
+        """When the user chooses to split, will_split_user() returns 
+        True.
+        """
+        expected = True
+        
+        mock_input.return_value = model.IsYes(expected)
+        g = game.Game(None, None, None, None, None)
+        actual = players.will_split_user(None, None, g)
+        
+        mock_input.assert_called()
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.game.BaseUI.input')
+    def test_stand(self, mock_input):
+        """When the user chooses to split, will_split_user() returns 
+        False.
+        """
+        expected = False
+        
+        mock_input.return_value = model.IsYes(expected)
+        g = game.Game(None, None, None, None, None)
+        actual = players.will_split_user(None, None, g)
+        
+        mock_input.assert_called()
+        self.assertEqual(expected, actual)
+    
 
 class always_will_buyin(unittest.TestCase):
     def test_parameters(self):

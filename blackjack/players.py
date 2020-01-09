@@ -53,7 +53,7 @@ class Player:
 #   * A game.Game object
 # 
 # And they must return a bool.
-def dealer_will_hit(self, hand:Hand, the_game=None) -> bool:
+def will_hit_dealer(self, hand:Hand, the_game=None) -> bool:
     """Determine whether the player will hit or stand on the hand.
     
     :param hand: The hand to make the decision on.
@@ -93,6 +93,7 @@ def will_hit_user(self, hand:Hand, the_game) -> bool:
     is_yes = the_game.ui.input('hit')
     return is_yes.value
 
+
 # will_split functions.
 # will_split functions determine whether the player will split a hand. 
 # They must accept the following parameters:
@@ -101,7 +102,7 @@ def will_hit_user(self, hand:Hand, the_game) -> bool:
 #   * A game.Game object
 # 
 # And they must return a bool.
-def always_will_split(self, hand:Hand, the_game) -> bool:
+def will_split_always(self, hand:Hand, the_game) -> bool:
     """The player will always split where possible.
     
     :param hand: The hand that may be split.
@@ -127,6 +128,11 @@ def will_split_recommended(self, hand:Hand, the_game) -> bool:
             return True
         else:
             return False
+
+def will_split_user(self, hand:Hand, the_game) -> bool:
+    """Get a hit decision from the user."""
+    is_yes = the_game.ui.input('split')
+    return is_yes.value
 
 
 # will_buyin functions.
@@ -231,13 +237,13 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
 
 
 # Player subclasses.
-Dealer = playerfactory('Dealer', dealer_will_hit, None, None, None, None)
-AutoPlayer = playerfactory('AutoPlayer', dealer_will_hit, always_will_split,
+Dealer = playerfactory('Dealer', will_hit_dealer, None, None, None, None)
+AutoPlayer = playerfactory('AutoPlayer', will_hit_dealer, will_split_always,
                            always_will_buyin, will_double_down_always, 
                            will_insure_always)
 BetterPlayer = playerfactory('BetterPlayer', will_hit_recommended, 
                              will_split_recommended, always_will_buyin, 
                              will_double_down_recommended, will_insure_never)
-UserPlayer = playerfactory('UserPlayer', will_hit_user, will_split_recommended, 
+UserPlayer = playerfactory('UserPlayer', will_hit_user, will_split_user, 
                            always_will_buyin, will_double_down_recommended, 
                            will_insure_never)

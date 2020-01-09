@@ -47,6 +47,8 @@ class UI(game.BaseUI):
             prompt = 'Hit? Y/n > '
         elif event == 'nextgame':
             prompt = 'Another round? Y/n > '
+        elif event == 'split':
+            prompt = 'Split? Y/n > '
         return self._yesno_prompt(prompt)
     
     def _yesno_prompt(self, prompt:str, default: bool = True) -> model.IsYes:
