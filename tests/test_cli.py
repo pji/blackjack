@@ -400,7 +400,22 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected_return.value, actual_return.value)
         mock_input.assert_called_with(expected_call)
+    
+    @patch('blackjack.cli.input')
+    def test_input_insure(self, mock_input):
+        """Given a prompt to insure, the input() method should prompt 
+        the user to see if they want to hit and return the response.
+        """
+        mock_input.return_value = 'yes'
+        expected_call = 'Insure? Y/n > '
+        expected_return = model.IsYes(True)
         
+        ui = cli.UI(True)
+        actual_return = ui.input('insure')
+        
+        self.assertEqual(expected_return.value, actual_return.value)
+        mock_input.assert_called_with(expected_call)
+
     
     # Test UI.exit().
     def test_exit(self):

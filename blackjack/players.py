@@ -227,6 +227,11 @@ def will_insure_never(self, the_game) -> bool:
     """
     return 0
 
+def will_insure_user(self, the_game) -> bool:
+    """Get a insurance decision from the user."""
+    is_yes = the_game.ui.input('insure')
+    return is_yes.value
+
 
 def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn, 
                   will_double_down, will_insure) -> type:
@@ -251,4 +256,4 @@ BetterPlayer = playerfactory('BetterPlayer', will_hit_recommended,
                              will_double_down_recommended, will_insure_never)
 UserPlayer = playerfactory('UserPlayer', will_hit_user, will_split_user, 
                            will_buyin_always, will_double_down_user, 
-                           will_insure_never)
+                           will_insure_user)

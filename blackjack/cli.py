@@ -47,10 +47,15 @@ class UI(game.BaseUI):
             prompt = 'Double down? Y/n > '
         elif event == 'hit':
             prompt = 'Hit? Y/n > '
+        elif event == 'insure':
+            prompt = 'Insure? Y/n > '
         elif event == 'nextgame':
             prompt = 'Another round? Y/n > '
         elif event == 'split':
             prompt = 'Split? Y/n > '
+        if not prompt:
+            reason = 'Invalid event sent to UI.input().'
+            raise NotImplementedError(reason)
         return self._yesno_prompt(prompt)
     
     def _yesno_prompt(self, prompt:str, default: bool = True) -> model.IsYes:

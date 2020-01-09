@@ -791,6 +791,36 @@ class will_insure_neverTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
+class will_insure_userTestCase(unittest.TestCase):
+    @patch('blackjack.game.BaseUI.input')
+    def test_insure(self, mock_input):
+        """When the user chooses to double down, 
+        will_insure_user() returns True.
+        """
+        expected = True
+        
+        mock_input.return_value = model.IsYes(expected)
+        g = game.Game(None, None, None, None, None)
+        actual = players.will_insure_user(None, g)
+        
+        mock_input.assert_called()
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.game.BaseUI.input')
+    def test_not_insure(self, mock_input):
+        """When the user chooses to double down, 
+        will_insure_user() returns False.
+        """
+        expected = False
+        
+        mock_input.return_value = model.IsYes(expected)
+        g = game.Game(None, None, None, None, None)
+        actual = players.will_insure_user(None, g)
+        
+        mock_input.assert_called()
+        self.assertEqual(expected, actual)
+    
+
 class playerfactoryTestCase(unittest.TestCase):
     def test_player_subclass(self):
         """playerfactory() should return Player subclasses."""
