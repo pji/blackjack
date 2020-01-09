@@ -130,7 +130,7 @@ def will_split_recommended(self, hand:Hand, the_game) -> bool:
             return False
 
 def will_split_user(self, hand:Hand, the_game) -> bool:
-    """Get a hit decision from the user."""
+    """Get a split decision from the user."""
     is_yes = the_game.ui.input('split')
     return is_yes.value
 
@@ -143,7 +143,7 @@ def will_split_user(self, hand:Hand, the_game) -> bool:
 #   * A game.Game object
 # 
 # And they must return a bool.
-def always_will_buyin(self, the_game) -> bool:
+def will_buyin_always(self, the_game) -> bool:
     """The player will always try to buy into a game.
     
     :param game: The game to buy into.
@@ -190,6 +190,11 @@ def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
     elif 9 in scores and dcard.rank >= 2 and dcard.rank <= 6:
         return True
     return False
+
+def will_double_down_user(self, hand:Hand, the_game) -> bool:
+    """Get a double down decision from the user."""
+    is_yes = the_game.ui.input('doubledown')
+    return is_yes.value
 
 
 # will_insure functions.
@@ -239,11 +244,11 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
 # Player subclasses.
 Dealer = playerfactory('Dealer', will_hit_dealer, None, None, None, None)
 AutoPlayer = playerfactory('AutoPlayer', will_hit_dealer, will_split_always,
-                           always_will_buyin, will_double_down_always, 
+                           will_buyin_always, will_double_down_always, 
                            will_insure_always)
 BetterPlayer = playerfactory('BetterPlayer', will_hit_recommended, 
-                             will_split_recommended, always_will_buyin, 
+                             will_split_recommended, will_buyin_always, 
                              will_double_down_recommended, will_insure_never)
 UserPlayer = playerfactory('UserPlayer', will_hit_user, will_split_user, 
-                           always_will_buyin, will_double_down_recommended, 
+                           will_buyin_always, will_double_down_user, 
                            will_insure_never)

@@ -43,7 +43,9 @@ class UI(game.BaseUI):
         :rtype: Any. (May need an response object in the future.)
         """
         prompt = None
-        if event == 'hit':
+        if event == 'doubledown':
+            prompt = 'Double down? Y/n > '
+        elif event == 'hit':
             prompt = 'Hit? Y/n > '
         elif event == 'nextgame':
             prompt = 'Another round? Y/n > '

@@ -516,7 +516,7 @@ class will_split_userTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
     
 
-class always_will_buyin(unittest.TestCase):
+class will_buyin_always(unittest.TestCase):
     def test_parameters(self):
         """Functions that follow the will_buyin protocol should 
         accept the following parameter: game.
@@ -524,7 +524,7 @@ class always_will_buyin(unittest.TestCase):
         player = players.Player()
         g = game.Game()
         
-        player.will_buyin = partial(players.always_will_buyin, None)
+        player.will_buyin = partial(players.will_buyin_always, None)
         player.will_buyin(game)
         
         # The test was that no exception was raised when will_buyin 
@@ -532,10 +532,10 @@ class always_will_buyin(unittest.TestCase):
         self.assertTrue(True)
     
     def test_always_true(self):
-        """always_will_buyin() will always return True."""
+        """will_buyin_always() will always return True."""
         g = game.Game()
         p = players.Player()
-        p.will_buyin = partial(players.always_will_buyin, None)
+        p.will_buyin = partial(players.will_buyin_always, None)
         actual = p.will_buyin(g)
         
         self.assertTrue(actual)
@@ -704,6 +704,36 @@ class will_double_down_recommendedTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
 
+
+class will_double_down_userTestCase(unittest.TestCase):
+    @patch('blackjack.game.BaseUI.input')
+    def test_double_down(self, mock_input):
+        """When the user chooses to double down, 
+        will_double_down_user() returns True.
+        """
+        expected = True
+        
+        mock_input.return_value = model.IsYes(expected)
+        g = game.Game(None, None, None, None, None)
+        actual = players.will_double_down_user(None, None, g)
+        
+        mock_input.assert_called()
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.game.BaseUI.input')
+    def test_not_double_down(self, mock_input):
+        """When the user chooses to double down, 
+        will_double_down_user() returns False.
+        """
+        expected = False
+        
+        mock_input.return_value = model.IsYes(expected)
+        g = game.Game(None, None, None, None, None)
+        actual = players.will_double_down_user(None, None, g)
+        
+        mock_input.assert_called()
+        self.assertEqual(expected, actual)
+    
 
 class will_insure_alwaysTestCase(unittest.TestCase):
     def test_parameters(self):
