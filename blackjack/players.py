@@ -8,12 +8,18 @@ players, including the dealer.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from random import choice
+
 from blackjack.cards import Hand
 
 
 # Global values.
 HIT = True
 STAND = False
+NAMES = ['Jennifer', 'Amy', 'Melissa', 'Heather', 'Angela', 'Michelle', 
+         'Kimberly', 'Jessica', 'Lisa', 'Amanda', 'Michael', 'Jason', 
+         'Christopher', 'David', 'James', 'John', 'Robert', 'Brian', 
+         'Matthew', 'Daniel']
 
 
 # Base class.
@@ -244,6 +250,12 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
         'will_insure': will_insure,
     }
     return type(name, (Player,), attrs)
+
+
+def make_player() -> Player:
+    """Make a random player for a blackjack game."""
+    name = choice(NAMES)
+    return Player(name=name)
 
 
 # Player subclasses.

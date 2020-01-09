@@ -897,3 +897,23 @@ class playerfactoryTestCase(unittest.TestCase):
         actual = obj.will_insure(None)
         
         self.assertEqual(expected, actual)
+
+
+class make_playerTestCase(unittest.TestCase):
+    def test_returns_Player(self):
+        """The make_player() function returns an instance of a Player 
+        subclass.
+        """
+        expected = players.Player
+        actual = players.make_player()
+        self.assertTrue(isinstance(actual, expected))
+    
+    def test_player_has_name(self):
+        """The players created by make_player() have names."""
+        expected = 'Graham'
+        
+        players.NAMES = [expected,]
+        player = players.make_player()
+        actual = player.name
+        
+        self.assertEqual(expected, actual)
