@@ -25,6 +25,13 @@ To see a game that is the dealer and two players::
 
     python3 -m blackjack.cli -2
 
+To construct a game with four computer players, you as the fifth 
+player, the initial bet set to 100, and all players starting with 
+100 chips::
+
+    python3 -m blackjack.cli -p 4 -u -c 100 -C 100
+
+
 
 Still To Do
 -----------
