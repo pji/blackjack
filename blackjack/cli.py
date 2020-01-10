@@ -213,24 +213,85 @@ def three_player():
         ui.exit()
         play = ui.input('nextgame').value
 
+def four_player():
+    ui = UI()
+    play = True
+    deck = cards.Deck.build(6)
+    deck.shuffle()
+    deck.random_cut()
+    dealer = players.Dealer(name='Dealer')
+    playerlist = []
+    for index in range(4):
+        playerlist.append(players.make_player())
+    g = game.Game(deck, dealer, playerlist, ui=ui, buyin=2)
+    while play:
+        ui.enter()
+        g.start()
+        g.deal()
+        g.play()
+        g.end()
+        ui.exit()
+        play = ui.input('nextgame').value
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Blackjack')
-    p.add_argument('-d', '--dealer_only', help='Just a dealer.', 
+    p.add_argument('-d', '--dealer_only', help='Just a dealer game.', 
                    action='store_true')
-    p.add_argument('-1', '--one_player', help='One player.', 
+    p.add_argument('-1', '--one_player', help='One player game.', 
                    action='store_true')
-    p.add_argument('-2', '--two_player', help='Two player.', 
+    p.add_argument('-2', '--two_player', help='Two player game.', 
                    action='store_true')
-    p.add_argument('-3', '--three_player', help='Three player.', 
+    p.add_argument('-3', '--three_player', help='Three player game.', 
                    action='store_true')
+    p.add_argument('-4', '--four_player', help='Four player game.', 
+                   action='store_true')
+    p.add_argument('-p', '--players', help='Number of random players.', 
+                   action='store')
+    p.add_argument('-u', '--user', help='Add a human player.', 
+                   action='store_true')
+    p.add_argument('-c', '--chips', help='Number of starting chips.', 
+                   action='store')
+    p.add_argument('-C', '--cost', help='Hand bet amount.', 
+                   action='store')
     args = p.parse_args()
     
     if args.dealer_only:
         dealer_only()
-    if args.one_player:
+    elif args.one_player:
         one_player()
-    if args.two_player:
+    elif args.two_player:
         two_player()
-    if args.three_player:
+    elif args.three_player:
         three_player()
+    elif args.four_player:
+        four_player()
+    else:
+        chips = 200
+        if args.chips:
+            chips = float(args.chips)
+        buyin = 2
+        if args.cost:
+            buyin = float(args.cost)
+        
+        playerlist = []
+        for _ in range(int(args.players)):
+            playerlist.append(players.make_player(chips))
+        if args.user:
+            playerlist.append(players.UserPlayer(name='You', chips=chips))
+        
+        deck = cards.Deck.build(6)
+        deck.shuffle()
+        deck.random_cut()
+        ui = UI()
+        g = game.Game(deck, None, playerlist, ui, buyin)
+        
+        play_again = True
+        while play_again:
+            ui.enter()
+            g.start()
+            g.deal()
+            g.play()
+            g.end()
+            ui.exit()
+            play_again = ui.input('nextgame').value
+        

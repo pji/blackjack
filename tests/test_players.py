@@ -9,13 +9,13 @@ This module contains the unit tests for the blackjack.players module.
 """
 from functools import partial
 import inspect
-import unittest
-from unittest.mock import patch
+import unittest as ut
+from unittest.mock import Mock, patch
 
 from blackjack import cards, players, game, model
 
 
-class PlayerTestCase(unittest.TestCase):
+class PlayerTestCase(ut.TestCase):
     def test_exists(self):
         """A class named Player should exist."""
         names = [item[0] for item in inspect.getmembers(players)]
@@ -97,7 +97,7 @@ class PlayerTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-class will_hit_dealerTestCase(unittest.TestCase):
+class will_hit_dealerTestCase(ut.TestCase):
     def test_exists(self):
         """A function named will_hit_dealer() should exist."""
         names = [item[0] for item in inspect.getmembers(players)]
@@ -172,7 +172,7 @@ class will_hit_dealerTestCase(unittest.TestCase):
         self.assertEqual(expected, actual_h1)
 
 
-class will_hit_recommendedTestCase(unittest.TestCase):
+class will_hit_recommendedTestCase(ut.TestCase):
     def test_dealer_card_good_hit_if_not_17(self):
         """If the dealer's up card is 7-11, the player should hit 
         until their hand's total is 17 or greater.
@@ -318,7 +318,7 @@ class will_hit_recommendedTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-class will_hit_userTestCase(unittest.TestCase):
+class will_hit_userTestCase(ut.TestCase):
     @patch('blackjack.game.BaseUI.input')
     def test_hit(self, mock_input):
         """When the user chooses to hit, will_hit_user() returns 
@@ -348,7 +348,7 @@ class will_hit_userTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
     
 
-class will_split_alwaysTestCase(unittest.TestCase):
+class will_split_alwaysTestCase(ut.TestCase):
     def test_paramters(self):
         """Functions that follow the will_split protocol should 
         accept the following parameters: hand, player, dealer, 
@@ -374,7 +374,7 @@ class will_split_alwaysTestCase(unittest.TestCase):
         self.assertTrue(actual)
 
 
-class will_split_recommendedTestCase(unittest.TestCase):
+class will_split_recommendedTestCase(ut.TestCase):
     def test_split_ace_or_8(self):
         """Always split aces or eights."""
         expected = True
@@ -486,7 +486,7 @@ class will_split_recommendedTestCase(unittest.TestCase):
         self.assertEqual(expected2, actual2)
 
 
-class will_split_userTestCase(unittest.TestCase):
+class will_split_userTestCase(ut.TestCase):
     @patch('blackjack.game.BaseUI.input')
     def test_split(self, mock_input):
         """When the user chooses to split, will_split_user() returns 
@@ -516,7 +516,7 @@ class will_split_userTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
     
 
-class will_buyin_always(unittest.TestCase):
+class will_buyin_always(ut.TestCase):
     def test_parameters(self):
         """Functions that follow the will_buyin protocol should 
         accept the following parameter: game.
@@ -541,7 +541,7 @@ class will_buyin_always(unittest.TestCase):
         self.assertTrue(actual)
 
 
-class will_double_down_alwaysTestCase(unittest.TestCase):
+class will_double_down_alwaysTestCase(ut.TestCase):
     def test_parameters(self):
         """Functions that follow the will_double_down protocol should 
         accept the following parameters: self, hand, game.
@@ -566,7 +566,7 @@ class will_double_down_alwaysTestCase(unittest.TestCase):
         self.assertTrue(actual)
 
 
-class will_double_down_recommendedTestCase(unittest.TestCase):
+class will_double_down_recommendedTestCase(ut.TestCase):
     def test_double_down_if_11(self):
         """If the player's hand is 11, player should double down."""
         expected = True
@@ -705,7 +705,7 @@ class will_double_down_recommendedTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-class will_double_down_userTestCase(unittest.TestCase):
+class will_double_down_userTestCase(ut.TestCase):
     @patch('blackjack.game.BaseUI.input')
     def test_double_down(self, mock_input):
         """When the user chooses to double down, 
@@ -735,7 +735,7 @@ class will_double_down_userTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
     
 
-class will_insure_alwaysTestCase(unittest.TestCase):
+class will_insure_alwaysTestCase(ut.TestCase):
     def test_parameters(self):
         """Functions that follow the will_insure protocol should 
         accept the following parameters: self, hand, game.
@@ -763,7 +763,7 @@ class will_insure_alwaysTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-class will_insure_neverTestCase(unittest.TestCase):
+class will_insure_neverTestCase(ut.TestCase):
     def test_parameters(self):
         """Functions that follow the will_insure protocol should 
         accept the following parameters: self, game.
@@ -791,7 +791,7 @@ class will_insure_neverTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-class will_insure_userTestCase(unittest.TestCase):
+class will_insure_userTestCase(ut.TestCase):
     @patch('blackjack.game.BaseUI.input')
     def test_insure(self, mock_input):
         """When the user chooses to double down, 
@@ -821,7 +821,7 @@ class will_insure_userTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
     
 
-class playerfactoryTestCase(unittest.TestCase):
+class playerfactoryTestCase(ut.TestCase):
     def test_player_subclass(self):
         """playerfactory() should return Player subclasses."""
         expected = players.Player
@@ -899,7 +899,7 @@ class playerfactoryTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-class make_playerTestCase(unittest.TestCase):
+class make_playerTestCase(ut.TestCase):
     def test_returns_Player(self):
         """The make_player() function returns an instance of a Player 
         subclass.
@@ -908,11 +908,12 @@ class make_playerTestCase(unittest.TestCase):
         actual = players.make_player()
         self.assertTrue(isinstance(actual, expected))
     
-    def test_player_has_name(self):
+    @patch('blackjack.players.get_name')
+    def test_player_has_name(self, mock_get_name):
         """The players created by make_player() have names."""
         expected = 'Graham'
         
-        players.NAMES = [expected,]
+        mock_get_name.return_value = 'Graham'
         player = players.make_player()
         actual = player.name
         
@@ -950,3 +951,73 @@ class make_playerTestCase(unittest.TestCase):
         ]
         for method in methods:
             _ = method(g)
+
+
+class name_builderTestCase(ut.TestCase):
+    def test_construct_name(self):
+        """Given a beginning, middle, and end, name_builder should 
+        return a string that is the combination of the three strings.
+        """
+        expected = 'Jichael'
+        
+        beginning = 'John'
+        end = 'Michael'
+        actual = players.name_builder(beginning, end)
+        
+        self.assertEqual(expected, actual)
+        
+    def test_end_starts_with_vowel(self):
+        """If the middle string starts with a vowel and the beginning 
+        string does not, the first character of the beginning string 
+        should be put in front of the middle string rather than 
+        replacing the first letter of the middle string.
+        """
+        expected = 'Meric'
+        
+        beginning = 'Michael'
+        end = 'Eric'
+        actual = players.name_builder(beginning, end)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_starts_with_two_or_more_consonants(self):
+        """If the middle string starts with two or more consonants 
+        and the beginning string starts with at least one consonant, 
+        the first consonants of the middle string should be replaced 
+        with the first consonants of the beginning string.
+        """
+        expected = 'Bristopher'
+        
+        beginning = 'Brian'
+        end = 'Christopher'
+        actual = players.name_builder(beginning, end)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_and_start_start_with_vowels(self):
+        """If the end string and the start string start with vowels, 
+        the starting vowels of the end should be replaced with the 
+        starting vowels of the start.
+        """
+        expected = 'Emy'
+        
+        start = 'Eric'
+        end = 'Amy'
+        actual = players.name_builder(start, end)
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_starts_with_two_or_more_consonants(self):
+        """If the end string starts with two or more consonants 
+        and the beginning string starts with at least one vowel, 
+        the first vowels of the beginning string should be placed 
+        before the first letter of the end string.
+        """
+        expected = 'Ejohn'
+        
+        beginning = 'Eric'
+        end = 'John'
+        actual = players.name_builder(beginning, end)
+        
+        self.assertEqual(expected, actual)
+    

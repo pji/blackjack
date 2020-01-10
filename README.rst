@@ -30,7 +30,6 @@ Still To Do
 -----------
 The following features are on the to-do list:
 
-* Add random computer player construction.
 * Add UI that updates information in place rather than listing events.
 * Create a kick-off script at root to ease starting the script
 * Save game state.

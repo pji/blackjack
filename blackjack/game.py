@@ -79,7 +79,7 @@ class Game:
     def start(self):
         """Start a round of blackjack."""
         for player in self.playerlist:
-            if player.chips > self.buyin:
+            if player.chips >= self.buyin:
                 player.chips -= self.buyin
                 self.ui.update('buyin', player, [self.buyin, player.chips])
             else:

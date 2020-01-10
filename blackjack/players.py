@@ -21,7 +21,57 @@ STAND = False
 NAMES = ['Jennifer', 'Amy', 'Melissa', 'Heather', 'Angela', 'Michelle', 
          'Kimberly', 'Jessica', 'Lisa', 'Amanda', 'Michael', 'Jason', 
          'Christopher', 'David', 'James', 'John', 'Robert', 'Brian', 
-         'Matthew', 'Daniel']
+         'Matthew', 'Daniel', 'Sophia', 'Olivia', 'Emma', 'Ava', 'Aria', 
+         'Isabella', 'Amelia', 'Mia', 'Riley', 'Aaliyah', 'Liam', 'Jackson', 
+         'Noah', 'Aiden', 'Grayson', 'Caden', 'Lucas', 'Elijah', 'Oliver', 
+         'Mason', 'Emily', 'Jessica', 'Ashley', 'Sarah', 'Samantha', 'Taylor', 
+         'Hannah', 'Alexis', 'Rachel', 'Elizabeth', 'Michael', 'Matthew', 
+         'Jacob', 'Christopher', 'Joshua', 'Nicholas', 'Tyler', 'Brandon', 
+         'Austin', 'Andrew']
+
+
+# Utility functions.
+def get_name():
+    """Return a random name."""
+    return choice(NAMES)
+
+def name_builder(start:str, end:str) -> str:
+    """Given three strings, return a string that combines them.
+    
+    :param beginning: The string to use for the beginning of the 
+        result.
+    :param middle: The string to use for the middle of the result.
+    :param end: The string to use for the end of the result.
+    :return: The new string.
+    :rtype: str
+    """
+    vowels = 'aeiouy'
+    consonants = 'bcdfghjklmnpqrstvwxz'
+    start = start.lower()
+    end = end.lower()
+    
+    def get_change_index(s:str, letters):
+        index = 1
+        while index < len(s) and s[index] in letters:
+            index += 1
+        return index
+    
+    name = ''
+    if end[0] not in vowels and start[0] not in vowels:
+        index_start = get_change_index(start, consonants)
+        index_end = get_change_index(end, consonants)
+        name = start[0:index_start] + end[index_end:]
+    elif end[0] in vowels and start[0] not in vowels:
+        index_start = get_change_index(start, consonants)
+        name = start[0:index_start] + end
+    elif end[0] in vowels and start[0] in vowels:
+        index_start = get_change_index(start, vowels)
+        index_end = get_change_index(end, vowels)
+        name = start[0:index_start] + end[index_end:]
+    else:
+        index_start = get_change_index(start, vowels)
+        name = start[0:index_start] + end
+    return name[0].upper() + name[1:]
 
 
 # Base class.
@@ -269,9 +319,14 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
     return type(name, (Player,), attrs)
 
 
-def make_player() -> Player:
+def make_player(chips=200) -> Player:
     """Make a random player for a blackjack game."""
-    name = choice(NAMES)
+    name = ''
+    if 0 != choice(range(3)):
+        name = get_name()
+    else:
+        name = name_builder(get_name(), get_name())
+    
     methods = {
         'will_hit': choice([will_hit_dealer, will_hit_recommended]),
         'will_split': choice([will_split_always, will_split_recommended]),
@@ -280,7 +335,7 @@ def make_player() -> Player:
                                     will_double_down_recommended]),
         'will_insure': choice([will_insure_always, will_insure_never]),
     }
-    player = Player(name=name)
+    player = Player(name=name, chips=chips)
     
     # Patches in the randomly chosen methods. type.MethodType has to 
     # be called here to coerce the functions into methods. Without 
