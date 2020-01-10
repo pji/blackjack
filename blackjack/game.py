@@ -70,21 +70,29 @@ class Game:
         self.ui = ui
         
         self.buyin = buyin
+        
+        self.seats = len(playerlist)
     
     def __repr__(self):
         cls = self.__class__
         return (f'{cls.__name__}[{self.deck!r}, {self.dealer}, {self.playlist},'
                 f'{ui}, {buyin}')
     
-    def start(self):
-        """Start a round of blackjack."""
+    def deal(self):
+        """Deal a round of blackjack."""
+        # First card.
         for player in self.playerlist:
-            if player.chips >= self.buyin:
-                player.chips -= self.buyin
-                self.ui.update('buyin', player, [self.buyin, player.chips])
-            else:
-                self._remove_player(player)
-                self.ui.update('remove', player, '')
+            player.hands = (self._build_hand(),)
+        self.dealer.hands = (self._build_hand(),)
+        
+        # Second card.
+        for player in self.playerlist:
+            card = self._draw()
+            card.flip()
+            player.hands[0].append(card)
+            self.ui.update('deal', player, player.hands[0])
+        self.dealer.hands[0].append(self._draw())
+        self.ui.update('deal', self.dealer, self.dealer.hands[0])
     
     def end(self):
         """End a round of blackjack."""
@@ -118,22 +126,6 @@ class Game:
                     player.chips += payout
                     self.ui.update(event, player, [payout, player.chips])
     
-    def deal(self):
-        """Deal a round of blackjack."""
-        # First card.
-        for player in self.playerlist:
-            player.hands = (self._build_hand(),)
-        self.dealer.hands = (self._build_hand(),)
-        
-        # Second card.
-        for player in self.playerlist:
-            card = self._draw()
-            card.flip()
-            player.hands[0].append(card)
-            self.ui.update('deal', player, player.hands[0])
-        self.dealer.hands[0].append(self._draw())
-        self.ui.update('deal', self.dealer, self.dealer.hands[0])
-    
     def play(self):
         """Play a round of blackjack."""
         # Handle the players.
@@ -166,6 +158,21 @@ class Game:
                 card.flip()
                 self.ui.update('flip', self.dealer, hand)
         self._hit(self.dealer)
+    
+    def new_game(self):
+        """Update the UI with the players at the start of the game."""
+        for player in self.playerlist:
+            self.ui.update('join', player, '')
+    
+    def start(self):
+        """Start a round of blackjack."""
+        for player in self.playerlist:
+            if player.chips >= self.buyin:
+                player.chips -= self.buyin
+                self.ui.update('buyin', player, [self.buyin, player.chips])
+            else:
+                self._remove_player(player)
+                self.ui.update('remove', player, '')
     
     def _ace_split_hit(self, player: Player, hand: Hand) -> None:
         """Handle a hand made by splitting a pair of aces. It also 

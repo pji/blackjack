@@ -51,6 +51,7 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    
     # Test enter().
     def test_enter(self):
         """enter() should print the headers for the game output."""
@@ -320,6 +321,34 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_update_join(self):
+        """Given an event that a new player has joined the game, 
+        the update() method should print that event to stdout.
+        """
+        expected = self.tmp.format('Graham', 'Walks up.', '')
+        
+        ui = cli.UI(True)
+        d = players.AutoPlayer([], 'Graham', 220)
+        with capture() as (out, err):
+            ui.update('join', d, None)
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
+    def test_update_join_you(self):
+        """Given an event that a new player has joined the game, 
+        the update() method should print that event to stdout.
+        """
+        expected = self.tmp.format('You', 'Walk up.', '')
+        
+        ui = cli.UI(True)
+        d = players.AutoPlayer([], 'You', 220)
+        with capture() as (out, err):
+            ui.update('join', d, None)
+        actual = out.getvalue()
+        
+        self.assertEqual(expected, actual)
+    
     def test_use_player_name(self):
         """If update() is given a player.Player object rather than 
         a string for the name field, update() should use the name 
@@ -338,6 +367,7 @@ class UITestCase(ut.TestCase):
         actual = out.getvalue()
         
         self.assertEqual(expected, actual)
+    
     
     # Test UI.input()
     @patch('blackjack.cli.input')
@@ -415,7 +445,7 @@ class UITestCase(ut.TestCase):
         
         self.assertEqual(expected_return.value, actual_return.value)
         mock_input.assert_called_with(expected_call)
-
+    
     
     # Test UI.exit().
     def test_exit(self):
@@ -432,3 +462,9 @@ class UITestCase(ut.TestCase):
         actual = out.getvalue()
         
         self.assertEqual(expected, actual)
+
+
+# class DynamicUITestCase(ut.TestCase):
+#     def test_init(self):
+#         """
+#         """

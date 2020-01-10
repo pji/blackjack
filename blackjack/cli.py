@@ -14,7 +14,7 @@ from functools import partial
 from blackjack import cards, game, model, players
 
 
-# UI object.
+# UI objects.
 class UI(game.BaseUI):
     tmp = '{:<15} {:<15} {:<}'
     
@@ -115,6 +115,11 @@ class UI(game.BaseUI):
         if event == 'insurepay':
             fmt = '{} ({})'.format(*detail)
             msg = self.tmp.format(player, 'Insurance pay out.', fmt)
+        if event == 'join':
+            phrase = 'Walks up.'
+            if player.name == 'You':
+                phrase = 'Walk up.'
+            msg = self.tmp.format(player, phrase, '')
         if event == 'payout':
             fmt = '{} ({})'.format(*detail)
             msg = self.tmp.format(player, 'Wins.', fmt)
@@ -139,7 +144,7 @@ class UI(game.BaseUI):
             fmt = '{} ({})'.format(*detail)
             msg = self.tmp.format(player, 'Stand-off.', fmt)
         if not msg:
-            reason = 'Invalid event sent to UI.update().'
+            reason = 'Invalid event sent to UI.update().' + msg
             raise NotImplementedError(reason)
         print(msg)
 
@@ -183,6 +188,7 @@ def two_player():
     p1 = players.AutoPlayer(name='John', chips=200)
     p2 = players.BetterPlayer(name='Michael', chips=200)
     g = game.Game(deck, dealer, (p1, p2), ui=ui, buyin=2)
+    g.new_game()
     while play:
         ui.enter()
         g.start()
@@ -204,6 +210,7 @@ def three_player():
     p2 = players.BetterPlayer(name='Michael', chips=200)
     p3 = players.UserPlayer(name='You', chips=200)
     g = game.Game(deck, dealer, (p1, p2, p3), ui=ui, buyin=2)
+    g.new_game()
     while play:
         ui.enter()
         g.start()
@@ -212,6 +219,7 @@ def three_player():
         g.end()
         ui.exit()
         play = ui.input('nextgame').value
+
 
 def four_player():
     ui = UI()
@@ -224,6 +232,7 @@ def four_player():
     for index in range(4):
         playerlist.append(players.make_player())
     g = game.Game(deck, dealer, playerlist, ui=ui, buyin=2)
+    g.new_game()
     while play:
         ui.enter()
         g.start()
@@ -284,6 +293,7 @@ if __name__ == '__main__':
         deck.random_cut()
         ui = UI()
         g = game.Game(deck, None, playerlist, ui, buyin)
+        g.new_game()
         
         play_again = True
         while play_again:

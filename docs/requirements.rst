@@ -489,3 +489,12 @@ method that's handling the input rather than creating a class. But,
 data descriptors are the validation pattern, and I'd rather not have 
 multiple ways I'm doing validation. So, potential overkill it is, 
 then.
+
+
+Dynamic UI
+----------
+The goal of the DynamicUI is to present the game like a table that 
+gets updated rather than a scrolling log of events. In order to do 
+that, the UI needs to keep track of the players in the game. That's 
+probably best handled by an event coming from the game. That way I 
+can enable new players in the middle of a game in the future.

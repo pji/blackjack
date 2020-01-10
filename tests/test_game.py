@@ -139,6 +139,46 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_seats(self):
+        """On initiation of a Game object, the value of the seats 
+        attribute should be the length of the playerlist. This will 
+        be used as the maximum number of players that can join the 
+        game.
+        """
+        expected = 3
+        
+        playerlist = [
+            players.Player(),
+            players.Player(),
+            players.Player(),
+        ]
+        g = game.Game(playerlist=playerlist)
+        actual = g.seats
+        
+        self.assertEqual(expected, actual)
+    
+    def test_players_join(self):
+        """When the Game object is initialized, it should send a join 
+        event to the UI for each player in the game.
+        """
+        playerlist = [
+            players.Player(),
+            players.Player(),
+            players.Player(),
+        ]
+        expected = [
+            call.update('join', playerlist[0], ''),
+            call.update('join', playerlist[1], ''),
+            call.update('join', playerlist[2], ''),
+        ]
+        
+        ui = Mock()
+        g = game.Game(playerlist=playerlist, ui=ui)
+        g.new_game()
+        actual = ui.mock_calls
+        
+        self.assertEqual(expected, actual)
+    
     # Game.deal() tests.
     def test_deal(self):
         """In a Game object with a deck and a dealer, deal() should 
