@@ -23,6 +23,7 @@ class GameTestCase(ut.TestCase):
         names = [item[0] for item in inspect.getmembers(game)]
         self.assertTrue('Game' in names)
     
+    
     # Game.__init__() tests.
     def test_deck_given(self):
         """If a deck is given, it should be stored in the deck 
@@ -157,8 +158,10 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    
+    # Test Game.new_game().
     def test_players_join(self):
-        """When the Game object is initialized, it should send a join 
+        """When players join a game, it should send a join 
         event to the UI for each player in the game.
         """
         playerlist = [
@@ -178,6 +181,7 @@ class GameTestCase(ut.TestCase):
         actual = ui.mock_calls
         
         self.assertEqual(expected, actual)
+    
     
     # Game.deal() tests.
     def test_deal(self):
@@ -257,6 +261,7 @@ class GameTestCase(ut.TestCase):
         # Deck
         actual_deck_size = len(deck)
         self.assertEqual(expected_deck_size, actual_deck_size)        
+    
     
     # Game.play() tests.
     def test_play_bust(self):
@@ -537,6 +542,7 @@ class GameTestCase(ut.TestCase):
         self.assertEqual(expected_hand, actual_hand)
         self.assertEqual(expected_insured, actual_insured)        
     
+    
     # Test Game.end().
     def test_end_player_wins(self):
         """If the player wins, the player gets double their initial 
@@ -761,6 +767,7 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    
     # Game._split() tests.
     def test__split_cannot_split(self):
         """Given a hand and a player, if the hand cannot be split, 
@@ -874,6 +881,7 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    
     # Test Game.start().
     def test_start_take_payment(self):
         """In a Game with players who will buy-in and a buy-in, 
@@ -940,6 +948,7 @@ class GameTestCase(ut.TestCase):
         
         ui.update.assert_called_with(*expected)
     
+    
     # Test Game._remove_player().
     def test__remove_player(self):
         """Given player, _remove_player() should remove that player 
@@ -953,6 +962,7 @@ class GameTestCase(ut.TestCase):
         actual = g.playerlist
         
         self.assertEqual(expected, actual)
+    
     
     # Test Game._compare_score().
     def test__compare_score_player_win(self):
@@ -1074,6 +1084,7 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    
     # Test Game._double_down().
     def test__double_down(self):
         """Given a hand and a player who will double down and can 
@@ -1132,6 +1143,7 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected_dd, actual_dd)
         self.assertEqual(expected_chips, actual_chips)
+    
     
     # Test Game._insure()
     def test__insure(self):
@@ -1195,6 +1207,7 @@ class GameTestCase(ut.TestCase):
         g._insure(player)
         
         ui.update.assert_called_with(*expected)
+    
     
     # Test Game._draw().
     def test__draw_deck_with_cards(self):

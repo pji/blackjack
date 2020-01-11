@@ -9,12 +9,94 @@ a command line interface.
 :license: MIT, see LICENSE for more details.
 """
 import argparse
-from functools import partial
+
+from blessed import Terminal
 
 from blackjack import cards, game, model, players
 
 
+# Objects and functions for advanced terminal control.
+def run_terminal(is_interactive=False):
+    """A coroutine to run the dynamic terminal UI.
+    
+    :param is_interactive: (Optional.) Whether the terminal should 
+        expect user input. This is mainly used for automated testing.
+    :yield: None.
+    :ytype: None.
+    """
+    term = Terminal()
+    ctlr = TerminalController(term)
+    with term.fullscreen(), term.hidden_cursor():
+        while True:
+            method, *args = yield
+            getattr(ctlr, method)(*args)
+            if is_interactive:
+                term.inkey()
+
+
+class TerminalController:
+    """A controller to handle UI events sent to the run_terminal 
+    coroutine.
+    """
+    def __init__(self, term):
+        self.term = term
+        self.headers = ('Player', 'Chips', 'Bet', 'Hand', 'Event')
+        self.playerlist = []
+        self.h_tmp = '{:<14} {:>7} {:>3} {:<27} {:<}'
+        self.r_tmp = '{:<14} {:>7} {:>3} {:<27} {:<}'
+    
+    def init(self, seats):
+        """Blackjack has started.
+        
+        :param seats: The number of players that can be in the game.
+        :return: None.
+        :rtype: None.
+        """
+        for i in range(seats):
+            self.playerlist.append(None)
+        print(self.term.bold('BLACKJACK'))
+        print(self.term.move_down + self.r_tmp.format(*self.headers))
+        print('\u2500' * self.term.width)
+        for line in range(seats):
+            print()
+        print('\u2500' * self.term.width)
+    
+    def join(self, player):
+        """A new player joined the game.
+        
+        :param player: The player joining the game.
+        :return: None.
+        :rtype: None.
+        """
+        try:
+            index = self.playerlist.index(None)
+        except ValueError:
+            reason = 'No empty seats in the player list.'
+            raise ValueError(reason)
+        else:
+            self.playerlist[index] = player
+            row = index + 4
+            msg = 'Joins game.'
+            line = (player.name, player.chips, '', '', msg)
+            print(self.term.move(row, 0) + self.r_tmp.format(*line))
+
+
 # UI objects.
+class DynamicUI(game.BaseUI):
+    def __init__(self, is_interactive=False):
+        """Initialize an instance of the class."""
+        self.rows = []
+        self.t = run_terminal(is_interactive)
+        next(self.t)
+    
+    def enter(self, seats):
+        self.t.send(('init', seats))
+    
+    def update(self, event, player, detail):
+        if event == 'join':
+            self.t.send((event, player))
+        
+
 class UI(game.BaseUI):
     tmp = '{:<15} {:<15} {:<}'
     
@@ -242,6 +324,33 @@ def four_player():
         ui.exit()
         play = ui.input('nextgame').value
 
+def dui():
+    ui = DynamicUI(True)
+    deck = cards.Deck.build(6)
+    deck.shuffle()
+    deck.random_cut()
+    dealer = players.Dealer(name='Dealer')
+    playerlist = []
+    for index in range(4):
+        playerlist.append(players.make_player())
+    g = game.Game(deck, dealer, playerlist, ui=ui, buyin=2)
+    ui.enter(len(playerlist))
+    g.new_game()
+
+def test():
+    playerlist = [
+        players.Player(name='spam', chips=200),
+        players.Player(name='eggs', chips=200),            
+    ]
+    term = run_terminal(True)
+    next(term)
+    term.send(('init', len(playerlist)))
+    for player in playerlist:
+        term.send(('join', player))
+    term.send(('end'))
+    
+    
+
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Blackjack')
     p.add_argument('-d', '--dealer_only', help='Just a dealer game.', 
@@ -254,6 +363,8 @@ if __name__ == '__main__':
                    action='store_true')
     p.add_argument('-4', '--four_player', help='Four player game.', 
                    action='store_true')
+    p.add_argument('-D', '--dui', help='Dynamic UI game.', 
+                   action='store_true')
     p.add_argument('-p', '--players', help='Number of random players.', 
                    action='store')
     p.add_argument('-u', '--user', help='Add a human player.', 
@@ -262,6 +373,8 @@ if __name__ == '__main__':
                    action='store')
     p.add_argument('-C', '--cost', help='Hand bet amount.', 
                    action='store')
+    p.add_argument('-t', '--test', help='Run current test.', 
+                   action='store_true')
     args = p.parse_args()
     
     if args.dealer_only:
@@ -274,6 +387,10 @@ if __name__ == '__main__':
         three_player()
     elif args.four_player:
         four_player()
+    elif args.dui:
+        dui()
+    elif args.test:
+        test()
     else:
         chips = 200
         if args.chips:

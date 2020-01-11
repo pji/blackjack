@@ -498,3 +498,70 @@ gets updated rather than a scrolling log of events. In order to do
 that, the UI needs to keep track of the players in the game. That's 
 probably best handled by an event coming from the game. That way I 
 can enable new players in the middle of a game in the future.
+
+I think how this is going to need to work without curses is that the 
+UI object will need to track each player's row. And since we need to 
+know what to delete in order to refresh the screen, I'll probably 
+have to store the previous message displayed somewhere, too.
+
+What should the interface look like? Maybe something like this:
+
+    Player  Hand        Bet Chips   Status
+    --------------------------------------
+    Dealer  7c --       --  --      Receives hand.
+    John    Js 10h      20  192.0   Stands.
+    Michael Qd 2d Ks    20   89.5   Stands.
+    You     5c 6h       20  205.5   Receives hand.
+    --------------------------------------
+    Double down? Y/n >
+
+The status is a little tricky with the computer players going so 
+quickly. Maybe put a little pause in there. We'll see.
+
+Some time later....
+
+Oh! Hey, guess what I just relearned. You can't backspace past a 
+newline character. Since my plan for avoiding curses was to clear the 
+table by using backspaces, I might be out of luck. Hm. Is there 
+another way to do this?
+
+I suppose this is where I have to break down and use my first third-
+party module. Great. OK. But what should I use? There is, apparently, 
+the windows-curses module that will allow curses to work on Windows 
+systems, so maybe that's the answer. I develop using curses, and then 
+add windows-curses as a requirement for Windows systems? I don't have 
+any way to test that at the moment, though. I'll go ahead and give it 
+a shot, though.
+
+Some time later....
+
+Using curses is going to be awkward. While it's not required, it wants 
+to be run from inside a wrapper() function call, but since I want to 
+be able to slot whatever UI I want into the game, I'd end up having to 
+call the game differently when using the DynamicUI instead of just UI. 
+
+Can this be resolved with a coroutine maybe? It doesn't seem like it. 
+wrapper() wants a callable function. For a coroutine to work, it 
+would need to already be running. There would be no way for me to call 
+into that coroutine from the game object. The game object would have 
+to be invoked from within the wrapper.
+
+I could skip the wrapper and try to make this work, but I foresee many 
+terminal restarts in that process. Maybe I just give up and go with a 
+third-party library after all. I've looked briefly at three:
+
+* blessings
+* blessed
+* asciimatics
+
+blessings seems to be dead. The maintainer says he doesn't have the 
+time to maintain it, and it's not been updated for Python 3.7, let 
+alone Python 3.8. blessed seems better supported and is a fork of 
+blessings, so that may be the way to go.  At least it supports Python 
+3.7. The last option was asciimatics, which seems more active by 
+doesn't list support for Python 3.7. asciimatics also says it's cross 
+platform.
+
+Maybe I'll try asciimatics on Python 3.7/3.8 and see if it works. I'm 
+able to import it OK, but it needs a wrapper too. Hm. So how about 
+blessed?

@@ -11,7 +11,9 @@ from contextlib import contextmanager
 from io import StringIO
 import sys
 import unittest as ut
-from unittest.mock import patch
+from unittest.mock import patch, call
+
+from blessed import Terminal
 
 from blackjack import cards, cli, model, players
 
@@ -464,7 +466,103 @@ class UITestCase(ut.TestCase):
         self.assertEqual(expected, actual)
 
 
-# class DynamicUITestCase(ut.TestCase):
-#     def test_init(self):
+class DynamicUITestCase(ut.TestCase):
+    def test_init(self):
+        """A DynamicUI object should initialize the following 
+        attributes: rows, tmp.
+        """
+        exp_rows = []
+        
+        ui = cli.DynamicUI()
+        act_rows = ui.rows
+        
+        self.assertEqual(exp_rows, act_rows)
+    
+    # Test DynamicUI.update().
+    @patch('blackjack.cli.run_terminal')
+    def test_update_join(self, mock_term):
+        """Given an event that a new player has joined the game, 
+        the update() method should print that event to stdout.
+        """
+        player = players.AutoPlayer([], 'Graham', 220)
+        expected = call().send(('join', player))
+        
+        ui = cli.DynamicUI()
+        ui.update('join', player, '')
+        actual = mock_term.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
+    
+#     def test_update_join_you(self):
+#         """Given an event that a new player has joined the game, 
+#         the update() method should print that event to stdout.
 #         """
-#         """
+#         expected = self.tmp.format('You', 'Walk up.', '')
+#         
+#         ui = cli.UI(True)
+#         d = players.AutoPlayer([], 'You', 220)
+#         with capture() as (out, err):
+#             ui.update('join', d, None)
+#         actual = out.getvalue()
+#         
+#         self.assertEqual(expected, actual)
+
+
+class run_terminalTestCase(ut.TestCase):
+    bold = '\x1b[1m'
+    ascii = '\x1b(B'
+    default = '\x1b[m'
+    h_tmp = '{:<14} {:>7} {:>3} {:<27} {:<}'
+    r_tmp = '{:<14} {:>7} {:>3} {:<27} {:<}'
+    
+    def test_init(self):
+        """When sent an init message, run_terminal() should display 
+        the game screen with headers, footers, and enough space for 
+        player seats.
+        """
+        headers = ('Player', 'Chips', 'Bet', 'Hand', 'Event')
+        lines = [
+            f'{self.bold}BLACKJACK{self.ascii}{self.default}\n',
+            f'\n' + self.h_tmp.format(*headers) + '\n',
+            '\u2500' * 80 + '\n',
+            '\n',
+            '\n',
+            '\u2500' * 80 + '\n',
+        ]
+        expected = ''.join(lines)
+        
+        seats = 2
+        with capture() as (out, err):
+            term = cli.run_terminal()
+            next(term)
+            term.send(('init', 2))
+        actual = out.getvalue()
+        del term
+        
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.print')
+    def test_join(self, mock_print):
+        """When sent a join message, run_terminal() should display 
+        the player's name, chips, and a join message in the first 
+        open row.
+        """
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        values = [[p.name, p.chips, '', '', 'Joins game.'] for p in playerlist]
+        expected = [
+            call('\x1b[5;1H' + self.r_tmp.format(*values[0])),
+            call('\x1b[6;1H' + self.r_tmp.format(*values[1])),
+        ]
+        
+        term = cli.run_terminal()
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        actual = mock_print.mock_calls[-2:]
+        del term
+
+        self.assertEqual(expected, actual)
