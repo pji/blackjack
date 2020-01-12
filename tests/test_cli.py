@@ -552,6 +552,59 @@ class DynamicUITestCase(ut.TestCase):
         actual = mock_term.mock_calls[-1]
         
         self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.run_terminal')
+    def test_update_doubled(self, mock_term):
+        """Given an event that a player has doubled down, the 
+        update() method should print that event to stdout.
+        """
+        player = players.AutoPlayer([], 'Graham', 200)
+        expected = call().send(('doubled', player, 40))
+        
+        ui = cli.DynamicUI()
+        ui.update('doubled', player, [40, 200])
+        actual = mock_term.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.run_terminal')
+    def test_update_hit(self, mock_term):
+        """Given an event that a player has hit, the update() method 
+        should print that event to stdout.
+        """
+        player = players.AutoPlayer([], 'Graham', 220)
+        hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(3, 0),
+            cards.Card(4, 0),
+        ])
+        expected = call().send(('hit', player, hand))
+        
+        ui = cli.DynamicUI()
+        ui.update('hit', player, hand)
+        actual = mock_term.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.run_terminal')
+    def test_update_stand(self, mock_term):
+        """Given an event that a player has hit, the update() method 
+        should print that event to stdout.
+        """
+        player = players.AutoPlayer([], 'Graham', 220)
+        hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(3, 0),
+            cards.Card(4, 0),
+        ])
+        expected = call().send(('stand', player, hand))
+        
+        ui = cli.DynamicUI()
+        ui.update('stand', player, hand)
+        actual = mock_term.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
+
 
 
 class run_terminalTestCase(ut.TestCase):
@@ -749,6 +802,102 @@ class run_terminalTestCase(ut.TestCase):
         term.send(('join', playerlist[0]))
         term.send(('join', playerlist[1]))
         term.send(('doubled', playerlist[0], 4))
+        actual = mock_print.mock_calls[-1:]
+        del term
+
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.print')
+    def test_hit(self, mock_print):
+        """When sent a hit message, run_terminal() should display
+        the player's hand in the player's row.
+        """
+        tmp = '\x1b[{row};28H{:>3}\x1b[{row};56H{:<24}'
+        expected = [
+            call(tmp.format('J♣ 3♦ 4♦', 'Hits.', row=5)),
+        ]
+        
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        hand0 = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(3, 1),
+            cards.Card(4, 1),
+        ])
+        term = cli.run_terminal()
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        term.send(('buyin', playerlist[0], 20))
+        term.send(('buyin', playerlist[1], 20))
+        term.send(('hit', playerlist[0], hand0))
+        actual = mock_print.mock_calls[-1:]
+        del term
+
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.print')
+    def test_stand(self, mock_print):
+        """When sent a stand message, run_terminal() should display
+        the player's hand in the player's row.
+        """
+        tmp = '\x1b[{row};28H{:>3}\x1b[{row};56H{:<24}'
+        expected = [
+            call(tmp.format('J♣ 3♦ 4♦', 'Stands.', row=5)),
+        ]
+        
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        hand0 = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(3, 1),
+            cards.Card(4, 1),
+        ])
+        term = cli.run_terminal()
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        term.send(('buyin', playerlist[0], 20))
+        term.send(('buyin', playerlist[1], 20))
+        term.send(('stand', playerlist[0], hand0))
+        actual = mock_print.mock_calls[-1:]
+        del term
+
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.print')
+    def test_stand_bust(self, mock_print):
+        """When sent a stand message, run_terminal() should display
+        the player's hand in the player's row.
+        """
+        tmp = '\x1b[{row};28H{:>3}\x1b[{row};56H{:<24}'
+        expected = [
+            call(tmp.format('J♣ 3♦ 10♦', 'Busts.', row=5)),
+        ]
+        
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        hand0 = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(3, 1),
+            cards.Card(10, 1),
+        ])
+        term = cli.run_terminal()
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        term.send(('buyin', playerlist[0], 20))
+        term.send(('buyin', playerlist[1], 20))
+        term.send(('stand', playerlist[0], hand0))
         actual = mock_print.mock_calls[-1:]
         del term
 

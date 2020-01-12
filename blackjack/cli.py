@@ -45,6 +45,37 @@ class TerminalController:
         self.h_tmp = '{:<14} {:>7} {:>3} {:<27} {:<}'
         self.r_tmp = '{:<14} {:>7} {:>3} {:<27} {:<}'
     
+    def _bet_update(self, player, bet, msg):
+        """The game event updates the player's bet.
+        
+        :param player: The player making the bet.
+        :param bet: The amount of the bet.
+        :param msg: The event's explanation.
+        :return: None.
+        :rtype: None.
+        """
+        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
+        row = self.playerlist.index(player) + 4
+        chips = self.term.move(row, 15) + '{:>7}'.format(player.chips)
+        bet = self.term.move(row, 23) +'{:>3}'.format(bet)
+        msg = self.term.move(row, 55) + msg_tmp.format(msg)
+        print(chips + bet + msg)
+    
+    def _hand_update(self, player, hand, msg):
+        """The game event updates the player's hand.
+        
+        :param player: The player who was dealt the hand.
+        :param hand: The hand that was dealt.
+        :param msg: The event's explanation.
+        :return: None.
+        :rtype: None.
+        """
+        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
+        row = self.playerlist.index(player) + 4
+        handstr = self.term.move(row, 27) + ' '.join(str(card) for card in hand)
+        msg = self.term.move(row, 55) + msg_tmp.format(msg)
+        print(handstr + msg)
+    
     def buyin(self, player, bet):
         """A player bets on a round.
         
@@ -53,12 +84,7 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
-        row = self.playerlist.index(player) + 4
-        chips = self.term.move(row, 15) + '{:>7}'.format(player.chips)
-        bet = self.term.move(row, 23) +'{:>3}'.format(bet)
-        msg = self.term.move(row, 55) + msg_tmp.format('Bets.')
-        print(chips + bet + msg)
+        self._bet_update(player, bet, 'Bets.')
     
     def deal(self, player, hand):
         """A player was dealt a hand.
@@ -68,11 +94,7 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
-        row = self.playerlist.index(player) + 4
-        handstr = self.term.move(row, 27) + ' '.join(str(card) for card in hand)
-        msg = self.term.move(row, 55) + msg_tmp.format('Takes hand.')
-        print(handstr + msg)
+        self._hand_update(player, hand, 'Takes hand.')
     
     def doubled(self, player, bet):
         """The player doubles down.
@@ -83,12 +105,17 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
-        row = self.playerlist.index(player) + 4
-        chips = self.term.move(row, 15) + '{:>7}'.format(player.chips)
-        bet = self.term.move(row, 23) + '{:>3}'.format(bet)
-        msg = self.term.move(row, 55) + msg_tmp.format('Doubles down.')
-        print(chips + bet + msg)
+        self._bet_update(player, bet, 'Doubles down.')
+    
+    def hit(self, player, hand):
+        """A player hits.
+        
+        :param player: The player who was dealt the hand.
+        :param hand: The hand that was dealt.
+        :return: None.
+        :rtype: None.
+        """
+        self._hand_update(player, hand, 'Hits.')
     
     def init(self, seats):
         """Blackjack has started.
@@ -115,12 +142,7 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
-        row = self.playerlist.index(player) + 4
-        chips = self.term.move(row, 15) + '{:>7}'.format(player.chips)
-        bet = self.term.move(row, 23) + '{:>3}'.format(bet)
-        msg = self.term.move(row, 55) + msg_tmp.format('Buys insurance.')
-        print(chips + bet + msg)
+        self._bet_update(player, bet, 'Buys insurance.')
     
     def join(self, player):
         """A new player joined the game.
@@ -150,13 +172,21 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
-        row = self.playerlist.index(player) + 4
-        chips = self.term.move(row, 15) + '{:>7}'.format(player.chips)
-        bet = self.term.move(row, 23) + '{:>3}'.format(bet)
-        msg = self.term.move(row, 55) + msg_tmp.format('Splits.')
-        print(chips + bet + msg)
-
+        self._bet_update(player, bet, 'Splits.')
+    
+    def stand(self, player, hand):
+        """A player hits.
+        
+        :param player: The player who was dealt the hand.
+        :param hand: The hand that was dealt.
+        :return: None.
+        :rtype: None.
+        """
+        scores = [score for score in hand.score() if score <= 21]
+        if scores:
+            self._hand_update(player, hand, 'Stands.')
+        else:
+            self._hand_update(player, hand, 'Busts.')
 
 
 # UI objects.
@@ -175,14 +205,18 @@ class DynamicUI(game.BaseUI):
             self.t.send((event, player, detail[0]))
         elif event == 'deal':
             self.t.send((event, player, detail))
-#         elif == 'doubled':
-#             self.t.send(event, player, detail[0])
+        elif event == 'doubled':
+            self.t.send((event, player, detail[0]))
+        elif event == 'hit':
+            self.t.send((event, player, detail))
         elif event == 'insure':
             self.t.send((event, player, detail[0]))
         elif event == 'join':
             self.t.send((event, player))
         elif event == 'split':
             self.t.send((event, player, detail[0]))
+        elif event == 'stand':
+            self.t.send((event, player, detail))
 
 
 class UI(game.BaseUI):
@@ -426,6 +460,7 @@ def dui():
     g.new_game()
     g.start()
     g.deal()
+    g.play()
 
 def test():
     playerlist = [
