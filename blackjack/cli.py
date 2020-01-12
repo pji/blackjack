@@ -53,11 +53,12 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
+        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
         row = self.playerlist.index(player) + 4
-        chips = '{:>7}'.format(player.chips)
-        bet = '{:>3}'.format(bet)
-        print(self.term.move(row, 15) + chips 
-              + self.term.move(row, 23) + bet)
+        chips = self.term.move(row, 15) + '{:>7}'.format(player.chips)
+        bet = self.term.move(row, 23) +'{:>3}'.format(bet)
+        msg = self.term.move(row, 55) + msg_tmp.format('Bets.')
+        print(chips + bet + msg)
     
     def deal(self, player, hand):
         """A player was dealt a hand.
@@ -67,9 +68,11 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
+        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
         row = self.playerlist.index(player) + 4
-        handstr = ' '.join(str(card) for card in hand)
-        print(self.term.move(row, 27) + handstr)
+        handstr = self.term.move(row, 27) + ' '.join(str(card) for card in hand)
+        msg = self.term.move(row, 55) + msg_tmp.format('Takes hand.')
+        print(handstr + msg)
     
     def init(self, seats):
         """Blackjack has started.
@@ -86,6 +89,22 @@ class TerminalController:
         for line in range(seats):
             print()
         print('\u2500' * self.term.width)
+    
+    def insure(self, player, bet):
+        """The player purchased insurance.
+        
+        :param player: The player purchasing insurance.
+        :param bet: The player's new bet total.
+        :param chips: The player's updated chips total.
+        :return: None.
+        :rtype: None.
+        """
+        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
+        row = self.playerlist.index(player) + 4
+        chips = self.term.move(row, 15) + '{:>7}'.format(player.chips)
+        bet = self.term.move(row, 23) + '{:>3}'.format(bet)
+        msg = self.term.move(row, 55) + msg_tmp.format('Buys insurance.')
+        print(chips + bet + msg)
     
     def join(self, player):
         """A new player joined the game.
@@ -123,6 +142,8 @@ class DynamicUI(game.BaseUI):
             self.t.send((event, player, detail[0]))
         elif event == 'deal':
             self.t.send((event, player, detail))
+        elif event == 'insure':
+            self.t.send((event, player, detail[0]))
         elif event == 'join':
             self.t.send((event, player))
         

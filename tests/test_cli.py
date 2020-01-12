@@ -524,7 +524,20 @@ class DynamicUITestCase(ut.TestCase):
         actual = mock_term.mock_calls[-1]
         
         self.assertEqual(expected, actual)
-
+        
+    @patch('blackjack.cli.run_terminal')
+    def test_update_insure(self, mock_term):
+        """Given an event that a player has bought insurance, the 
+        update() method should print that event to stdout.
+        """
+        player = players.AutoPlayer([], 'Graham', 200)
+        expected = call().send(('insure', player, 30))
+        
+        ui = cli.DynamicUI()
+        ui.update('insure', player, [30, 200])
+        actual = mock_term.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
 
 
 class run_terminalTestCase(ut.TestCase):
@@ -592,9 +605,10 @@ class run_terminalTestCase(ut.TestCase):
         the player's bet in the player's row and show their new chips 
         total.
         """
+        tmp = '\x1b[{row};16H{:>7}\x1b[{row};24H{:>3}\x1b[{row};56H{:<24}'
         expected = [
-            call('\x1b[5;16H' + '    200' + '\x1b[5;24H' + ' 20'),
-            call('\x1b[6;16H' + '    200' + '\x1b[6;24H' + ' 20'),
+            call(tmp.format(200, 20, 'Bets.', row=5)),
+            call(tmp.format(200, 20, 'Bets.', row=6)),
         ]
         
         playerlist = [
@@ -619,9 +633,10 @@ class run_terminalTestCase(ut.TestCase):
         """When sent a deal message, run_terminal() should display
         the player's hand in the player's row.
         """
+        tmp = '\x1b[{row};28H{:>3}\x1b[{row};56H{:<24}'
         expected = [
-            call('\x1b[5;28H' + 'J♣ A♦'),
-            call('\x1b[6;28H' + 'J♠ A♥'),
+            call(tmp.format('J♣ A♦', 'Takes hand.', row=5)),
+            call(tmp.format('J♠ A♥', 'Takes hand.', row=6)),
         ]
         
         playerlist = [
@@ -646,6 +661,31 @@ class run_terminalTestCase(ut.TestCase):
         term.send(('deal', playerlist[0], hand0))
         term.send(('deal', playerlist[1], hand1))
         actual = mock_print.mock_calls[-2:]
+        del term
+
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.print')
+    def test_insured(self, mock_print):
+        """When sent an insure message, run_terminal() should update 
+        the player's bet and announce the decision.
+        """
+        tmp = '\x1b[{row};16H{:>7}\x1b[{row};24H{:>3}\x1b[{row};56H{:<24}'
+        expected = [
+            call(tmp.format(200, 3, 'Buys insurance.', row=5)),
+        ]
+        
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        term = cli.run_terminal()
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        term.send(('insure', playerlist[0], 3))
+        actual = mock_print.mock_calls[-1:]
         del term
 
         self.assertEqual(expected, actual)
