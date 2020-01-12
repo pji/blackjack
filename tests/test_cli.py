@@ -554,6 +554,34 @@ class DynamicUITestCase(ut.TestCase):
         self.assertEqual(expected, actual)
     
     @patch('blackjack.cli.run_terminal')
+    def test_update_payout(self, mock_term):
+        """Given an event that a player has split, the 
+        update() method should print that event to stdout.
+        """
+        player = players.AutoPlayer([], 'Graham', 200)
+        expected = call().send(('payout', player, 40))
+        
+        ui = cli.DynamicUI()
+        ui.update('payout', player, [40, 200])
+        actual = mock_term.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.run_terminal')
+    def test_update_tie(self, mock_term):
+        """Given an event that a player has tied, the 
+        update() method should print that event to stdout.
+        """
+        player = players.AutoPlayer([], 'Graham', 200)
+        expected = call().send(('tie', player, 20))
+        
+        ui = cli.DynamicUI()
+        ui.update('tie', player, [20, 200])
+        actual = mock_term.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.run_terminal')
     def test_update_doubled(self, mock_term):
         """Given an event that a player has doubled down, the 
         update() method should print that event to stdout.
@@ -604,7 +632,6 @@ class DynamicUITestCase(ut.TestCase):
         actual = mock_term.mock_calls[-1]
         
         self.assertEqual(expected, actual)
-
 
 
 class run_terminalTestCase(ut.TestCase):
@@ -902,5 +929,54 @@ class run_terminalTestCase(ut.TestCase):
         del term
 
         self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.print')
+    def test_payout(self, mock_print):
+        """When sent an payout message, run_terminal() should update 
+        the player's chips and announce the result.
+        """
+        tmp = '\x1b[{row};16H{:>7}\x1b[{row};24H{:>3}\x1b[{row};56H{:<24}'
+        expected = [
+            call(tmp.format(200, '', 'Wins 4.', row=5)),
+        ]
+        
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        term = cli.run_terminal()
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        term.send(('payout', playerlist[0], 4))
+        actual = mock_print.mock_calls[-1:]
+        del term
 
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.print')
+    def test_tie(self, mock_print):
+        """When sent an tie message, run_terminal() should update 
+        the player's chips and announce the result.
+        """
+        tmp = '\x1b[{row};16H{:>7}\x1b[{row};24H{:>3}\x1b[{row};56H{:<24}'
+        expected = [
+            call(tmp.format(200, '', 'Ties. Keeps 2.', row=5)),
+        ]
+        
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        term = cli.run_terminal()
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        term.send(('tie', playerlist[0], 2))
+        actual = mock_print.mock_calls[-1:]
+        del term
+
+        self.assertEqual(expected, actual)
 

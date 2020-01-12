@@ -101,7 +101,6 @@ class TerminalController:
         
         :param player: The player doubling down.
         :param bet: The player's new bet total.
-        :param chips: The player's updated chips total.
         :return: None.
         :rtype: None.
         """
@@ -138,7 +137,6 @@ class TerminalController:
         
         :param player: The player purchasing insurance.
         :param bet: The player's new bet total.
-        :param chips: The player's updated chips total.
         :return: None.
         :rtype: None.
         """
@@ -163,12 +161,22 @@ class TerminalController:
             line = (player.name, player.chips, '', '', msg)
             print(self.term.move(row, 0) + self.r_tmp.format(*line))
         
+    def payout(self, player, bet):
+        """The player wins the hand.
+        
+        :param player: The player who won.
+        :param bet: How much the player won.
+        :return: None.
+        :rtype: None.
+        """
+        msg = f'Wins {bet}.'
+        self._bet_update(player, '', msg)
+    
     def split(self, player, bet):
         """The player split their hand.
         
         :param player: The player splitting.
         :param bet: The player's new bet total.
-        :param chips: The player's updated chips total.
         :return: None.
         :rtype: None.
         """
@@ -187,6 +195,17 @@ class TerminalController:
             self._hand_update(player, hand, 'Stands.')
         else:
             self._hand_update(player, hand, 'Busts.')
+        
+    def tie(self, player, bet):
+        """The player ties the hand.
+        
+        :param player: The player who won.
+        :param bet: How much the player kept.
+        :return: None.
+        :rtype: None.
+        """
+        msg = f'Ties. Keeps {bet}.'
+        self._bet_update(player, '', msg)
 
 
 # UI objects.
@@ -213,10 +232,14 @@ class DynamicUI(game.BaseUI):
             self.t.send((event, player, detail[0]))
         elif event == 'join':
             self.t.send((event, player))
+        elif event == 'payout':
+            self.t.send((event, player, detail[0]))
         elif event == 'split':
             self.t.send((event, player, detail[0]))
         elif event == 'stand':
             self.t.send((event, player, detail))
+        elif event == 'tie':
+            self.t.send((event, player, detail[0]))
 
 
 class UI(game.BaseUI):
@@ -461,6 +484,7 @@ def dui():
     g.start()
     g.deal()
     g.play()
+    g.end()
 
 def test():
     playerlist = [
