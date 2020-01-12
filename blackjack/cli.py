@@ -74,6 +74,22 @@ class TerminalController:
         msg = self.term.move(row, 55) + msg_tmp.format('Takes hand.')
         print(handstr + msg)
     
+    def doubled(self, player, bet):
+        """The player doubles down.
+        
+        :param player: The player doubling down.
+        :param bet: The player's new bet total.
+        :param chips: The player's updated chips total.
+        :return: None.
+        :rtype: None.
+        """
+        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
+        row = self.playerlist.index(player) + 4
+        chips = self.term.move(row, 15) + '{:>7}'.format(player.chips)
+        bet = self.term.move(row, 23) + '{:>3}'.format(bet)
+        msg = self.term.move(row, 55) + msg_tmp.format('Doubles down.')
+        print(chips + bet + msg)
+    
     def init(self, seats):
         """Blackjack has started.
         
@@ -124,6 +140,23 @@ class TerminalController:
             msg = 'Joins game.'
             line = (player.name, player.chips, '', '', msg)
             print(self.term.move(row, 0) + self.r_tmp.format(*line))
+        
+    def split(self, player, bet):
+        """The player split their hand.
+        
+        :param player: The player splitting.
+        :param bet: The player's new bet total.
+        :param chips: The player's updated chips total.
+        :return: None.
+        :rtype: None.
+        """
+        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
+        row = self.playerlist.index(player) + 4
+        chips = self.term.move(row, 15) + '{:>7}'.format(player.chips)
+        bet = self.term.move(row, 23) + '{:>3}'.format(bet)
+        msg = self.term.move(row, 55) + msg_tmp.format('Splits.')
+        print(chips + bet + msg)
+
 
 
 # UI objects.
@@ -142,11 +175,15 @@ class DynamicUI(game.BaseUI):
             self.t.send((event, player, detail[0]))
         elif event == 'deal':
             self.t.send((event, player, detail))
+#         elif == 'doubled':
+#             self.t.send(event, player, detail[0])
         elif event == 'insure':
             self.t.send((event, player, detail[0]))
         elif event == 'join':
             self.t.send((event, player))
-        
+        elif event == 'split':
+            self.t.send((event, player, detail[0]))
+
 
 class UI(game.BaseUI):
     tmp = '{:<15} {:<15} {:<}'

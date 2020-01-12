@@ -148,9 +148,7 @@ class Game:
             # Standard hit decision.
             else:
                 self._hit(player)
-        
-        # Insurance decision.
-        
+                
         # The dealer has to flip before they hit.
         hand = self.dealer.hands[0]
         for card in hand:
