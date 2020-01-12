@@ -161,6 +161,7 @@ class Game:
     
     def new_game(self):
         """Update the UI with the players at the start of the game."""
+        self.ui.update('join', self.dealer, '')
         for player in self.playerlist:
             self.ui.update('join', player, '')
     

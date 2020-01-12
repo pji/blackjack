@@ -59,6 +59,18 @@ class TerminalController:
         print(self.term.move(row, 15) + chips 
               + self.term.move(row, 23) + bet)
     
+    def deal(self, player, hand):
+        """A player was dealt a hand.
+        
+        :param player: The player who was dealt the hand.
+        :param hand: The hand that was dealt.
+        :return: None.
+        :rtype: None.
+        """
+        row = self.playerlist.index(player) + 4
+        handstr = ' '.join(str(card) for card in hand)
+        print(self.term.move(row, 27) + handstr)
+    
     def init(self, seats):
         """Blackjack has started.
         
@@ -109,7 +121,9 @@ class DynamicUI(game.BaseUI):
     def update(self, event, player, detail):
         if event == 'buyin':
             self.t.send((event, player, detail[0]))
-        if event == 'join':
+        elif event == 'deal':
+            self.t.send((event, player, detail))
+        elif event == 'join':
             self.t.send((event, player))
         
 
@@ -350,9 +364,10 @@ def dui():
     for index in range(4):
         playerlist.append(players.make_player())
     g = game.Game(deck, dealer, playerlist, ui=ui, buyin=2)
-    ui.enter(len(playerlist))
+    ui.enter(len(playerlist) + 1)
     g.new_game()
     g.start()
+    g.deal()
 
 def test():
     playerlist = [

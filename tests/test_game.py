@@ -164,19 +164,20 @@ class GameTestCase(ut.TestCase):
         """When players join a game, it should send a join 
         event to the UI for each player in the game.
         """
+        ui = Mock()
         playerlist = [
             players.Player(),
             players.Player(),
             players.Player(),
         ]
+        g = game.Game(playerlist=playerlist, ui=ui)
         expected = [
+            call.update('join', g.dealer, ''),
             call.update('join', playerlist[0], ''),
             call.update('join', playerlist[1], ''),
             call.update('join', playerlist[2], ''),
         ]
         
-        ui = Mock()
-        g = game.Game(playerlist=playerlist, ui=ui)
         g.new_game()
         actual = ui.mock_calls
         
