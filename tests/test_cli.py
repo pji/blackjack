@@ -493,19 +493,19 @@ class DynamicUITestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
-#     def test_update_join_you(self):
-#         """Given an event that a new player has joined the game, 
-#         the update() method should print that event to stdout.
-#         """
-#         expected = self.tmp.format('You', 'Walk up.', '')
-#         
-#         ui = cli.UI(True)
-#         d = players.AutoPlayer([], 'You', 220)
-#         with capture() as (out, err):
-#             ui.update('join', d, None)
-#         actual = out.getvalue()
-#         
-#         self.assertEqual(expected, actual)
+    @patch('blackjack.cli.run_terminal')
+    def test_update_join(self, mock_term):
+        """Given an event that a player has bet, the update() method 
+        should print that event to stdout.
+        """
+        player = players.AutoPlayer([], 'Graham', 220)
+        expected = call().send(('buyin', player, 20))
+        
+        ui = cli.DynamicUI()
+        ui.update('buyin', player, [20, 200])
+        actual = mock_term.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
 
 
 class run_terminalTestCase(ut.TestCase):
@@ -562,6 +562,34 @@ class run_terminalTestCase(ut.TestCase):
         term.send(('init', len(playerlist)))
         term.send(('join', playerlist[0]))
         term.send(('join', playerlist[1]))
+        actual = mock_print.mock_calls[-2:]
+        del term
+
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.print')
+    def test_buyin(self, mock_print):
+        """When sent a buyin message, run_terminal() should display
+        the player's bet in the player's row and show their new chips 
+        total.
+        """
+        expected = [
+            call('\x1b[5;16H' + '    200' + '\x1b[5;24H' + ' 20'),
+            call('\x1b[6;16H' + '    200' + '\x1b[6;24H' + ' 20'),
+        ]
+        
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        
+        term = cli.run_terminal()
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        term.send(('buyin', playerlist[0], 20))
+        term.send(('buyin', playerlist[1], 20))
         actual = mock_print.mock_calls[-2:]
         del term
 
