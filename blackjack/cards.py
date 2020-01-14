@@ -269,6 +269,13 @@ class Hand(Pile):
         super().__init__(*args, **kwargs)
         self.doubled_down = False
     
+    def __format__(self, format_spec):
+        value = self.__str__()
+        return value.__format__(format_spec)
+    
+    def __str__(self):
+        return ' '.join(str(card) for card in self.cards)
+    
     def append(self, item):
         self.cards.append(item)
     

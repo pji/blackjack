@@ -565,3 +565,44 @@ platform.
 Maybe I'll try asciimatics on Python 3.7/3.8 and see if it works. I'm 
 able to import it OK, but it needs a wrapper too. Hm. So how about 
 blessed?
+
+Some time later....
+
+It works, but boy does it make debugging a pain.
+
+
+The Splitting Problem
+---------------------
+Splitting involves the following actions:
+
+* Determining that a split is possible
+* Determining whether to make the split
+* Splitting the hand
+* Adding the additional bet for the second hand
+* Determining if the split hands are aces
+* If the split hands are aces, hit them once and stand
+* Otherwise, handle each of the new hand's hits normally
+
+How does that cause problems:
+
+* It's both a hand update and a bet update to the UI
+* The UI needs to make space for the extra hand
+
+At the moment, DynamicUI doesn't keep any record of what is displayed 
+in the UI. It doesn't need to because the location of the fields 
+doesn't change. Since it doesn't change, it never needs to print the 
+data out again.
+
+But, the best UI for a split hand is probably to move all the players 
+under the player who split down a row, and put the player-who-split's 
+new hand in the now empty row. That that would require DynamicUI to:
+
+* Keep track of the data in the table so it can be reprinted after 
+  being moved
+* Keep track of which table rows are handling split hands, so that 
+  row can be removed after the round
+
+I think the best option here is probably to have TerminalController 
+keep a list of what data is in what field. DynamicUI changes the data 
+in that list, and then TerminalController prints the data back to 
+the UI. How big of a change is that? Pretty big.

@@ -9,6 +9,11 @@ a command line interface.
 :license: MIT, see LICENSE for more details.
 """
 import argparse
+from collections import namedtuple, OrderedDict
+from copy import deepcopy
+import sys
+from time import sleep
+import traceback as tb
 
 from blessed import Terminal
 
@@ -16,7 +21,9 @@ from blackjack import cards, game, model, players
 
 
 # Objects and functions for advanced terminal control.
-def run_terminal(is_interactive=False):
+FieldInfo = namedtuple('FieldInfo', 'loc fmt')
+
+def run_terminal(is_interactive=False, ctlr=None):
     """A coroutine to run the dynamic terminal UI.
     
     :param is_interactive: (Optional.) Whether the terminal should 
@@ -24,26 +31,39 @@ def run_terminal(is_interactive=False):
     :yield: None.
     :ytype: None.
     """
-    term = Terminal()
-    ctlr = TerminalController(term)
+    term = None
+    if not ctlr:
+        term = Terminal()
+        ctlr = TerminalController(term, is_interactive)
+    else:
+        term = ctlr.term
+    resp = None
     with term.fullscreen(), term.hidden_cursor():
         while True:
-            method, *args = yield
-            getattr(ctlr, method)(*args)
+            method, *args = yield resp
+            resp = getattr(ctlr, method)(*args)
             if is_interactive:
-                term.inkey()
+                sleep(.15)
 
 
 class TerminalController:
     """A controller to handle UI events sent to the run_terminal 
     coroutine.
     """
-    def __init__(self, term):
+    def __init__(self, term, is_interactive=False):
         self.term = term
-        self.headers = ('Player', 'Chips', 'Bet', 'Hand', 'Event')
         self.playerlist = []
         self.h_tmp = '{:<14} {:>7} {:>3} {:<27} {:<}'
         self.r_tmp = '{:<14} {:>7} {:>3} {:<27} {:<}'
+        self.is_interactive = is_interactive
+        self.fields = OrderedDict([
+            ('Player', FieldInfo(0, '{:<14}'),),
+            ('Chips', FieldInfo(15, '{:>7}'),),
+            ('Bet', FieldInfo(23, '{:>3}'),),
+            ('Hand', FieldInfo(27, '{:<27}'),),
+            ('Event', FieldInfo(55, '{:<' + str(self.term.width-56) + '}'),),
+        ])
+        self.data = []
     
     def _bet_update(self, player, bet, msg):
         """The game event updates the player's bet.
@@ -75,6 +95,61 @@ class TerminalController:
         handstr = self.term.move(row, 27) + ' '.join(str(card) for card in hand)
         msg = self.term.move(row, 55) + msg_tmp.format(msg)
         print(handstr + msg)
+        
+    def _update_bet(self, player, bet, msg):
+        """The game event updates the player's bet.
+        
+        :param player: The player making the bet.
+        :param bet: The amount of the bet.
+        :param msg: The event's explanation.
+        :return: None.
+        :rtype: None.
+        """
+        table = [row[:] for row in self.data]
+        row = [row[0] for row in table].index(player)
+        
+        # Handle split hands.
+#         if len(player.hands) == 2:
+#             row += player.hands.index(hand)
+        
+        table[row][1] = player.chips
+        table[row][2] = bet
+        table[row][4] = msg
+        self._update_table(table)
+    
+    def _update_hand(self, player, hand, msg):
+        """The game event updates the player's hand.
+        
+        :param player: The player who was dealt the hand.
+        :param hand: The hand that was dealt.
+        :param msg: The event's explanation.
+        :return: None.
+        :rtype: None.
+        """
+        table = [row[:] for row in self.data]
+        row = [row[0] for row in table].index(player)
+        
+        # Handle split hands.
+        if len(player.hands) == 2:
+            row += player.hands.index(hand)
+        
+        table[row][3] = str(hand)
+        table[row][4] = msg
+        self._update_table(table)
+    
+    def _update_table(self, data):
+        if len(data) > len(self.data):
+            y = len(self.data) + 3
+            print(self.term.move(y, 0) + ' ' * self.term.width)
+            self.data.append(['', '', '', '', ''])
+        for row in range(len(data)):
+            for col in range(len(self.fields)):
+                if data[row][col] != self.data[row][col]:
+                    fields = list(self.fields.keys())
+                    y = row + 4
+                    x, fmt = self.fields[fields[col]]
+                    print(self.term.move(y, x) + fmt.format(data[row][col]))
+        self.data = data
     
     def buyin(self, player, bet):
         """A player bets on a round.
@@ -84,7 +159,7 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        self._bet_update(player, bet, 'Bets.')
+        self._update_bet(player, bet, 'Bets.')
     
     def deal(self, player, hand):
         """A player was dealt a hand.
@@ -94,7 +169,7 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        self._hand_update(player, hand, 'Takes hand.')
+        self._update_hand(player, hand, 'Takes hand.')
     
     def doubled(self, player, bet):
         """The player doubles down.
@@ -104,7 +179,7 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        self._bet_update(player, bet, 'Doubles down.')
+        self._update_bet(player, bet, 'Doubles down.')
     
     def hit(self, player, hand):
         """A player hits.
@@ -114,7 +189,7 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        self._hand_update(player, hand, 'Hits.')
+        self._update_hand(player, hand, 'Hits.')
     
     def init(self, seats):
         """Blackjack has started.
@@ -124,9 +199,9 @@ class TerminalController:
         :rtype: None.
         """
         for i in range(seats):
-            self.playerlist.append(None)
+            self.data.append(['', '', '', '', ''])
         print(self.term.bold('BLACKJACK'))
-        print(self.term.move_down + self.r_tmp.format(*self.headers))
+        print(self.term.move_down + self.r_tmp.format(*self.fields.keys()))
         print('\u2500' * self.term.width)
         for line in range(seats):
             print()
@@ -140,7 +215,7 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        self._bet_update(player, bet, 'Buys insurance.')
+        self._update_bet(player, bet, 'Buys insurance.')
     
     def join(self, player):
         """A new player joined the game.
@@ -149,18 +224,23 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
+        playerlist = [row[0] for row in self.data]
+        msg = 'Joins game.'
         try:
-            index = self.playerlist.index(None)
+            index = playerlist.index('')
         except ValueError:
-            reason = 'No empty seats in the player list.'
+            reason = ('Player tried to join, but there are no empty '
+                      'seats at the table.')
             raise ValueError(reason)
         else:
-            self.playerlist[index] = player
-            row = index + 4
-            msg = 'Joins game.'
-            line = (player.name, player.chips, '', '', msg)
-            print(self.term.move(row, 0) + self.r_tmp.format(*line))
-        
+            table = [row[:] for row in self.data]
+            table[index][0] = player
+            table[index][1] = player.chips
+            table[index][4] = msg
+            
+            self._update_table(table)
+            self.playerlist = [row[0] for row in self.data]
+            
     def payout(self, player, bet):
         """The player wins the hand.
         
@@ -180,7 +260,17 @@ class TerminalController:
         :return: None.
         :rtype: None.
         """
-        self._bet_update(player, bet, 'Splits.')
+        row = [row[0] for row in self.data].index(player)
+        table = [row[:] for row in self.data[0:row + 1]]
+        table.append(['', '', '', '', ''])
+        for new_row in self.data[row + 1:]:
+            table.append(new_row[:])
+        table[row][2] = bet
+        table[row][3] = str(player.hands[0])
+        table[row][4] = 'Splits.'
+        table[row + 1][2] = bet
+        table[row + 1][3] = str(player.hands[1])
+        self._update_table(table)
     
     def stand(self, player, hand):
         """A player hits.
@@ -192,9 +282,9 @@ class TerminalController:
         """
         scores = [score for score in hand.score() if score <= 21]
         if scores:
-            self._hand_update(player, hand, 'Stands.')
+            self._update_hand(player, hand, 'Stands.')
         else:
-            self._hand_update(player, hand, 'Busts.')
+            self._update_hand(player, hand, 'Busts.')
         
     def tie(self, player, bet):
         """The player ties the hand.
@@ -206,6 +296,43 @@ class TerminalController:
         """
         msg = f'Ties. Keeps {bet}.'
         self._bet_update(player, '', msg)
+    
+    def _yesno_prompt(self, msg) -> model.IsYes:
+        """Prompt the user with a yes/no question.
+        
+        :param msg: The question to prompt with.
+        :return: The user's decision.
+        :rtype: model.IsYes
+        """
+        row = len(self.playerlist) + 5
+        clearline = self.term.move(row, 0) + (' ' * self.term.width)
+        msg = self.term.move(row, 0) + f'{msg} (Y/n) > _'
+        is_yes = None
+        while not is_yes:
+            print(clearline)
+            if self.is_interactive:
+                sleep(.2)
+            print(msg)
+            with self.term.cbreak():
+                resp = self.term.inkey()
+            try:
+                is_yes = model.IsYes(resp)
+            except ValueError:
+                pass
+        return is_yes
+    
+    def nextgame_prompt(self) -> model.IsYes:
+        """Does the user want to play again?
+        
+        :return: The user's decision.
+        :rtype: model.IsYes
+        """
+        resp = self._yesno_prompt('Another round?')
+        rows = [index + 4 for index in range(len(self.playerlist))]
+        for row in rows:
+            clrline = self.term.move(row, 24) + (' ' * (self.term.width - 24))
+            print(clrline)
+        return resp
 
 
 # UI objects.
@@ -218,6 +345,21 @@ class DynamicUI(game.BaseUI):
     
     def enter(self, seats):
         self.t.send(('init', seats))
+    
+    def input(self, event, details=None, default=None):
+        """Get user input from the UI.
+        
+        :param event: The event you need input for.
+        :param details: (Optional.) Details specific to the event.
+        :param default: (Optional.) The default value for the input. 
+            This is mainly to make input easier to test.
+        :return: The input received from the UI.
+        :rtype: Any. (May need an response object in the future.)
+        """
+        resp = None
+        if event == 'nextgame':
+            resp = self.t.send(('nextgame_prompt',))
+        return resp
     
     def update(self, event, player, detail):
         if event == 'buyin':
@@ -469,6 +611,7 @@ def four_player():
         ui.exit()
         play = ui.input('nextgame').value
 
+
 def dui():
     ui = DynamicUI(True)
     deck = cards.Deck.build(6)
@@ -481,10 +624,21 @@ def dui():
     g = game.Game(deck, dealer, playerlist, ui=ui, buyin=2)
     ui.enter(len(playerlist) + 1)
     g.new_game()
-    g.start()
-    g.deal()
-    g.play()
-    g.end()
+    play = True
+    while play:
+        try:
+            g.start()
+            g.deal()
+            g.play()
+            g.end()
+            play = ui.input('nextgame').value
+        except Exception as ex:
+            with open('exception.txt', 'w') as fh:
+                fh.write(str(ex.args))
+                tb_str = ''.join(tb.format_tb(ex.__traceback__))
+                fh.write(tb_str)
+            raise ex
+
 
 def test():
     playerlist = [
@@ -497,8 +651,7 @@ def test():
     for player in playerlist:
         term.send(('join', player))
     term.send(('end'))
-    
-    
+
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Blackjack')

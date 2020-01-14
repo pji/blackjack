@@ -87,7 +87,7 @@ def validate_yesno(self, value):
         return True
     if normal == 'n' or normal == 'no':
         return False
-    reason = 'Not "yes" or "no".'
+    reason = 'Not "yes" or "no".' + str(value)
     raise ValueError(self.msg.format(reason))
         
 
