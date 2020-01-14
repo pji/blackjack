@@ -1106,6 +1106,8 @@ class run_terminalTestCase(ut.TestCase):
             call(prompt_tmp.format('Another round? (Y/n) > _', row=8)),
             call('\x1b[8;1H' + (' ' * 80)),
             call('\x1b[7;1H' + ('\u2500' * 80)),
+            call(self.locs[0].format(5) + self.fmts[0].format('spam')),
+            call(self.locs[0].format(6) + self.fmts[0].format('eggs')),
             call(self.locs[2].format(5) + self.fmts[2].format('')),
             call(self.locs[3].format(5) + self.fmts[3].format('')),
             call(self.locs[4].format(5) + self.fmts[4].format('')),
@@ -1129,7 +1131,7 @@ class run_terminalTestCase(ut.TestCase):
         for row in ctlr.data:
             row[2], row[3], row[4] = '42', 'bacon', 'ham'
         actl_return = term.send(('nextgame_prompt',))
-        actl_print = mock_print.mock_calls[-9:]
+        actl_print = mock_print.mock_calls[-11:]
         del term
         
         self.assertEqual(expd_print, actl_print)
