@@ -103,10 +103,20 @@ class TerminalController:
         self._update_table(table)
     
     def _update_table(self, data):
-        while len(data) > len(self.data):
-            y = len(self.data) + 4
-            print(self.term.move(y, 0) + ' ' * self.term.width)
-            self.data.append(['', '', '', '', ''])
+        if len(data) < len(self.data):
+            y = len(self.data) + 5
+            print(self.term.move(y, 0) + (' ' * self.term.width))
+            while len(data) < len(self.data):
+                _ = self.data.pop()
+                y = len(self.data) + 5
+                print(self.term.move(y, 0) + (' ' * self.term.width))
+        elif len(data) > len(self.data):
+            y = len(data) + 4
+            print(self.term.move(y, 0) + ('\u2500' * self.term.width))
+            while len(data) > len(self.data):
+                y = len(self.data) + 4
+                print(self.term.move(y, 0) + ' ' * self.term.width)
+                self.data.append(['', '', '', '', ''])
         for row in range(len(data)):
             for col in range(len(self.fields)):
                 if data[row][col] != self.data[row][col]:
@@ -301,10 +311,14 @@ class TerminalController:
                 index = playerlist.index('')
                 _ = playerlist.pop(index)
                 _ = self.data.pop(index)
-                y = len(self.data) + 4
+                y = len(self.data) + 5
                 print(self.term.move(y, 0) + (' ' * self.term.width))
             y = len(self.data) + 4
             print(self.term.move(y, 0) + ('\u2500' * self.term.width))
+            for index in range(len(playerlist)):
+                y = index + 4
+                print(self.term.move(y, self.fields['Player'].loc) 
+                      + self.fields['Player'].fmt.format(playerlist[index]))
         
             # Clear previous round.
             table = [row[:] for row in self.data]
