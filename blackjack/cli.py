@@ -65,37 +65,6 @@ class TerminalController:
         ])
         self.data = []
     
-    def _bet_update(self, player, bet, msg):
-        """The game event updates the player's bet.
-        
-        :param player: The player making the bet.
-        :param bet: The amount of the bet.
-        :param msg: The event's explanation.
-        :return: None.
-        :rtype: None.
-        """
-        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
-        row = self.playerlist.index(player) + 4
-        chips = self.term.move(row, 15) + '{:>7}'.format(player.chips)
-        bet = self.term.move(row, 23) +'{:>3}'.format(bet)
-        msg = self.term.move(row, 55) + msg_tmp.format(msg)
-        print(chips + bet + msg)
-    
-    def _hand_update(self, player, hand, msg):
-        """The game event updates the player's hand.
-        
-        :param player: The player who was dealt the hand.
-        :param hand: The hand that was dealt.
-        :param msg: The event's explanation.
-        :return: None.
-        :rtype: None.
-        """
-        msg_tmp = '{:<' + str(self.term.width - 56) + '}'
-        row = self.playerlist.index(player) + 4
-        handstr = self.term.move(row, 27) + ' '.join(str(card) for card in hand)
-        msg = self.term.move(row, 55) + msg_tmp.format(msg)
-        print(handstr + msg)
-        
     def _update_bet(self, player, bet, msg):
         """The game event updates the player's bet.
         
@@ -107,10 +76,6 @@ class TerminalController:
         """
         table = [row[:] for row in self.data]
         row = [row[0] for row in table].index(player)
-        
-        # Handle split hands.
-#         if len(player.hands) == 2:
-#             row += player.hands.index(hand)
         
         table[row][1] = player.chips
         table[row][2] = bet
@@ -138,8 +103,8 @@ class TerminalController:
         self._update_table(table)
     
     def _update_table(self, data):
-        if len(data) > len(self.data):
-            y = len(self.data) + 3
+        while len(data) > len(self.data):
+            y = len(self.data) + 4
             print(self.term.move(y, 0) + ' ' * self.term.width)
             self.data.append(['', '', '', '', ''])
         for row in range(len(data)):
@@ -250,7 +215,7 @@ class TerminalController:
         :rtype: None.
         """
         msg = f'Wins {bet}.'
-        self._bet_update(player, '', msg)
+        self._update_bet(player, '', msg)
     
     def split(self, player, bet):
         """The player split their hand.
@@ -295,7 +260,7 @@ class TerminalController:
         :rtype: None.
         """
         msg = f'Ties. Keeps {bet}.'
-        self._bet_update(player, '', msg)
+        self._update_bet(player, '', msg)
     
     def _yesno_prompt(self, msg) -> model.IsYes:
         """Prompt the user with a yes/no question.
@@ -304,7 +269,7 @@ class TerminalController:
         :return: The user's decision.
         :rtype: model.IsYes
         """
-        row = len(self.playerlist) + 5
+        row = len(self.data) + 5
         clearline = self.term.move(row, 0) + (' ' * self.term.width)
         msg = self.term.move(row, 0) + f'{msg} (Y/n) > _'
         is_yes = None
@@ -319,6 +284,7 @@ class TerminalController:
                 is_yes = model.IsYes(resp)
             except ValueError:
                 pass
+        print(clearline)
         return is_yes
     
     def nextgame_prompt(self) -> model.IsYes:
@@ -328,10 +294,26 @@ class TerminalController:
         :rtype: model.IsYes
         """
         resp = self._yesno_prompt('Another round?')
-        rows = [index + 4 for index in range(len(self.playerlist))]
-        for row in rows:
-            clrline = self.term.move(row, 24) + (' ' * (self.term.width - 24))
-            print(clrline)
+        if resp.value:
+            # Undo splits.
+            playerlist = [row[0] for row in self.data]
+            while '' in playerlist:
+                index = playerlist.index('')
+                _ = playerlist.pop(index)
+                _ = self.data.pop(index)
+                y = len(self.data) + 4
+                print(self.term.move(y, 0) + (' ' * self.term.width))
+            y = len(self.data) + 4
+            print(self.term.move(y, 0) + ('\u2500' * self.term.width))
+        
+            # Clear previous round.
+            table = [row[:] for row in self.data]
+            for row in table:
+                row[1] = row[0].chips
+                row[2] = ''
+                row[3] = ''
+                row[4] = ''
+            self._update_table(table)
         return resp
 
 

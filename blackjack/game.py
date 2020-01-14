@@ -147,7 +147,7 @@ class Game:
             
             # Standard hit decision.
             else:
-                self._hit(player)
+                self._hit(player, player.hands[0])
                 
         # The dealer has to flip before they hit.
         hand = self.dealer.hands[0]
@@ -155,7 +155,7 @@ class Game:
             if card.facing == DOWN:
                 card.flip()
                 self.ui.update('flip', self.dealer, hand)
-        self._hit(self.dealer)
+        self._hit(self.dealer, self.dealer.hands[0])
     
     def new_game(self):
         """Update the UI with the players at the start of the game."""
@@ -249,8 +249,6 @@ class Game:
     
     def _hit(self, player, hand=None):
         """Handle the player's hitting and standing."""
-        if not hand:
-            hand = player.hands[0]
         while player.will_hit(hand, self):
             card = self._draw()
             card.flip()
@@ -290,10 +288,13 @@ class Game:
         :return: Whether the hand was split.
         :rtype: bool
         """
-        if hand[0].rank == hand[1].rank and player.will_split(hand, self):
+        if (hand[0].rank == hand[1].rank 
+                and player.will_split(hand, self)
+                and player.chips >= self.buyin):
             new_hand1 = Hand([hand[0],])
             new_hand2 = Hand([hand[1],])
             player.hands = (new_hand1, new_hand2)
-            self.ui.update('split', player, player.hands)
+            player.chips -= self.buyin
+            self.ui.update('split', player, [self.buyin, player.chips])
             return True
         return False

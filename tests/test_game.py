@@ -428,12 +428,10 @@ class GameTestCase(ut.TestCase):
         player = players.AutoPlayer((hand,), name='Terry')
         dealer = players.Dealer((dhand,))
         deck = cards.Deck([
-            exp_h2[1],
-            exp_h1[2],
-            exp_h1[1],
+            cards.Card(1, 3, cards.DOWN),
+            cards.Card(9, 3, cards.DOWN),
+            cards.Card(2, 2, cards.DOWN),
         ])
-        for card in deck:
-            card.flip()
         g = game.Game(deck, dealer, (player,))
         g.play()
         actual = player.hands
@@ -825,11 +823,11 @@ class GameTestCase(ut.TestCase):
             cards.Card(11, 3),
             cards.Card(11, 1),
         ]),]
-        p1 = players.AutoPlayer(copy(h1), name='John')
-        expected = ('split', p1, hands)
+        p1 = players.AutoPlayer(copy(h1), 'John', 200)
+        expected = ('split', p1, [20, 180])
         
         playerlist = [p1,]
-        g = game.Game(None, None, playerlist, ui=Mock())
+        g = game.Game(None, None, playerlist, Mock(), 20)
         _ = g._split(h1[0], p1)
 
         g.ui.update.assert_called_with(*expected)

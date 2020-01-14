@@ -940,9 +940,6 @@ class run_terminalTestCase(ut.TestCase):
         term.send(('split', playerlist[0], 20))
         del term
         actual = ctlr.data
-        print('+----+')
-        print(ctlr.data)
-        print('+----+')
 
         self.assertEqual(expected, actual)
     
@@ -1056,23 +1053,21 @@ class run_terminalTestCase(ut.TestCase):
         """When sent an payout message, run_terminal() should update 
         the player's chips and announce the result.
         """
-        tmp = '\x1b[{row};16H{:>7}\x1b[{row};24H{:>3}\x1b[{row};56H{:<24}'
-        expected = [
-            call(tmp.format(200, '', 'Wins 4.', row=5)),
-        ]
+        expected = [200, '', 'Wins 20.']
         
         playerlist = [
             players.Player(name='spam', chips=200),
             players.Player(name='eggs', chips=200),            
         ]
-        term = cli.run_terminal()
+        ctlr = cli.TerminalController(Terminal())
+        term = cli.run_terminal(ctlr=ctlr)
         next(term)
         term.send(('init', len(playerlist)))
         term.send(('join', playerlist[0]))
         term.send(('join', playerlist[1]))
-        term.send(('payout', playerlist[0], 4))
-        actual = mock_print.mock_calls[-1:]
+        term.send(('payout', playerlist[0], 20))
         del term
+        actual = [ctlr.data[0][1], ctlr.data[0][2], ctlr.data[0][4]]
 
         self.assertEqual(expected, actual)
     
@@ -1081,23 +1076,21 @@ class run_terminalTestCase(ut.TestCase):
         """When sent an tie message, run_terminal() should update 
         the player's chips and announce the result.
         """
-        tmp = '\x1b[{row};16H{:>7}\x1b[{row};24H{:>3}\x1b[{row};56H{:<24}'
-        expected = [
-            call(tmp.format(200, '', 'Ties. Keeps 2.', row=5)),
-        ]
+        expected = [200, '', 'Ties. Keeps 20.']
         
         playerlist = [
             players.Player(name='spam', chips=200),
             players.Player(name='eggs', chips=200),            
         ]
-        term = cli.run_terminal()
+        ctlr = cli.TerminalController(Terminal())
+        term = cli.run_terminal(ctlr=ctlr)
         next(term)
         term.send(('init', len(playerlist)))
         term.send(('join', playerlist[0]))
         term.send(('join', playerlist[1]))
-        term.send(('tie', playerlist[0], 2))
-        actual = mock_print.mock_calls[-1:]
+        term.send(('tie', playerlist[0], 20))
         del term
+        actual = [ctlr.data[0][1], ctlr.data[0][2], ctlr.data[0][4]]
 
         self.assertEqual(expected, actual)
     
@@ -1108,12 +1101,17 @@ class run_terminalTestCase(ut.TestCase):
         prompt the user for whether they'd like another round of 
         blackjack and return the response.
         """
-        clear_tmp = '\x1b[{row};25H' + (' ' * 56)
         prompt_tmp = '\x1b[{row};1H{}'
         expd_print = [
             call(prompt_tmp.format('Another round? (Y/n) > _', row=8)),
-            call(clear_tmp.format(row=5)),
-            call(clear_tmp.format(row=6)),
+            call('\x1b[8;1H' + (' ' * 80)),
+            call('\x1b[7;1H' + ('\u2500' * 80)),
+            call(self.locs[2].format(5) + self.fmts[2].format('')),
+            call(self.locs[3].format(5) + self.fmts[3].format('')),
+            call(self.locs[4].format(5) + self.fmts[4].format('')),
+            call(self.locs[2].format(6) + self.fmts[2].format('')),
+            call(self.locs[3].format(6) + self.fmts[3].format('')),
+            call(self.locs[4].format(6) + self.fmts[4].format('')),
         ]
         expd_return = model.IsYes(True)
         
@@ -1122,13 +1120,16 @@ class run_terminalTestCase(ut.TestCase):
             players.Player(name='spam', chips=200),
             players.Player(name='eggs', chips=200),            
         ]
-        term = cli.run_terminal()
+        ctlr = cli.TerminalController(Terminal())
+        term = cli.run_terminal(ctlr=ctlr)
         next(term)
         term.send(('init', len(playerlist)))
         term.send(('join', playerlist[0]))
         term.send(('join', playerlist[1]))
+        for row in ctlr.data:
+            row[2], row[3], row[4] = '42', 'bacon', 'ham'
         actl_return = term.send(('nextgame_prompt',))
-        actl_print = mock_print.mock_calls[-3:]
+        actl_print = mock_print.mock_calls[-9:]
         del term
         
         self.assertEqual(expd_print, actl_print)
