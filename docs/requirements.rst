@@ -605,4 +605,4 @@ new hand in the now empty row. That that would require DynamicUI to:
 I think the best option here is probably to have TerminalController 
 keep a list of what data is in what field. DynamicUI changes the data 
 in that list, and then TerminalController prints the data back to 
-the UI. How big of a change is that? Pretty big.
+the UI. How big of a change is that? Pretty big, but doable.

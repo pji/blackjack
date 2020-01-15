@@ -37,9 +37,9 @@ Still To Do
 -----------
 The following features are on the to-do list:
 
-* Handle betting on splits properly.
+* Add UI event for losing the game.
 * Add UI that updates information in place rather than listing events.
-* Create a kick-off script at root to ease starting the script
+* Create a kick-off script at root to ease starting the script.
 * Save game state.
 * Restore game state.
 
@@ -51,6 +51,7 @@ The following features are on the nice-to-have list:
 * Add random computer players joining and leaving game.
 * Add card counting computer players.
 * Add casino catching and removing card counting players.
+* Allow splitting more than once.
 
 
 Testing

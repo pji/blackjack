@@ -98,34 +98,54 @@ class Game:
         """End a round of blackjack."""
         dhand = self.dealer.hands[0]
         for player in self.playerlist:
-            event = 'payout'
+            # Handle insurance.
             if player.insured and dhand.is_blackjack():
                 payout = player.insured * 2
                 if payout:
                     player.chips += payout
                     self.ui.update('insurepay', player, [payout, player.chips])
-            for phand in player.hands:
-                payout = 0
+            
+            # Handle hands.
+            for index in range(len(player.hands)):
+                phand = player.hands[index]
                 result = self._compare_score(dhand, phand)
-                if (result == True 
-                        and phand.is_blackjack() 
-                        and len(player.hands) == 2):
-                    payout = 2 * self.buyin
-                elif result == True and phand.is_blackjack():
-                    payout = 2.5 * self.buyin
-                elif result == True and phand.doubled_down:
-                    payout = 4 * self.buyin
-                elif result == True:
-                    payout = 2 * self.buyin
-                elif result == None and dhand.is_blackjack():
-                    pass
+                event = None
+                mod = 0
+                
+                # Event modifiers.
+                if index == 1 and result == True:
+                    event = 'splitpayout'
+                elif index == 1 and result == None:
+                    event = 'splittie'
+                elif index == 1 and result == False:
+                    event = 'splitlost'
                 elif result == None:
                     event = 'tie'
-                    payout = self.buyin
-                if payout:
-                    player.chips += payout
-                    self.ui.update(event, player, [payout, player.chips])
-    
+                elif result == True:
+                    event = 'payout'
+                else:
+                    event = 'lost'
+                
+                # Payout modifiers.
+                if result == None and dhand.is_blackjack():
+                    pass
+                elif result == None and phand.doubled_down:
+                    mod = 2
+                elif result == None:
+                    mod = 1
+                elif result == False:
+                    mod = 0
+                elif phand.is_blackjack() and len(player.hands) == 1:
+                    mod = 2.5
+                elif phand.doubled_down:
+                    mod = 4
+                else:
+                    mod = 2
+                
+                payout = mod * self.buyin
+                player.chips += payout
+                self.ui.update(event, player, [payout, player.chips])
+        
     def play(self):
         """Play a round of blackjack."""
         # Handle the players.
@@ -272,7 +292,7 @@ class Game:
                     cost = self.buyin / 2
                 player.insured = cost
                 player.chips -= cost
-                self.ui.update('insured', player, [cost, player.chips])
+                self.ui.update('insure', player, [cost, player.chips])
     
     def _remove_player(self, player: Player) -> None:
         """Remove a player from the game."""

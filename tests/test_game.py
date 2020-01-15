@@ -694,6 +694,197 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_end_with_ui(self):
+        """Once the loss is determined, end() should send the event 
+        to the UI.
+        """
+        cardlist = [
+            cards.Card(7, 0, cards.UP),
+            cards.Card(6, 0, cards.UP),
+            cards.Card(10, 0, cards.UP),
+        ]
+        phand = cards.Hand(cardlist)
+        player = players.AutoPlayer((phand,), 'Michael', 180)
+        
+        # This looks a little weird. Shouldn't the hand be different 
+        # between the first two call.updates() since the cards in the 
+        # hand will be different at those points?
+        # 
+        # No. game.play() is sending the dealer's hand object to 
+        # ui.update(), and we are testing to make sure the same 
+        # hand is sent. Since objects are mutable, the hand has three 
+        # cards in it when assertEqual() runs, so the expected hand 
+        # needs to have all three cards, too.
+        expected = [call.update('lost', player, [0, 180])]
+        
+        dhand = cards.Hand([
+            cards.Card(7, 0, cards.UP),
+            cards.Card(10, 0, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        ui = Mock()
+        g = game.Game(None, dealer, (player,), ui, 20)
+        g.end()
+        actual = ui.mock_calls
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_split_with_ui(self):
+        """Once the payout is determined, end() should send the event 
+        to the UI. If the hand is split, that event should be 
+        'splitpayout' if the hand wins.
+        """
+        hand2 = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(10, 0),
+        ])
+        hand1 = cards.Hand([
+            cards.Card(1, 2),
+            cards.Card(2, 0),
+            cards.Card(9, 1),
+        ])
+        player = players.Player([hand1, hand2], 'Michael', 180)
+        
+        # This looks a little weird. Shouldn't the hand be different 
+        # between the first two call.updates() since the cards in the 
+        # hand will be different at those points?
+        # 
+        # No. game.play() is sending the dealer's hand object to 
+        # ui.update(), and we are testing to make sure the same 
+        # hand is sent. Since objects are mutable, the hand has three 
+        # cards in it when assertEqual() runs, so the expected hand 
+        # needs to have all three cards, too.
+        expected = [call.update('splitpayout', player, [40, 220]),]
+        
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        ui = Mock()
+        g = game.Game(None, dealer, (player,), ui, 20)
+        g.end()
+        actual = [ui.mock_calls[-1],]
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_split_with_loss_ui(self):
+        """Once the payout is determined, end() should send the event 
+        to the UI. If the hand is split, that event should be 
+        'splitlost' if the hand loses.
+        """
+        hand2 = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(10, 0),
+        ])
+        hand1 = cards.Hand([
+            cards.Card(1, 2),
+            cards.Card(2, 0),
+            cards.Card(9, 1),
+        ])
+        player = players.Player([hand2, hand1], 'Michael', 180)
+        
+        # This looks a little weird. Shouldn't the hand be different 
+        # between the first two call.updates() since the cards in the 
+        # hand will be different at those points?
+        # 
+        # No. game.play() is sending the dealer's hand object to 
+        # ui.update(), and we are testing to make sure the same 
+        # hand is sent. Since objects are mutable, the hand has three 
+        # cards in it when assertEqual() runs, so the expected hand 
+        # needs to have all three cards, too.
+        expected = [call.update('splitlost', player, [0, 220]),]
+        
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        ui = Mock()
+        g = game.Game(None, dealer, (player,), ui, 20)
+        g.end()
+        actual = [ui.mock_calls[-1],]
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_split_with_tie_ui(self):
+        """Once the payout is determined, end() should send the event 
+        to the UI. If the hand is split, that event should be 
+        'splitlost' if the hand loses.
+        """
+        hand2 = cards.Hand([
+            cards.Card(7, 1),
+            cards.Card(10, 0),
+        ])
+        hand1 = cards.Hand([
+            cards.Card(1, 2),
+            cards.Card(2, 0),
+            cards.Card(9, 1),
+        ])
+        player = players.Player([hand1, hand2], 'Michael', 180)
+        
+        # This looks a little weird. Shouldn't the hand be different 
+        # between the first two call.updates() since the cards in the 
+        # hand will be different at those points?
+        # 
+        # No. game.play() is sending the dealer's hand object to 
+        # ui.update(), and we are testing to make sure the same 
+        # hand is sent. Since objects are mutable, the hand has three 
+        # cards in it when assertEqual() runs, so the expected hand 
+        # needs to have all three cards, too.
+        expected = [call.update('splittie', player, [20, 200]),]
+        
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        ui = Mock()
+        g = game.Game(None, dealer, (player,), ui, 20)
+        g.end()
+        actual = [ui.mock_calls[-1],]
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_split_blackjack_with_ui(self):
+        """Once the payout is determined, end() should send the event 
+        to the UI. If the hand is split and it's a blackjack, the 
+        event should be 'splitpayout'.
+        """
+        hand2 = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(10, 0),
+        ])
+        hand1 = cards.Hand([
+            cards.Card(1, 2),
+            cards.Card(2, 0),
+            cards.Card(9, 1),
+        ])
+        player = players.Player([hand1, hand2], 'Michael', 180)
+        
+        # This looks a little weird. Shouldn't the hand be different 
+        # between the first two call.updates() since the cards in the 
+        # hand will be different at those points?
+        # 
+        # No. game.play() is sending the dealer's hand object to 
+        # ui.update(), and we are testing to make sure the same 
+        # hand is sent. Since objects are mutable, the hand has three 
+        # cards in it when assertEqual() runs, so the expected hand 
+        # needs to have all three cards, too.
+        expected = [call.update('splitpayout', player, [40, 220])]
+        
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        ui = Mock()
+        g = game.Game(None, dealer, (player,), ui, 20)
+        g.end()
+        actual = [ui.mock_calls[-1],]
+        
+        self.assertEqual(expected, actual)
+    
     def test_end_with_double_down(self):
         """If the hand was doubled down, the pay out should quadruple 
         the initial bet.
@@ -739,7 +930,7 @@ class GameTestCase(ut.TestCase):
         ui = Mock()
         g = game.Game(None, dealer, (player,), ui, 20)
         g.end()
-        actual = ui.mock_calls
+        actual = [ui.mock_calls[-2],]
         
         self.assertEqual(expected, actual)
     
@@ -797,19 +988,22 @@ class GameTestCase(ut.TestCase):
             cards.Hand([cards.Card(11, 1),]),
         )
         expected_return = True
+        exp_chips = 0
         
         h1 = [cards.Hand([
             cards.Card(11, 3),
             cards.Card(11, 1),
         ]),]
-        p1 = players.AutoPlayer(copy(h1), name='John')
+        p1 = players.AutoPlayer(copy(h1), 'John', 20)
         playerlist = [p1,]
-        g = game.Game(None, None, playerlist)
+        g = game.Game(None, None, playerlist, None, 20)
         actual_return = g._split(h1[0], p1)
         actual_hands = p1.hands
+        act_chips = p1.chips
         
         self.assertEqual(expected_hands, actual_hands)
         self.assertEqual(expected_return, actual_return)
+        self.assertEqual(exp_chips, act_chips)
     
     def test__split_with_ui(self):
         """If _split() splits the hand, it should send the event, 
@@ -831,6 +1025,7 @@ class GameTestCase(ut.TestCase):
         _ = g._split(h1[0], p1)
 
         g.ui.update.assert_called_with(*expected)
+    
     
     # Test Game._ace_split_hit()
     def test__ace_split_hit(self):
@@ -1199,7 +1394,7 @@ class GameTestCase(ut.TestCase):
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
         player = players.AutoPlayer(None, 'Eric', 20)
-        expected = ['insured', player, [10, 10]]
+        expected = ['insure', player, [10, 10]]
 
         ui = Mock()
         g = game.Game(None, dealer, (player,), ui, 20)

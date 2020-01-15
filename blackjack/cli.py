@@ -156,6 +156,16 @@ class TerminalController:
         """
         self._update_bet(player, bet, 'Doubles down.')
     
+    def flip(self, dealer, hand):
+        """The dealer flipped a card.
+        
+        :param dealer: The dealer who was dealt the hand.
+        :param hand: The hand that was dealt.
+        :return: None.
+        :rtype: None.
+        """
+        self._update_hand(dealer, hand, 'Flips card.')
+    
     def hit(self, player, hand):
         """A player hits.
         
@@ -216,6 +226,16 @@ class TerminalController:
             self._update_table(table)
             self.playerlist = [row[0] for row in self.data]
             
+    def lost(self, player):
+        """The player loses the hand.
+        
+        :param player: The player who lost.
+        :return: None.
+        :rtype: None.
+        """
+        msg = f'Loses.'
+        self._update_bet(player, '', msg)
+    
     def payout(self, player, bet):
         """The player wins the hand.
         
@@ -237,7 +257,7 @@ class TerminalController:
         """
         row = [row[0] for row in self.data].index(player)
         table = [row[:] for row in self.data[0:row + 1]]
-        table.append(['', '', '', '', ''])
+        table.append(['  \u2514\u2500', '', '', '', ''])
         for new_row in self.data[row + 1:]:
             table.append(new_row[:])
         table[row][2] = bet
@@ -245,6 +265,54 @@ class TerminalController:
         table[row][4] = 'Splits.'
         table[row + 1][2] = bet
         table[row + 1][3] = str(player.hands[1])
+        self._update_table(table)
+    
+    def splitlost(self, player, bet):
+        """The player split their hand and lost.
+        
+        :param player: The player splitting.
+        :param bet: The player's new bet total.
+        :return: None.
+        :rtype: None.
+        """
+        msg = 'Loses.'
+        table = [row[:] for row in self.data]
+        row = [row[0] for row in table].index(player)
+        row += 1
+        table[row][2] = ''
+        table[row][4] = msg
+        self._update_table(table)
+    
+    def splitpayout(self, player, bet):
+        """The player split their hand and won.
+        
+        :param player: The player splitting.
+        :param bet: The player's new bet total.
+        :return: None.
+        :rtype: None.
+        """
+        msg = f'Wins {bet}.'
+        table = [row[:] for row in self.data]
+        row = [row[0] for row in table].index(player)
+        row += 1
+        table[row][2] = ''
+        table[row][4] = msg
+        self._update_table(table)
+    
+    def splittie(self, player, bet):
+        """The player split their hand and tied.
+        
+        :param player: The player splitting.
+        :param bet: The player's new bet total.
+        :return: None.
+        :rtype: None.
+        """
+        msg = f'Ties. Keeps {bet}.'
+        table = [row[:] for row in self.data]
+        row = [row[0] for row in table].index(player)
+        row += 1
+        table[row][2] = ''
+        table[row][4] = msg
         self._update_table(table)
     
     def stand(self, player, hand):
@@ -307,8 +375,8 @@ class TerminalController:
         if resp.value:
             # Undo splits.
             playerlist = [row[0] for row in self.data]
-            while '' in playerlist:
-                index = playerlist.index('')
+            while '  \u2514\u2500' in playerlist:
+                index = playerlist.index('  \u2514\u2500')
                 _ = playerlist.pop(index)
                 _ = self.data.pop(index)
                 y = len(self.data) + 5
@@ -364,20 +432,33 @@ class DynamicUI(game.BaseUI):
             self.t.send((event, player, detail))
         elif event == 'doubled':
             self.t.send((event, player, detail[0]))
+        elif event == 'flip':
+            self.t.send((event, player, detail))
         elif event == 'hit':
             self.t.send((event, player, detail))
         elif event == 'insure':
             self.t.send((event, player, detail[0]))
         elif event == 'join':
             self.t.send((event, player))
+        elif event == 'lost':
+            self.t.send((event, player))
         elif event == 'payout':
             self.t.send((event, player, detail[0]))
         elif event == 'split':
+            self.t.send((event, player, detail[0]))
+        elif event == 'splitlost':
+            self.t.send((event, player, detail[0]))
+        elif event == 'splitpayout':
+            self.t.send((event, player, detail[0]))
+        elif event == 'splittie':
             self.t.send((event, player, detail[0]))
         elif event == 'stand':
             self.t.send((event, player, detail))
         elif event == 'tie':
             self.t.send((event, player, detail[0]))
+        else:
+            reason = f'Event not recognized. {event}'
+            raise NotImplementedError(reason)
 
 
 class UI(game.BaseUI):
@@ -485,6 +566,8 @@ class UI(game.BaseUI):
             if player.name == 'You':
                 phrase = 'Walk up.'
             msg = self.tmp.format(player, phrase, '')
+        if event == 'lost':
+            msg = self.tmp.format(player, 'Loses.', '')
         if event == 'payout':
             fmt = '{} ({})'.format(*detail)
             msg = self.tmp.format(player, 'Wins.', fmt)
@@ -493,11 +576,20 @@ class UI(game.BaseUI):
         if event == 'shuffled':
             msg = self.tmp.format(player, 'Shuffled deck.', '')
         if event == 'split':
+            hands = player.hands
             lines = [
-                self.tmp.format(player, 'Hand split.', get_handstr(detail[0])),
-                self.tmp.format('', '', get_handstr(detail[1])),
+                self.tmp.format(player, 'Hand split.', get_handstr(hands[0])),
+                self.tmp.format('', '', get_handstr(hands[1])),
             ]
             msg = '\n'.join(lines)
+        if event == 'splitlost':
+            msg = self.tmp.format(player, 'Loses.', '')
+        if event == 'splitpayout':
+            fmt = '{} ({})'.format(*detail)
+            msg = self.tmp.format(player, 'Wins.', fmt)
+        if event == 'splittie':
+            fmt = '{} ({})'.format(*detail)
+            msg = self.tmp.format(player, 'Stand-off.', fmt)
         if event == 'stand':
             scores = [score for score in detail.score() if score <= 21]
             try:
@@ -637,16 +729,43 @@ def dui():
 
 
 def test():
-    playerlist = [
-        players.Player(name='spam', chips=200),
-        players.Player(name='eggs', chips=200),            
-    ]
-    term = run_terminal(True)
-    next(term)
-    term.send(('init', len(playerlist)))
-    for player in playerlist:
-        term.send(('join', player))
-    term.send(('end'))
+    ui = DynamicUI(True)
+#     deck = cards.Deck.build(6)
+#     deck.shuffle()
+#     deck.random_cut()
+    deck = cards.Deck([
+        cards.Card(10, 0, cards.DOWN),
+        cards.Card(10, 0, cards.DOWN),
+        cards.Card(10, 0, cards.DOWN),
+        cards.Card(6, 0, cards.DOWN),
+        cards.Card(2, 0, cards.DOWN),
+        cards.Card(8, 0, cards.DOWN),
+        cards.Card(10, 0, cards.DOWN),
+        cards.Card(10, 0, cards.DOWN),
+        cards.Card(7, 0, cards.DOWN),
+        cards.Card(10, 0, cards.DOWN),
+    ])
+    dealer = players.Dealer(name='Dealer')
+    playerlist = [players.AutoPlayer(name='Spam', chips=100),]
+#     for index in range(4):
+#         playerlist.append(players.make_player())
+    g = game.Game(deck, dealer, playerlist, ui=ui, buyin=2)
+    ui.enter(len(playerlist) + 1)
+    g.new_game()
+    play = True
+    while play:
+        try:
+            g.start()
+            g.deal()
+            g.play()
+            g.end()
+            play = ui.input('nextgame').value
+        except Exception as ex:
+            with open('exception.txt', 'w') as fh:
+                fh.write(str(ex.args))
+                tb_str = ''.join(tb.format_tb(ex.__traceback__))
+                fh.write(tb_str)
+            raise ex
 
 
 if __name__ == '__main__':
