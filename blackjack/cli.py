@@ -79,6 +79,10 @@ class TerminalController:
         table = [row[:] for row in self.data]
         row = [row[0] for row in table].index(player)
         
+        if bet:
+            bet = str(int(bet))
+            if len(bet) > 3:
+                bet = '{}e{}'.format(bet[0], len(bet))
         table[row][1] = player.chips
         table[row][2] = bet
         table[row][4] = msg
@@ -204,6 +208,17 @@ class TerminalController:
         """
         self._update_bet(player, bet, 'Buys insurance.')
     
+    def insurepay(self, player, bet):
+        """The player gets an insurance pay out.
+        
+        :param player: The player who bought insurance.
+        :param bet: How much the player recieved.
+        :return: None.
+        :rtype: None.
+        """
+        msg = f'Insurance pays {bet}.'
+        self._update_bet(player, '', msg)
+    
     def join(self, player):
         """A new player joined the game.
         
@@ -217,7 +232,7 @@ class TerminalController:
             index = playerlist.index('')
         except ValueError:
             reason = ('Player tried to join, but there are no empty '
-                      'seats at the table.')
+                      f'seats at the table. {playerlist}')
             raise ValueError(reason)
         else:
             table = [row[:] for row in self.data]
@@ -248,6 +263,20 @@ class TerminalController:
         """
         msg = f'Wins {bet}.'
         self._update_bet(player, '', msg)
+    
+    def remove(self, player):
+        """A player leaves the game.
+        
+        :param player: The player who left.
+        :return: None
+        :rtype: None
+        """
+        msg = 'Walks away.'
+        data = [row[:] for row in self.data]
+        row = [row[0] for row in data].index(player)
+        data[row][4] = msg
+        self._update_table(data)
+        self.data[row] = ['', '', '', '', '']
     
     def shuffled(self):
         """The dealer shuffles."""
@@ -492,12 +521,16 @@ class DynamicUI(game.BaseUI):
             self.t.send((event, player, detail))
         elif event == 'insure':
             self.t.send((event, player, detail[0]))
+        elif event == 'insurepay':
+            self.t.send((event, player, detail[0]))
         elif event == 'join':
             self.t.send((event, player))
         elif event == 'lost':
             self.t.send((event, player))
         elif event == 'payout':
             self.t.send((event, player, detail[0]))
+        elif event == 'remove':
+            self.t.send((event, player))
         elif event == 'shuffled':
             self.t.send((event,))
         elif event == 'split':
@@ -764,9 +797,9 @@ def dui():
     dealer = players.Dealer(name='Dealer')
     playerlist = []
     for index in range(4):
-        playerlist.append(players.make_player())
+        playerlist.append(players.make_player(bet=20))
     playerlist.append(players.UserPlayer(name='You', chips=200))
-    g = game.Game(deck, dealer, playerlist, ui=ui, buyin=2)
+    g = game.Game(deck, dealer, playerlist, ui=ui, buyin=20)
     ui.enter(len(playerlist) + 1)
     g.new_game()
     play = True
@@ -786,44 +819,45 @@ def dui():
 
 
 def test():
-    ui = DynamicUI(True)
-#     deck = cards.Deck.build(6)
-#     deck.shuffle()
-#     deck.random_cut()
-    deck = cards.Deck([
-        cards.Card(10, 0, cards.DOWN),
-        cards.Card(10, 0, cards.DOWN),
-        cards.Card(10, 0, cards.DOWN),
-        cards.Card(6, 0, cards.DOWN),
-        cards.Card(2, 0, cards.DOWN),
-        cards.Card(8, 0, cards.DOWN),
-        cards.Card(10, 0, cards.DOWN),
-        cards.Card(10, 0, cards.DOWN),
-        cards.Card(7, 0, cards.DOWN),
-        cards.Card(10, 0, cards.DOWN),
-    ])
-    deck.size = 1
-    dealer = players.Dealer(name='Dealer')
-    playerlist = [players.AutoPlayer(name='Spam', chips=100),]
-#     for index in range(4):
-#         playerlist.append(players.make_player())
-    g = game.Game(deck, dealer, playerlist, ui=ui, buyin=2)
-    ui.enter(len(playerlist) + 1)
-    g.new_game()
-    play = True
-    while play:
-        try:
+    try:
+        ui = DynamicUI(True)
+        deck = cards.Deck.build(6)
+        deck.shuffle()
+        deck.random_cut()
+    #     deck = cards.Deck([
+    #         cards.Card(10, 0, cards.DOWN),
+    #         cards.Card(10, 0, cards.DOWN),
+    #         cards.Card(10, 0, cards.DOWN),
+    #         cards.Card(6, 0, cards.DOWN),
+    #         cards.Card(2, 0, cards.DOWN),
+    #         cards.Card(8, 0, cards.DOWN),
+    #         cards.Card(10, 0, cards.DOWN),
+    #         cards.Card(10, 0, cards.DOWN),
+    #         cards.Card(7, 0, cards.DOWN),
+    #         cards.Card(10, 0, cards.DOWN),
+    #     ])
+        deck.size = 1
+        dealer = players.Dealer(name='Dealer')
+        playerlist = []
+    #     playerlist = [players.AutoPlayer(name='Spam', chips=100),]
+        for index in range(4):
+            playerlist.append(players.make_player(chips=10000))
+        g = game.Game(deck, dealer, playerlist, ui=ui, buyin=1000)
+        ui.enter(len(playerlist) + 1)
+        g.new_game()
+        play = True
+        while play:
             g.start()
             g.deal()
             g.play()
             g.end()
             play = ui.input('nextgame').value
-        except Exception as ex:
-            with open('exception.txt', 'w') as fh:
-                fh.write(str(ex.args))
-                tb_str = ''.join(tb.format_tb(ex.__traceback__))
-                fh.write(tb_str)
-            raise ex
+    except Exception as ex:
+        with open('exception.txt', 'w') as fh:
+            fh.write(str(ex.args))
+            tb_str = ''.join(tb.format_tb(ex.__traceback__))
+            fh.write(tb_str)
+        raise ex
 
 
 if __name__ == '__main__':
@@ -841,13 +875,13 @@ if __name__ == '__main__':
     p.add_argument('-D', '--dui', help='Dynamic UI game.', 
                    action='store_true')
     p.add_argument('-p', '--players', help='Number of random players.', 
-                   action='store')
+                   action='store', type=int)
     p.add_argument('-u', '--user', help='Add a human player.', 
                    action='store_true')
     p.add_argument('-c', '--chips', help='Number of starting chips.', 
-                   action='store')
+                   action='store', type=int, default=200)
     p.add_argument('-C', '--cost', help='Hand bet amount.', 
-                   action='store')
+                   action='store', type=int, default=20)
     p.add_argument('-t', '--test', help='Run current test.', 
                    action='store_true')
     args = p.parse_args()
@@ -867,33 +901,39 @@ if __name__ == '__main__':
     elif args.test:
         test()
     else:
-        chips = 200
-        if args.chips:
-            chips = float(args.chips)
-        buyin = 2
-        if args.cost:
-            buyin = float(args.cost)
+        if args.chips > 9999999:
+            reason = 'Cannot start with more than 9999999 chips.'
+            raise ValueError(reason)
+        if args.cost > 99999999:
+            reason = 'Bets cannot be more than 99999999.'
+            raise ValueError(reason)
         
         playerlist = []
         for _ in range(int(args.players)):
-            playerlist.append(players.make_player(chips))
+            playerlist.append(players.make_player(args.chips))
         if args.user:
-            playerlist.append(players.UserPlayer(name='You', chips=chips))
+            playerlist.append(players.UserPlayer(name='You', chips=args.chips))
         
         deck = cards.Deck.build(6)
         deck.shuffle()
         deck.random_cut()
-        ui = UI()
-        g = game.Game(deck, None, playerlist, ui, buyin)
+        ui = DynamicUI(True)
+        g = game.Game(deck, None, playerlist, ui, args.cost)
+        ui.enter(len(playerlist) + 1)
         g.new_game()
         
         play_again = True
         while play_again:
-            ui.enter()
-            g.start()
-            g.deal()
-            g.play()
-            g.end()
-            ui.exit()
-            play_again = ui.input('nextgame').value
+            try:
+                g.start()
+                g.deal()
+                g.play()
+                g.end()
+                play_again = ui.input('nextgame').value
+            except Exception as ex:
+                with open('exception.txt', 'w') as fh:
+                    fh.write(str(ex.args))
+                    tb_str = ''.join(tb.format_tb(ex.__traceback__))
+                    fh.write(tb_str)
+                raise ex
         

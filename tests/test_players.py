@@ -951,6 +951,19 @@ class make_playerTestCase(ut.TestCase):
         ]
         for method in methods:
             _ = method(g)
+    
+    def test_random_chips(self):
+        """Given a bet, make_player() should give the player a random 
+        number of chips based on that bet.
+        """
+        exp_high = 21
+        exp_low = 1
+        
+        player = players.make_player(bet=1)
+        actual = player.chips
+        
+        self.assertTrue(exp_high >= actual)
+        self.assertTrue(exp_low <= actual)
 
 
 class name_builderTestCase(ut.TestCase):
@@ -1021,3 +1034,26 @@ class name_builderTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+
+class get_chips(ut.TestCase):
+    def test_accepts_bet(self):
+        """The get_chips() function should accept the initial buyin 
+        value for a game of blackjack.
+        """
+        expected = 20
+        
+        # This is the test. It fails if an exception is raised.
+        _ = players.get_chips(expected)
+    
+    def test_returns_chips(self):
+        """get_chips should return a number of chips that is between 
+        1 and 21 times the given bet.
+        """
+        exp_high = 21
+        exp_low = 1
+        
+        bet = 1
+        actual = players.get_chips(bet)
+        
+        self.assertTrue(exp_high >= actual)
+        self.assertTrue(exp_low <= actual)

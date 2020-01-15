@@ -1097,16 +1097,18 @@ class GameTestCase(ut.TestCase):
     
     def test_start_too_few_chips(self):
         """If a player tries to buy into a game but does not have 
-        enough chips, start() should remove them from the game.
+        enough chips, start() should remove them from the game and 
+        add a new player.
         """
-        expected = []
+        expected = players.Player
         
         p1 = players.Player(name='John', chips = 1)
         g = game.Game(None, None, [p1,], None, 20)
         g.start()
-        actual = g.playerlist
+        actual = g.playerlist[0]
         
-        self.assertEqual(expected, actual)
+        self.assertTrue(isinstance(actual, expected))
+        self.assertNotEqual(expected, actual)
     
     def test_start_buyin_ui(self):
         """When a player buys into the round, start() should send that 
@@ -1129,18 +1131,28 @@ class GameTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)        
     
-    def test_start_remove_ui(self):
+    @patch('blackjack.game.make_player')
+    def test_start_remove_ui(self, mock_make_player):
         """When a player is removed, start() should send that event to 
-        the UI.
+        the UI and then send an event for the addition of the new 
+        player.
         """
-        p1 = players.AutoPlayer([], 'Eric', 1)
-        expected = ['remove', p1, '']
+        unexp_player = players.AutoPlayer([], 'Eric', 1)
+        exp_player = players.AutoPlayer([], 'Spam', 1)
+        exp_calls = [
+            call.update('remove', unexp_player, ''),
+            call.update('join', exp_player, '')
+        ]
         
         ui = Mock()
-        g = game.Game(playerlist=(p1,), ui=ui, buyin=20)
+        mock_make_player.return_value = exp_player
+        g = game.Game(playerlist=(unexp_player,), ui=ui, buyin=20)
         g.start()
+        act_player = g.playerlist[0]
+        act_calls = ui.mock_calls
         
-        ui.update.assert_called_with(*expected)
+        self.assertEqual(exp_player, act_player)
+        self.assertEqual(exp_calls, act_calls)
     
     
     # Test Game._remove_player().
@@ -1148,7 +1160,7 @@ class GameTestCase(ut.TestCase):
         """Given player, _remove_player() should remove that player 
         from the playlist attribute.
         """
-        expected = []
+        expected = [None,]
         
         p1 = players.Player(name='John', chips = 1)
         g = game.Game(None, None, [p1,], None, 20)
@@ -1445,3 +1457,19 @@ class GameTestCase(ut.TestCase):
         _ = g._draw()
         
         ui.update.assert_called_with(*expected)
+    
+    
+    # Test Game._add_player().
+    def test__add_player(self):
+        """Given a player, _add_player() adds that player in the first 
+        empty slot in the playerlist.
+        """
+        player = players.Player(name='Spam')
+        expected = [player,]
+        
+        playerlist = [None,]
+        g = game.Game(None, None, playerlist, None, None)
+        g._add_player(player)
+        actual = g.playerlist
+        
+        self.assertEqual(expected, actual)

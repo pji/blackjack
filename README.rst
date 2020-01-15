@@ -41,6 +41,7 @@ Still To Do
 -----------
 The following features are on the to-do list:
 
+* Keep data from displaying outside of fields.
 * Create a kick-off script at root to ease starting the script.
 * Save game state.
 * Restore game state.

@@ -583,7 +583,7 @@ Splitting involves the following actions:
 * If the split hands are aces, hit them once and stand
 * Otherwise, handle each of the new hand's hits normally
 
-How does that cause problems:
+How does that cause problems?
 
 * It's both a hand update and a bet update to the UI
 * The UI needs to make space for the extra hand
@@ -606,3 +606,67 @@ I think the best option here is probably to have TerminalController
 keep a list of what data is in what field. DynamicUI changes the data 
 in that list, and then TerminalController prints the data back to 
 the UI. How big of a change is that? Pretty big, but doable.
+
+
+The Players Leaving Problem
+---------------------------
+I want the game to feel, for lack of a better term, populated. It's 
+not just the user playing against the computer dealer, there are other 
+players at the table. They have victories and losses and make their 
+own decisions, including whether to buy into the next round. This 
+means I need to allow players to leave.
+
+Now if players only leave, eventually the user will be alone with the 
+dealer. That seems lonely. So, in addition to leaving, we need to 
+allow players to join. But:
+
+* How many can join?
+* When can they join?
+* Who are they?
+
+
+How Many
+~~~~~~~~
+In order to simplify this, I decided a while ago to limit the game to 
+a certain number of seats. That allows the UI to have an expectation 
+of how many players it will have to display. I then proceded to code 
+the game to expect a player in every seat.
+
+There is a problem in that only the UI tracks seats. The game engine 
+does not. However, it's the game engine that decides when players 
+join. So, the only way the game engine can keep track of whether there 
+is an open seat is if the action that removes a player also adds a 
+new player.
+
+That's probably a little awkward for the user. They see the "Walks 
+away," message immediately followed by the join message. But is that 
+worth fixing right now? I lean towards no. DynamicUI has a pause 
+between events, so the user will have the opportunity to see the 
+message, if briefly. Maybe I can allow empty seats in the future, but 
+for now the casino is hoppin' and there are butts in every seat.
+
+
+When
+~~~~
+Since the game engine needs it to be tied to the remove event, they 
+join at the same time the old player leaves. This can be addressed in 
+the future to give a game or two pause between players joining.
+
+
+Who
+~~~
+The whole point of the random player generator was to make it random 
+people. The question is, how many chips should they have. If it's 
+fewer than the initial bet, they aren't going to be able to play this 
+round anyway. So, that's the minimum. A couple of players walking up 
+and walking away would be amusing. A potential infinite loop of them 
+doing so is not.
+
+So, the floor is Game.buyin. What is the ceiling? It probably should 
+be random, but in a range. Since the big thing is whether or not they 
+have enough for bets, maybe it should be based on some multiple of 
+Game.buyin? Maybe the range is centered on 11 bets ± 10? That way 
+you could get the player who walks up for one bet, busts then walks 
+away.
+
+So, that should be added to players.make_player().

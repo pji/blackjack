@@ -31,6 +31,16 @@ NAMES = ['Jennifer', 'Amy', 'Melissa', 'Heather', 'Angela', 'Michelle',
 
 
 # Utility functions.
+def get_chips(bet):
+    """Return the number of chips to give to a player.
+    
+    :param bet: The initial buyin for a game of blackjack.
+    :return: The chips to give to the player.
+    :rtype: int or float, depending on what bet was.
+    """
+    multiplier = choice(range(1, 21))
+    return bet * multiplier
+
 def get_name():
     """Return a random name."""
     return choice(NAMES)
@@ -319,13 +329,16 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
     return type(name, (Player,), attrs)
 
 
-def make_player(chips=200) -> Player:
+def make_player(chips=200, bet=None) -> Player:
     """Make a random player for a blackjack game."""
     name = ''
     if 0 != choice(range(3)):
         name = get_name()
     else:
         name = name_builder(get_name(), get_name())
+    
+    if bet:
+        chips = get_chips(bet)
     
     methods = {
         'will_hit': choice([will_hit_dealer, will_hit_recommended]),

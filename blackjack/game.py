@@ -10,7 +10,7 @@ The module contains the main game loop for blackjack.
 from typing import Union
 
 from blackjack.cards import Deck, DOWN, Hand
-from blackjack.players import Dealer, Player
+from blackjack.players import Dealer, Player, make_player
 
 
 # Internal utility functions.
@@ -192,6 +192,9 @@ class Game:
             else:
                 self._remove_player(player)
                 self.ui.update('remove', player, '')
+                player = make_player(bet=self.buyin)
+                self._add_player(player)
+                self.ui.update('join', player, '')
     
     def _ace_split_hit(self, player: Player, hand: Hand) -> None:
         """Handle a hand made by splitting a pair of aces. It also 
@@ -207,6 +210,18 @@ class Game:
         hand.append(card)
         self.ui.update('hit', player, hand)
         self.ui.update('stand', player, hand)
+    
+    def _add_player(self, player):
+        """Add a new player to the first empty seat in the game.
+        
+        :param player: The player to add to the game.
+        :return: None.
+        :rtype: None
+        """
+        playerlist = list(self.playerlist)
+        index = playerlist.index(None)
+        playerlist[index] = player
+        self.playerlist = playerlist
     
     def _build_hand(self):
         """create the initial hand and deal a card into it."""
@@ -297,7 +312,8 @@ class Game:
     def _remove_player(self, player: Player) -> None:
         """Remove a player from the game."""
         playerlist = list(self.playerlist)
-        playerlist.remove(player)
+        index = playerlist.index(player)
+        playerlist[index] = None
         self.playerlist = playerlist
     
     def _split(self, hand: Hand, player: Player) -> None:
