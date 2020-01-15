@@ -31,14 +31,16 @@ player, the initial bet set to 100, and all players starting with
 
     python3 -m blackjack.cli -p 4 -u -c 100 -C 100
 
+If you want to watch games between a dealer and four random players in 
+the new curses-based UI::
+
+    python3 -m blackjack.cli -D
 
 
 Still To Do
 -----------
 The following features are on the to-do list:
 
-* Add UI event for losing the game.
-* Add UI that updates information in place rather than listing events.
 * Create a kick-off script at root to ease starting the script.
 * Save game state.
 * Restore game state.

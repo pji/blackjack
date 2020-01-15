@@ -794,20 +794,99 @@ class DynamicUITestCase(ut.TestCase):
     
     # Test DynamicUI.input().
     @patch('blackjack.cli.run_terminal')
+    def test_input_doubledown_call(self, mock_term):
+        """Given an event that there should be a doubledown prompt, 
+        input() should call for the the prompt.
+        """
+        ex_call = call().send(('doubledown_prompt',))
+        ex_return = model.IsYes(True)
+        
+        ui = cli.DynamicUI()
+        ac_return = ui.input('doubledown')
+        ac_call = mock_term.mock_calls[-1]
+        
+        self.assertEqual(ex_call, ac_call)
+    
+    @patch('blackjack.cli.run_terminal')
+    def test_input_doubledown_return(self, mock_term):
+        """Given an event that there should be a doubledown prompt, 
+        input() should return the response to the prompt.
+        """
+        ex_return = model.IsYes(True)
+        
+        mock_term.return_value = (item for item in [None, ex_return])
+        ui = cli.DynamicUI()
+        ac_return = ui.input('doubledown')
+        
+        self.assertEqual(ex_return, ac_return)
+
+    @patch('blackjack.cli.run_terminal')
+    def test_input_hit_call(self, mock_term):
+        """Given an event that there should be a hit prompt, 
+        input() should call for the the prompt.
+        """
+        ex_call = call().send(('hit_prompt',))
+        ex_return = model.IsYes(True)
+        
+        ui = cli.DynamicUI()
+        ac_return = ui.input('hit')
+        ac_call = mock_term.mock_calls[-1]
+        
+        self.assertEqual(ex_call, ac_call)
+    
+    @patch('blackjack.cli.run_terminal')
+    def test_input_hit_return(self, mock_term):
+        """Given an event that there should be a hit prompt, 
+        input() should return the response to the prompt.
+        """
+        ex_return = model.IsYes(True)
+        
+        mock_term.return_value = (item for item in [None, ex_return])
+        ui = cli.DynamicUI()
+        ac_return = ui.input('hit')
+        
+        self.assertEqual(ex_return, ac_return)
+
+    @patch('blackjack.cli.run_terminal')
+    def test_input_insure_call(self, mock_term):
+        """Given an event that there should be an insure prompt, 
+        input() should call for the the prompt.
+        """
+        ex_call = call().send(('insure_prompt',))
+        ex_return = model.IsYes(True)
+        
+        ui = cli.DynamicUI()
+        ac_return = ui.input('insure')
+        ac_call = mock_term.mock_calls[-1]
+        
+        self.assertEqual(ex_call, ac_call)
+    
+    @patch('blackjack.cli.run_terminal')
+    def test_input_insure_return(self, mock_term):
+        """Given an event that there should be an insure prompt, 
+        input() should return the response to the prompt.
+        """
+        ex_return = model.IsYes(True)
+        
+        mock_term.return_value = (item for item in [None, ex_return])
+        ui = cli.DynamicUI()
+        ac_return = ui.input('insure')
+        
+        self.assertEqual(ex_return, ac_return)
+
+    @patch('blackjack.cli.run_terminal')
     def test_input_nextgame_prompt_call(self, mock_term):
         """Given an event that there should be a new game prompt, 
-        input() should return the response to the prompt.
+        input() should call for the prompt.
         """
         ex_call = call().send(('nextgame_prompt',))
         ex_return = model.IsYes(True)
         
-#         mock_term.return_value = (item for item in [None, ex_return])
         ui = cli.DynamicUI()
         ac_return = ui.input('nextgame')
         ac_call = mock_term.mock_calls[-1]
         
         self.assertEqual(ex_call, ac_call)
-#         self.assertEqual(ex_return, ac_return)
     
     @patch('blackjack.cli.run_terminal')
     def test_input_nextgame_prompt_return(self, mock_term):
@@ -819,6 +898,33 @@ class DynamicUITestCase(ut.TestCase):
         mock_term.return_value = (item for item in [None, ex_return])
         ui = cli.DynamicUI()
         ac_return = ui.input('nextgame')
+        
+        self.assertEqual(ex_return, ac_return)
+    
+    @patch('blackjack.cli.run_terminal')
+    def test_input_split_call(self, mock_term):
+        """Given an event that there should be a split prompt, 
+        input() should call for the the prompt.
+        """
+        ex_call = call().send(('split_prompt',))
+        ex_return = model.IsYes(True)
+        
+        ui = cli.DynamicUI()
+        ac_return = ui.input('split')
+        ac_call = mock_term.mock_calls[-1]
+        
+        self.assertEqual(ex_call, ac_call)
+    
+    @patch('blackjack.cli.run_terminal')
+    def test_input_split_return(self, mock_term):
+        """Given an event that there should be a split prompt, 
+        input() should return the response to the prompt.
+        """
+        ex_return = model.IsYes(True)
+        
+        mock_term.return_value = (item for item in [None, ex_return])
+        ui = cli.DynamicUI()
+        ac_return = ui.input('split')
         
         self.assertEqual(ex_return, ac_return)
 
@@ -1399,6 +1505,136 @@ class run_terminalTestCase(ut.TestCase):
         actual = [ctlr.data[0][1], ctlr.data[0][2], ctlr.data[0][4]]
 
         self.assertEqual(expected, actual)
+    
+    
+    # Input messages.
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.cli.print')
+    def test_double_down_prompt(self, mock_print, mock_inkey):
+        """When sent a double_down_prompt message, run_terminal() 
+        should prompt the user for whether they'd like to hit and 
+        return the response.
+        """
+        prompt_tmp = '\x1b[{row};1H{}'
+        expd_print = [
+            call(prompt_tmp.format('Double down? (Y/n) > _', row=8)),
+            call('\x1b[8;1H' + (' ' * 80)),
+        ]
+        expd_return = model.IsYes(True)
+        
+        mock_inkey.return_value = True
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        ctlr = cli.TerminalController(Terminal())
+        term = cli.run_terminal(ctlr=ctlr)
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        actl_return = term.send(('doubledown_prompt',))
+        actl_print = mock_print.mock_calls[-2:]
+        del term
+        
+        self.assertEqual(expd_print, actl_print)
+        self.assertEqual(expd_return.value, actl_return.value)
+    
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.cli.print')
+    def test_hit_prompt(self, mock_print, mock_inkey):
+        """When sent a hit_prompt message, run_terminal() should 
+        prompt the user for whether they'd like to hit and return 
+        the response.
+        """
+        prompt_tmp = '\x1b[{row};1H{}'
+        expd_print = [
+            call(prompt_tmp.format('Hit? (Y/n) > _', row=8)),
+            call('\x1b[8;1H' + (' ' * 80)),
+        ]
+        expd_return = model.IsYes(True)
+        
+        mock_inkey.return_value = True
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        ctlr = cli.TerminalController(Terminal())
+        term = cli.run_terminal(ctlr=ctlr)
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        actl_return = term.send(('hit_prompt',))
+        actl_print = mock_print.mock_calls[-2:]
+        del term
+        
+        self.assertEqual(expd_print, actl_print)
+        self.assertEqual(expd_return.value, actl_return.value)
+    
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.cli.print')
+    def test_hit_prompt(self, mock_print, mock_inkey):
+        """When sent a insure_prompt message, run_terminal() should 
+        prompt the user for whether they'd like to insure and return 
+        the response.
+        """
+        prompt_tmp = '\x1b[{row};1H{}'
+        expd_print = [
+            call(prompt_tmp.format('Insure? (Y/n) > _', row=8)),
+            call('\x1b[8;1H' + (' ' * 80)),
+        ]
+        expd_return = model.IsYes(True)
+        
+        mock_inkey.return_value = True
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        ctlr = cli.TerminalController(Terminal())
+        term = cli.run_terminal(ctlr=ctlr)
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        actl_return = term.send(('insure_prompt',))
+        actl_print = mock_print.mock_calls[-2:]
+        del term
+        
+        self.assertEqual(expd_print, actl_print)
+        self.assertEqual(expd_return.value, actl_return.value)
+    
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.cli.print')
+    def test_hit_prompt(self, mock_print, mock_inkey):
+        """When sent a split_prompt message, run_terminal() should 
+        prompt the user for whether they'd like to split and return 
+        the response.
+        """
+        prompt_tmp = '\x1b[{row};1H{}'
+        expd_print = [
+            call(prompt_tmp.format('Split? (Y/n) > _', row=8)),
+            call('\x1b[8;1H' + (' ' * 80)),
+        ]
+        expd_return = model.IsYes(True)
+        
+        mock_inkey.return_value = True
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        ctlr = cli.TerminalController(Terminal())
+        term = cli.run_terminal(ctlr=ctlr)
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        actl_return = term.send(('split_prompt',))
+        actl_print = mock_print.mock_calls[-2:]
+        del term
+        
+        self.assertEqual(expd_print, actl_print)
+        self.assertEqual(expd_return.value, actl_return.value)
     
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.cli.print')

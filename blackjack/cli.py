@@ -65,6 +65,8 @@ class TerminalController:
         ])
         self.data = []
     
+    
+    # Update messages.
     def _update_bet(self, player, bet, msg):
         """The game event updates the player's bet.
         
@@ -347,6 +349,8 @@ class TerminalController:
         msg = f'Ties. Keeps {bet}.'
         self._update_bet(player, '', msg)
     
+    
+    # Input messages.
     def _yesno_prompt(self, msg) -> model.IsYes:
         """Prompt the user with a yes/no question.
         
@@ -371,6 +375,30 @@ class TerminalController:
                 pass
         print(clearline)
         return is_yes
+    
+    def doubledown_prompt(self) -> model.IsYes:
+        """Does the user want to double down?
+        
+        :return: The user's decision.
+        :rtype: model.IsYes
+        """
+        return self._yesno_prompt('Double down?')
+    
+    def hit_prompt(self) -> model.IsYes:
+        """Does the user want to hit?
+        
+        :return: The user's decision.
+        :rtype: model.IsYes
+        """
+        return self._yesno_prompt('Hit?')
+    
+    def insure_prompt(self) -> model.IsYes:
+        """Does the user want to insure the hand?
+        
+        :return: The user's decision.
+        :rtype: model.IsYes
+        """
+        return self._yesno_prompt('Insure?')
     
     def nextgame_prompt(self) -> model.IsYes:
         """Does the user want to play again?
@@ -404,6 +432,14 @@ class TerminalController:
                 row[4] = ''
             self._update_table(table)
         return resp
+    
+    def split_prompt(self) -> model.IsYes:
+        """Does the user want to split the hand?
+        
+        :return: The user's decision.
+        :rtype: model.IsYes
+        """
+        return self._yesno_prompt('Split?')
 
 
 # UI objects.
@@ -428,8 +464,19 @@ class DynamicUI(game.BaseUI):
         :rtype: Any. (May need an response object in the future.)
         """
         resp = None
-        if event == 'nextgame':
+        if event == 'doubledown':
+            resp = self.t.send(('doubledown_prompt',))
+        elif event == 'hit':
+            resp = self.t.send(('hit_prompt',))
+        elif event == 'insure':
+            resp = self.t.send(('insure_prompt',))
+        elif event == 'nextgame':
             resp = self.t.send(('nextgame_prompt',))
+        elif event == 'split':
+            resp = self.t.send(('split_prompt',))
+        else:
+            reason = f'Dynamic UI does not recognize {event}.'
+            raise ValueError(reason)
         return resp
     
     def update(self, event, player, detail):
@@ -718,6 +765,7 @@ def dui():
     playerlist = []
     for index in range(4):
         playerlist.append(players.make_player())
+    playerlist.append(players.UserPlayer(name='You', chips=200))
     g = game.Game(deck, dealer, playerlist, ui=ui, buyin=2)
     ui.enter(len(playerlist) + 1)
     g.new_game()
