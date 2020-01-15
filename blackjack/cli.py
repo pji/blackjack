@@ -247,6 +247,13 @@ class TerminalController:
         msg = f'Wins {bet}.'
         self._update_bet(player, '', msg)
     
+    def shuffled(self):
+        """The dealer shuffles."""
+        msg = 'Shuffles deck.'
+        data = [row[:] for row in self.data]
+        data[0][4] = msg
+        self._update_table(data)
+    
     def split(self, player, bet):
         """The player split their hand.
         
@@ -444,6 +451,8 @@ class DynamicUI(game.BaseUI):
             self.t.send((event, player))
         elif event == 'payout':
             self.t.send((event, player, detail[0]))
+        elif event == 'shuffled':
+            self.t.send((event,))
         elif event == 'split':
             self.t.send((event, player, detail[0]))
         elif event == 'splitlost':
@@ -745,6 +754,7 @@ def test():
         cards.Card(7, 0, cards.DOWN),
         cards.Card(10, 0, cards.DOWN),
     ])
+    deck.size = 1
     dealer = players.Dealer(name='Dealer')
     playerlist = [players.AutoPlayer(name='Spam', chips=100),]
 #     for index in range(4):

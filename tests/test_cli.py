@@ -577,6 +577,25 @@ class DynamicUITestCase(ut.TestCase):
         self.assertEqual(expected, actual)
     
     @patch('blackjack.cli.run_terminal')
+    def test_update_deal(self, mock_term):
+        """Given an event that a player has bet, the update() method 
+        should print that event to stdout.
+        """
+        player = players.AutoPlayer([], 'Graham', 220)
+        hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(1, 0),
+        ])
+        expected = call().send(('shuffled',))
+        
+        ui = cli.DynamicUI()
+        ui.update('deal', player, hand)
+        ui.update('shuffled', player, '')
+        actual = mock_term.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.run_terminal')
     def test_update_flip(self, mock_term):
         """Given an event that a dealer has flipped a card, the 
         update() method should print that event to stdout.
@@ -993,7 +1012,7 @@ class run_terminalTestCase(ut.TestCase):
     
     @patch('blackjack.cli.print')
     def test_flip(self, mock_print):
-        """When sent a deal message, run_terminal() should display
+        """When sent a flip message, run_terminal() should display
         the player's hand and event message in the player's row.
         """        
         hand0 = cards.Hand([
@@ -1015,6 +1034,33 @@ class run_terminalTestCase(ut.TestCase):
         term.send(('flip', playerlist[0], hand0))
         del term
         actual = [ctlr.data[0][3], ctlr.data[0][4]]
+
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.cli.print')
+    def test_shuffle(self, mock_print):
+        """When sent a shuffle message, run_terminal() should display
+        the event message in the dealer's row.
+        """        
+        hand0 = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(1, 1),
+        ])
+        expected = ['Shuffles deck.']        
+        
+        playerlist = [
+            players.Player(name='spam', chips=200),
+            players.Player(name='eggs', chips=200),            
+        ]
+        ctlr = cli.TerminalController(Terminal())      
+        term = cli.run_terminal(ctlr=ctlr)
+        next(term)
+        term.send(('init', len(playerlist)))
+        term.send(('join', playerlist[0]))
+        term.send(('join', playerlist[1]))
+        term.send(('shuffled',))
+        del term
+        actual = [ctlr.data[0][4]]
 
         self.assertEqual(expected, actual)
     
