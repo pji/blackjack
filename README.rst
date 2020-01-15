@@ -39,15 +39,12 @@ the new curses-based UI::
 
 Still To Do
 -----------
-The following features are on the to-do list:
-
-* Keep data from displaying outside of fields.
-* Create a kick-off script at root to ease starting the script.
-* Save game state.
-* Restore game state.
+The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
+* Save game state.
+* Restore game state.
 * Add optional card count to display.
 * Add will_*_never functions.
 * Add will_*_random functions.
