@@ -1154,7 +1154,7 @@ class run_terminalTestCase(ut.TestCase):
         the data table in TerminalController withe the new chips and 
         bet totals.
         """
-        expected = [200, 20, 'Bets.']
+        expected = [200, '20', 'Bets.']
         
         playerlist = [
             players.Player(name='spam', chips=200),
@@ -1177,7 +1177,7 @@ class run_terminalTestCase(ut.TestCase):
         """When sent an double message, run_terminal() should update 
         the player's bet and announce the decision.
         """
-        expected = [200, 20, 'Doubles down.']
+        expected = [200, '20', 'Doubles down.']
         
         playerlist = [
             players.Player(name='spam', chips=200),
@@ -1254,7 +1254,7 @@ class run_terminalTestCase(ut.TestCase):
         """When sent an insure message, run_terminal() should update 
         the player's bet and announce the decision.
         """
-        expected = [200, 20, 'Buys insurance.']
+        expected = [200, '20', 'Buys insurance.']
         
         playerlist = [
             players.Player(name='spam', chips=200),

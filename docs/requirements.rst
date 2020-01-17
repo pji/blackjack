@@ -670,3 +670,96 @@ you could get the player who walks up for one bet, busts then walks
 away.
 
 So, that should be added to players.make_player().
+
+
+Back to the UI
+--------------
+While the DynamicUI is now done, it feels over complicated. Right now 
+it has three pieces:
+
+* cli.DynamicUI: A class to implement the game.BaseUI class
+* cli.TerminalController: A slightly more intuitive way of handling 
+  the messages coming from game.Game, plus a way to maintain the 
+  state of the UI
+* run_terminal: A generator that allows UI events to happen within 
+  blessed's fullscreen and hidden_cursor context managers
+
+Each of those pieces are probably necessary to truly separate the game 
+engine from the UI. The problem is that TerminalController should 
+probably be more ignorant of the game events than it is. Right now it 
+has a method per event sent by the game engine. It should probably 
+only have methods relevant to the UI, letting DynamicUI translate 
+between the engine and the UI.
+
+That's doable, but what shape should the new TerminalController take? 
+If I'm writing something to manage writing the game's UI to the 
+terminal, maybe I should keep it open to be generically useful? Maybe?
+
+
+termui
+------
+termui will be the new implementation of TerminalController. It will 
+be in its own module. And:
+
+* It will not have events specific to blackjack.
+* It will maintain a tabular display of data in the terminal.
+* It will handle user input.
+* It will provide error handling to allow the recovery of exceptions 
+  when the terminal is in fullscreen mode.
+
+This will mean that DynamicUI will need to mediate between the game 
+engine and TermController, but I think that is fine.
+
+What user interface elements does termui need to deal with:
+
+* Table title
+* Description field
+* Table headers
+* Table frame
+* Data cells
+* Cell frames
+* User prompt
+* Errors
+
+What events will termui need to handle:
+
+* Initial draw
+* Update cell
+* Update frame
+* Update table size
+* Add row
+* Add column
+* Prompt user
+* Update description
+* Update title
+* Error
+* Display error
+* Exit
+
+There could be a page concept here, where the UI has multiple tables 
+that the user can switch between. So, I need to be careful to allow 
+multiple of the controller objects to exist at once, each one 
+representing a page of the UI. Though, that sounds more like having 
+one controller object and separate table objects holding each page, 
+which is overkill at the moment, I think. Let's just focus on one 
+table controller object now, and we can split table from controller 
+in the future if needed.
+
+Since it is controlling a table, though, I'll start by calling it 
+Table.
+
+
+Table Attributes
+~~~~~~~~~~~~~~~~
+What attributes does the Table object need:
+
+* title
+* description
+* headers
+* data
+* frame_components
+* header_templates
+* cell_templates
+* terminal
+* prompt
+
