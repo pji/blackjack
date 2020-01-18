@@ -17,7 +17,7 @@ import traceback as tb
 
 from blessed import Terminal
 
-from blackjack import cards, game, model, players
+from blackjack import cards, game, model, players, termui
 
 
 # Objects and functions for advanced terminal control.
@@ -548,6 +548,120 @@ class DynamicUI(game.BaseUI):
         else:
             reason = f'Event not recognized. {event}'
             raise NotImplementedError(reason)
+
+
+class TableUI(game.EngineUI):
+    """A table-based terminal UI for blackjack."""
+    # General operation methods.
+    def __init__(self, ctlr: termui.TerminalController = None):
+        """Initialize and instance of the class.
+        
+        :param ctlr: (Optional.) The TerminalController object running 
+            the UI.
+        """
+        if not ctlr:
+            ctlr = self._make_ctlr()
+        self.ctlr = ctlr
+        self.loop = None
+    
+    def _make_ctlr(self):
+        """Returns a termui.Table object for blackjack."""
+        fields = (
+            ('Player', '{:<14}'),
+            ('Chips', '{:>7}'),
+            ('Bet', '{:>3}'),
+            ('Hand', '{:<27}'),
+            ('Event', '{:<23}'),
+        )
+        return termui.Table('Blackjack', fields)
+    
+    def end(self):
+        """End the UI loop gracefully."""
+        self.loop.close()
+    
+    def start(self):
+        """Start the UI."""
+        self.loop = termui.main(ctlr=self.ctlr)
+        next(self.loop)
+        self.loop.send(('draw',))
+    
+    
+    # Input methods.
+    def doubledown_prompt(self) -> model.IsYes:
+        """Ask user if they want to double down."""    
+    
+    def hit_prompt(self) -> model.IsYes:
+        """Ask user if they want to hit."""    
+    
+    def insure_prompt(self) -> model.IsYes:
+        """Ask user if they want to insure."""    
+    
+    def nextgame_prompt(self) -> model.IsYes:
+        """Ask user if they want to play another round."""    
+    
+    def split_prompt(self) -> model.IsYes:
+        """Ask user if they want to split."""    
+    
+    
+    # Update methods.
+    def _update_bet(self, player, bet):
+        """The player's bet and chips information needs to be 
+        updated.
+        """
+    
+    def bet(self, player, bet):
+        """Player places initial bet."""
+    
+    def deal(self, player, hand):
+        """Player recieves initial hand."""
+    
+    def doubledown(self, player, bet):
+        """Player doubles down."""
+    
+    def flip(self, player, hand):
+        """Player flips a card."""
+    
+    def hit(self, player, hand):
+        """Player hits."""
+    
+    def insures(self, player, bet):
+        """Player insures their hand."""
+    
+    def insurepay(self, player, bet):
+        """Insurance is paid to player."""
+    
+    def joins(self, player):
+        """Player joins the game."""
+    
+    def leaves(self, player):
+        """Player leaves the game."""
+    
+    def loses(self, player):
+        """Player loses."""
+    
+    def loses_split(self, player, bet):
+        """Player loses on their split hand."""
+    
+    def shuffles(self):
+        """The deck is shuffled."""
+    
+    def splits(self, player, bet):
+        """Player splits their hand."""
+    
+    def stand(self, player, hand):
+        """Player stands."""
+    
+    def tie(self, player, bet):
+        """Player ties."""
+    
+    def ties_split(self, player, bet):
+        """Player ties on their split hand."""
+    
+    def wins(self, player, bet):
+        """Player wins."""
+    
+    def wins_split(self, player, bet):
+        """Player wins on their split hand."""
 
 
 class UI(game.BaseUI):

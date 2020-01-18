@@ -7,9 +7,11 @@ The module contains the main game loop for blackjack.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from abc import ABC, abstractmethod
 from typing import Union
 
 from blackjack.cards import Deck, DOWN, Hand
+from blackjack.model import IsYes
 from blackjack.players import Dealer, Player, make_player
 
 
@@ -334,3 +336,110 @@ class Game:
             self.ui.update('split', player, [self.buyin, player.chips])
             return True
         return False
+
+
+class EngineUI(ABC):
+    # General operation methods.
+    @abstractmethod
+    def end(self):
+        """End the UI."""
+    
+    @abstractmethod
+    def start(self):
+        """Start the UI."""
+    
+    
+    # Input methods.
+    @abstractmethod
+    def doubledown_prompt(self) -> IsYes:
+        """Ask user if they want to double down."""    
+    
+    @abstractmethod
+    def hit_prompt(self) -> IsYes:
+        """Ask user if they want to hit."""    
+    
+    @abstractmethod
+    def insure_prompt(self) -> IsYes:
+        """Ask user if they want to insure."""    
+    
+    @abstractmethod
+    def nextgame_prompt(self) -> IsYes:
+        """Ask user if they want to play another round."""    
+    
+    @abstractmethod
+    def split_prompt(self) -> IsYes:
+        """Ask user if they want to split."""    
+    
+    
+    # Update methods.
+    @abstractmethod
+    def bet(self, player, bet):
+        """Player places initial bet."""
+    
+    @abstractmethod
+    def deal(self, player, hand):
+        """Player recieves initial hand."""
+    
+    @abstractmethod
+    def doubledown(self, player, bet):
+        """Player doubles down."""
+    
+    @abstractmethod
+    def flip(self, player, hand):
+        """Player flips a card."""
+    
+    @abstractmethod
+    def hit(self, player, hand):
+        """Player hits."""
+    
+    @abstractmethod
+    def insures(self, player, bet):
+        """Player insures their hand."""
+    
+    @abstractmethod
+    def insurepay(self, player, bet):
+        """Insurance is paid to player."""
+    
+    @abstractmethod
+    def joins(self, player):
+        """Player joins the game."""
+    
+    @abstractmethod
+    def leaves(self, player):
+        """Player leaves the game."""
+    
+    @abstractmethod
+    def loses(self, player):
+        """Player loses."""
+    
+    @abstractmethod
+    def loses_split(self, player, bet):
+        """Player loses on their split hand."""
+    
+    @abstractmethod
+    def shuffles(self):
+        """The deck is shuffled."""
+    
+    @abstractmethod
+    def splits(self, player, bet):
+        """Player splits their hand."""
+    
+    @abstractmethod
+    def stand(self, player, hand):
+        """Player stands."""
+    
+    @abstractmethod
+    def tie(self, player, bet):
+        """Player ties."""
+    
+    @abstractmethod
+    def ties_split(self, player, bet):
+        """Player ties on their split hand."""
+    
+    @abstractmethod
+    def wins(self, player, bet):
+        """Player wins."""
+    
+    @abstractmethod
+    def wins_split(self, player, bet):
+        """Player wins on their split hand."""

@@ -15,7 +15,7 @@ from unittest.mock import patch, call, MagicMock
 
 from blessed import Terminal
 
-from blackjack import cards, cli, model, players
+from blackjack import cards, cli, game, model, players, termui
 
 
 # Utility functions.
@@ -38,6 +38,84 @@ def mock_run_terminal_only_yesno():
 
 
 # Tests.
+class TableUITestCase(ut.TestCase):
+    def test_subclass(self):
+        """TableUI is a subclass of game.EngineUI."""
+        exp = game.EngineUI
+        act = cli.TableUI
+        self.assertTrue(issubclass(act, exp))
+    
+    # General operations methods.
+    def test_init_optional_attrs(self):
+        """On initialization, TableUI should accept optional 
+        attributes.
+        """
+        fields = [
+            ['Name', '{:<10}',],
+            ['Value', '{:<10}',],
+        ]
+        ctlr = termui.Table('spam', fields)
+        exp = {
+            'ctlr': ctlr,
+        }
+        
+        ui = cli.TableUI(**exp)
+        for attr in exp:
+            act = getattr(ui, attr)
+            
+            self.assertEqual(exp[attr], act)
+    
+    def test_init_no_optional_attrs(self):
+        """On initialization, TableUI should not require optional 
+        attributes.
+        """
+        exp = termui.Table
+        
+        ui = cli.TableUI()
+        act = ui.ctlr
+        
+        self.assertTrue(isinstance(act, exp))
+    
+    @patch('blackjack.termui.main')
+    def test_start(self, mock_main):
+        """start() should kick off the main loop of the UI, set it 
+        as the loop attribute, and prime it.
+        """
+        ui = cli.TableUI()
+        term = ui.ctlr
+        exp = [
+            call(ctlr=ui.ctlr),
+            call().__next__(),
+            call().send(('draw',))
+        ]
+        
+        ui.start()
+        act = mock_main.mock_calls
+        
+        self.assertEqual(exp, act)
+    
+    @patch('blackjack.termui.main')
+    def test_end(self, mock_main):
+        """end() should terminate UI loop gracefully."""
+        exp = call().close()
+        
+        ui = cli.TableUI()
+        ui.start()
+        ui.end()
+        act = mock_main.mock_calls[-1]
+        
+        self.assertEqual(exp, act)
+    
+    
+    # Update method tests.
+    @ut.skip
+    def test__update_bet(self):
+        """_update_bet should send an event to the UI loop that a 
+        player's bet has changed and needs to be updated.
+        """
+        raise NotImplemented
+
+
 class UITestCase(ut.TestCase):
     tmp = '{:<15} {:<15} {:<}\n'
     

@@ -342,3 +342,17 @@ class mainTestCase(ut.TestCase):
         # This will fail the test due to a exception if 
         # ctlr.term.fullscreen cannot be called.
         next(main)
+    
+    @patch('blessed.Terminal')
+    def test_terminate(self, _):
+        """When StopGeneration is raised to main(), main should 
+        terminate gracefully.
+        """
+        exp = StopIteration
+        
+        main = termui.main()
+        next(main)
+        main.close()
+        
+        with self.assertRaises(exp):
+            _ = main.send(('draw',))
