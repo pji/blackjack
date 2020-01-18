@@ -14,6 +14,7 @@ from copy import deepcopy
 import sys
 from time import sleep
 import traceback as tb
+from typing import Sequence
 
 from blessed import Terminal
 
@@ -604,31 +605,96 @@ class TableUI(game.EngineUI):
     
     
     # Update methods.
-    def _update_bet(self, player, bet):
+    def _get_field_index(self, needed: Sequence[str]) -> list:
+        """Get the indices the given fields of the data table.
+        
+        :param needed: The names of the fields you need the indexes 
+            for.
+        :return: A list of the indices.
+        :rtype: list
+        """
+        fields = [field.name for field in self.ctlr.fields]
+        return [fields.index(field) for field in needed]
+    
+    def _get_player_row_and_data(self, player: players.Player) -> tuple:
+        """Get the data table row for the given player.
+        
+        :param player: The player to get the row for.
+        :return: An index and a copy of the data table.
+        :rtype: tuple
+        """
+        # Get the player's row to update.
+        # Since termui.Table determines which fields to updata by 
+        # looking for changes in the data table, it's very important 
+        # that we create a copy of data here.
+        data = [row[:] for row in self.ctlr.data]
+        playerlist = [row[0] for row in data]
+        row = playerlist.index(player)
+        return row, data
+    
+    def _update_bet(self, player, bet, event):
         """The player's bet and chips information needs to be 
         updated.
         """
+        row, data = self._get_player_row_and_data(player)
+        
+        affected_fields = ('Chips', 'Bet', 'Event')
+        i_chips, i_bet, i_event = self._get_field_index(affected_fields)
+        
+        data[row][i_chips] = player.chips
+        data[row][i_bet] = bet
+        data[row][i_event] = event
+        self.loop.send(('update', data))
+    
+    def _update_event(self, player, event):
+        """The player's event information needs to be updated.
+        """
+        row, data = self._get_player_row_and_data(player)
+        
+        affected_fields = ('Event',)
+        i_event, = self._get_field_index(affected_fields)
+        
+        data[row][i_event] = event
+        self.loop.send(('update', data))
+    
+    def _update_hand(self, player, hand, event):
+        """The player's hand information needs to be updated."""
+        row, data = self._get_player_row_and_data(player)
+        
+        affected_fields = ('Hand', 'Event')
+        i_hand, i_event = self._get_field_index(affected_fields)
+        
+        data[row][i_hand] = str(hand)
+        data[row][i_event] = event
+        self.loop.send(('update', data))
     
     def bet(self, player, bet):
         """Player places initial bet."""
+        self._update_bet(player, bet, 'Bets.')
     
     def deal(self, player, hand):
         """Player recieves initial hand."""
+        self._update_hand(player, str(hand), 'Takes hand.')
     
     def doubledown(self, player, bet):
         """Player doubles down."""
+        self._update_bet(player, bet, 'Doubles down.')
     
     def flip(self, player, hand):
         """Player flips a card."""
+        self._update_hand(player, str(hand), 'Flips card.')
     
     def hit(self, player, hand):
         """Player hits."""
+        self._update_hand(player, str(hand), 'Hits.')
     
     def insures(self, player, bet):
         """Player insures their hand."""
+        self._update_bet(player, bet, f'Buys {bet} insurance.')
     
     def insurepay(self, player, bet):
         """Insurance is paid to player."""
+        self._update_bet(player, bet, f'Insurance pays {bet}.')
     
     def joins(self, player):
         """Player joins the game."""
@@ -647,18 +713,39 @@ class TableUI(game.EngineUI):
     
     def splits(self, player, bet):
         """Player splits their hand."""
+        row, data = self._get_player_row_and_data(player)
+        affected = ['Player', 'Chips', 'Bet', 'Hand', 'Event']
+        i_play, i_chip, i_bet, i_hand, i_event = self._get_field_index(affected)
+        
+        # Update existing row.
+        data[row][i_chip] = player.chips
+        data[row][i_bet] = bet
+        data[row][i_hand] = str(player.hands[0])
+        data[row][i_event] = 'Splits hand.'
+        
+        # Build the new split row and add it.
+        new_row = ['' for field in range(len(self.ctlr.fields))]
+        new_row[i_play] = '  \u2514\u2500'
+        new_row[i_bet] = bet
+        new_row[i_hand] = str(player.hands[1])
+        data.insert(row + 1, new_row)
+        
+        self.loop.send(('update', data))
     
     def stand(self, player, hand):
         """Player stands."""
+        self._update_hand(player, str(hand), 'Stands.')
     
     def tie(self, player, bet):
         """Player ties."""
+        self._update_bet(player, bet, f'Ties {bet}.')
     
     def ties_split(self, player, bet):
         """Player ties on their split hand."""
     
     def wins(self, player, bet):
         """Player wins."""
+        self._update_bet(player, bet, f'Wins {bet}.')
     
     def wins_split(self, player, bet):
         """Player wins on their split hand."""

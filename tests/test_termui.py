@@ -198,6 +198,29 @@ class TableTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    @patch('blackjack.termui.print')
+    def test__draw_cell_wrap_with_int(self, mock_print):
+        """If a non-string is passed to _draw_cell, it should coerce 
+        the value to a string before trying to wrap it.
+        """
+        val = 12345678901234567890
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        expected = [
+            call(self.loc.format(5, 13) + fields[1][1].format(str(val)[10:])),
+        ]
+        
+        ctlr = termui.Table('Eggs', fields)
+        main = termui.main(ctlr)
+        next(main)
+        main.send(('_draw_cell', 0, 1, val))
+        del main
+        actual = mock_print.mock_calls
+        
+        self.assertEqual(expected, actual)
+    
     
     # Table.draw() tests.
     @patch('blackjack.termui.print')

@@ -192,7 +192,7 @@ class Table(TerminalController):
     def _draw_cell(self, row, col, value):
         """Given a row, column, and value, draw that cell in the UI."""
         width = self._field_widths[col]
-        text = self.term.wrap(value, width)
+        text = self.term.wrap(str(value), width)
         y = row + 4
         x = list(self._field_locs)[col]
         fmt = self.fields[col].fmt

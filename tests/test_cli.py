@@ -108,12 +108,234 @@ class TableUITestCase(ut.TestCase):
     
     
     # Update method tests.
-    @ut.skip
-    def test__update_bet(self):
+    @patch('blackjack.termui.main')
+    def test__update_bet(self, mock_main):
         """_update_bet should send an event to the UI loop that a 
-        player's bet has changed and needs to be updated.
+        player's bet has changed and needs to be updated. The data 
+        sent in that event should be a copy of the table in the 
+        termui.Table object. 
         """
-        raise NotImplemented
+        player = players.Player(name='spam', chips=80)
+        msg = 'Bets.'
+        new_data = [[player, 80, 20, '', msg],]
+        exp = call().send(('update', new_data))
+        
+        unexp_data = [[player, 100, '', '', ''],]
+        ui = cli.TableUI()
+        ui.ctlr.data = unexp_data
+        ui.start()
+        ui._update_bet(player, 20, msg)
+        act = mock_main.mock_calls[-1]
+        ui.end()
+        
+        self.assertEqual(exp, act)
+        
+        # Since termui.Table determines what fields to update based 
+        # on differences between it's data table and the data table 
+        # it's sent, it's very important that the changes made to 
+        # the data table output by _update_bet() are not yet seen in 
+        # the data table held by termui.Table.
+        #
+        # If this test fails, it's likely because you aren't copying 
+        # the rows of self.ctrl.data. You are referencing them.
+        self.assertNotEqual(unexp_data[0][1], 80)
+    
+    @patch('blackjack.termui.main')
+    def test__update_event(self, mock_main):
+        """_update_event should send an event to the UI loop that a 
+        player has had an event occur. The data sent in that event 
+        should be a copy of the table in the termui.Table object. 
+        """
+        player = players.Player(name='spam', chips=80)
+        msg = 'Walks away.'
+        new_data = [[player, 80, '', '', msg],]
+        exp = call().send(('update', new_data))
+        
+        unexp_data = [[player, 80, '', '', ''],]
+        ui = cli.TableUI()
+        ui.ctlr.data = unexp_data
+        ui.start()
+        ui._update_event(player, msg)
+        act = mock_main.mock_calls[-1]
+        ui.end()
+        
+        self.assertEqual(exp, act)
+        
+        # Since termui.Table determines what fields to update based 
+        # on differences between it's data table and the data table 
+        # it's sent, it's very important that the changes made to 
+        # the data table output by _update_bet() are not yet seen in 
+        # the data table held by termui.Table.
+        #
+        # If this test fails, it's likely because you aren't copying 
+        # the rows of self.ctrl.data. You are referencing them.
+        self.assertNotEqual(unexp_data[0][4], 'Takes hand.')
+    
+    @patch('blackjack.termui.main')
+    def test__update_hand(self, mock_main):
+        """_update_bet should send an event to the UI loop that a 
+        player's hand has changed and needs to be updated. The data 
+        sent in that event should be a copy of the table in the 
+        termui.Table object. 
+        """
+        hand = cards.Hand((
+            cards.Card(11, 0),
+            cards.Card(5, 2),
+        ))
+        player = players.Player(name='spam', chips=80)
+        msg = 'Takes hand.'
+        new_data = [[player, 80, 20, str(hand), msg],]
+        exp = call().send(('update', new_data))
+        
+        unexp_data = [[player, 80, 20, '', 'Bets.'],]
+        ui = cli.TableUI()
+        ui.ctlr.data = unexp_data
+        ui.start()
+        ui._update_hand(player, hand, msg)
+        act = mock_main.mock_calls[-1]
+        ui.end()
+        
+        self.assertEqual(exp, act)
+        
+        # Since termui.Table determines what fields to update based 
+        # on differences between it's data table and the data table 
+        # it's sent, it's very important that the changes made to 
+        # the data table output by _update_bet() are not yet seen in 
+        # the data table held by termui.Table.
+        #
+        # If this test fails, it's likely because you aren't copying 
+        # the rows of self.ctrl.data. You are referencing them.
+        self.assertNotEqual(unexp_data[0][4], 'Takes hand.')
+        
+    @patch('blackjack.termui.print')
+    @patch('blackjack.cli.TableUI._update_bet')
+    def test_bet_updates(self, mock_update_hand, _):
+        """The tested methods should call the _update_bet() method 
+        with the player, bet, and event text.
+        """
+        player = players.Player(name='spam', chips=100)
+        bet = 20
+        exp = [
+            call(player, bet, 'Bets.'),
+            call(player, bet, 'Doubles down.'),
+            call(player, bet, f'Buys {bet} insurance.'),
+            call(player, bet, f'Insurance pays {bet}.'),
+            call(player, bet, f'Ties {bet}.'),
+            call(player, bet, f'Wins {bet}.'),
+        ]
+        
+        data = [[player, 80, 20, '', ''],]
+        ui = cli.TableUI()
+        ui.ctlr.data = data
+        ui.start()
+        ui.bet(player, bet)
+        ui.doubledown(player, bet)
+        ui.insures(player, bet)
+        ui.insurepay(player, bet)
+        ui.tie(player, bet)
+        ui.wins(player, bet)
+        act = mock_update_hand.mock_calls[-6:]
+        ui.end()
+        
+        self.assertEqual(exp, act)
+    
+#     @patch('blackjack.termui.print')
+#     @patch('blackjack.cli.TableUI._update_bet')
+#     def test_bet_updates(self, mock_update_hand, _):
+#         """The tested methods should call the _update_event() method 
+#         with the player and event text.
+#         """
+#         player = players.Player(name='spam', chips=100)
+#         exp = [
+#             call(player, 'Walks away.'),
+#             call(player, 'Shuffles.'),
+#         ]
+#         
+#         data = [[player, 80, 20, '', ''],]
+#         ui = cli.TableUI()
+#         ui.ctlr.data = data
+#         ui.start()
+#         ui.leaves(player)
+#         ui.shuffles(player)
+#         act = mock_update_hand.mock_calls[-6:]
+#         ui.end()
+#         
+#         self.assertEqual(exp, act)
+#     
+    @patch('blackjack.termui.print')
+    @patch('blackjack.cli.TableUI._update_hand')
+    def test_hand_updates(self, mock_update_hand, _):
+        """The tested methods should call the _update_hand() method 
+        with the player, hand, and event text.
+        """
+        player = players.Player(name='spam', chips=100)
+        hand = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(10, 3),
+        ])
+        handstr = str(hand)
+        exp = [
+            call(player, handstr, 'Takes hand.'),
+            call(player, handstr, 'Flips card.'),
+            call(player, handstr, 'Hits.'),
+            call(player, handstr, 'Stands.'),
+        ]
+        
+        data = [[player, 80, 20, '', ''],]
+        ui = cli.TableUI()
+        ui.ctlr.data = data
+        ui.start()
+        ui.deal(player, hand)
+        ui.flip(player, hand)
+        ui.hit(player, hand)
+        ui.stand(player, hand)
+        act = mock_update_hand.mock_calls[-4:]
+        ui.end()
+        
+        self.assertEqual(exp, act)
+    
+    @patch('blackjack.termui.main')
+    def test_splits(self, mock_main):
+        """When given a player and a bet, splits() should add a row 
+        to the data table for the split hand, update it with the 
+        relevant information, and send it to the UI.
+        """
+        hands = [
+            cards.Hand([cards.Card(11, 0),]),
+            cards.Hand([cards.Card(11, 3),]),
+        ]
+        player = players.Player(hands, name='spam', chips=100)
+        player2 = players.Player(hands, name='eggs', chips=100)
+        new_data = [
+            [player, 100, 20, 'J♣', 'Splits hand.'], 
+            ['  \u2514\u2500', '', 20, 'J♠', ''],
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+        ]
+        exp_call = call().send(('update', new_data))
+        unexp_len = len(new_data)
+        
+        data = [
+            [player, 100, 20, 'J♣ J♠', 'Takes hand.'], 
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+        ]
+        ui = cli.TableUI()
+        ui.ctlr.data = data
+        ui.start()
+        ui.splits(player, 20)
+        act_call = mock_main.mock_calls[-1]
+        act_len = len(data)
+        ui.end()
+        
+        self.assertEqual(exp_call, act_call)
+        self.assertNotEqual(unexp_len, act_len)
+    
+    @ut.skip
+    @patch('blackjack.termui.main')
+    def test__update_bet_split(self):
+        """When is_split is True, _update_bet should update the split 
+        row of the data table for the player.
+        """
+        raise NotImplementedError
 
 
 class UITestCase(ut.TestCase):
