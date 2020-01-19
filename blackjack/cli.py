@@ -632,16 +632,26 @@ class TableUI(game.EngineUI):
         row = playerlist.index(player)
         return row, data
     
-    def _update_bet(self, player, bet, event):
+    def _update_bet(self, player, bet, event, split=False):
         """The player's bet and chips information needs to be 
         updated.
+        
+        :param player: The player whose row to update.
+        :param bet: The player's bet.
+        :param event: The event that occurred.
+        :param split: Whether the update is for the split hand.
+        :return: None.
+        :rtype: NoneType
         """
         row, data = self._get_player_row_and_data(player)
+        if split and len(player.hands) == 2:
+            row += 1
         
         affected_fields = ('Chips', 'Bet', 'Event')
         i_chips, i_bet, i_event = self._get_field_index(affected_fields)
         
-        data[row][i_chips] = player.chips
+        if not split:
+            data[row][i_chips] = player.chips
         data[row][i_bet] = bet
         data[row][i_event] = event
         self.loop.send(('update', data))
@@ -697,19 +707,54 @@ class TableUI(game.EngineUI):
         self._update_bet(player, bet, f'Insurance pays {bet}.')
     
     def joins(self, player):
-        """Player joins the game."""
+        """Player joins the game.
+        
+        :param player: The player to add to the game.
+        :return: None.
+        :rtype: NoneType.
+        """
+        row, data = self._get_player_row_and_data('')
+        affected = ['Player', 'Chips', 'Event']
+        i_play, i_chip, i_event = self._get_field_index(affected)
+        
+        data[row][i_play] = player
+        data[row][i_chip] = player.chips
+        data[row][i_event] = 'Sits down.'
+        
+        self.loop.send(('update', data))
     
     def leaves(self, player):
-        """Player leaves the game."""
+        """Player leaves the game.
+        
+        :param player: The player to remove from the game.
+        :return: None.
+        :rtype: NoneType.
+        """
+        row, data = self._get_player_row_and_data(player)
+        affected = ['Player', 'Chips', 'Bet', 'Hand', 'Event']
+        i_play, i_chip, i_bet, i_hand, i_event = self._get_field_index(affected)
+        
+        # Send leaving message to UI.
+        data[row][i_chip] = ''
+        data[row][i_bet] = ''
+        data[row][i_hand] = ''
+        data[row][i_event] = 'Walks away.'
+        self.loop.send(('update', data))
+        
+        # Remove the player from the data table.
+        self.ctlr.data[row][i_play] = ''
     
     def loses(self, player):
         """Player loses."""
+        self._update_bet(player, '', 'Loses.')
     
-    def loses_split(self, player, bet):
+    def loses_split(self, player):
         """Player loses on their split hand."""
+        self._update_bet(player, '', 'Loses.', True)
     
-    def shuffles(self):
+    def shuffles(self, player):
         """The deck is shuffled."""
+        self._update_event(player, 'Shuffles the deck.')
     
     def splits(self, player, bet):
         """Player splits their hand."""
@@ -738,17 +783,19 @@ class TableUI(game.EngineUI):
     
     def tie(self, player, bet):
         """Player ties."""
-        self._update_bet(player, bet, f'Ties {bet}.')
+        self._update_bet(player, '', f'Ties {bet}.')
     
     def ties_split(self, player, bet):
-        """Player ties on their split hand."""
+        """Player ties."""
+        self._update_bet(player, '', f'Ties {bet}.', True)
     
     def wins(self, player, bet):
         """Player wins."""
-        self._update_bet(player, bet, f'Wins {bet}.')
+        self._update_bet(player, '', f'Wins {bet}.')
     
     def wins_split(self, player, bet):
         """Player wins on their split hand."""
+        self._update_bet(player, '', f'Wins {bet}.', True)
 
 
 class UI(game.BaseUI):

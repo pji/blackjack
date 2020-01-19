@@ -221,7 +221,6 @@ class TableTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
-    
     # Table.draw() tests.
     @patch('blackjack.termui.print')
     def test_draw(self, mock_print):
