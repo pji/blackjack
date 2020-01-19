@@ -93,7 +93,7 @@ class TableTestCase(ut.TestCase):
         """
         fields = (
             ('Eggs', '{}'),
-            ('Baked Beands', '{}')
+            ('Baked Beans', '{}')
         )
         expected = {
             'title': 'Spam',
@@ -114,7 +114,7 @@ class TableTestCase(ut.TestCase):
         
         fields = (
             ('Eggs', '{}'),
-            ('Baked Beands', '{}')
+            ('Baked Beans', '{}')
         )
         attrs = {
             'title': 'Spam',
@@ -144,6 +144,7 @@ class TableTestCase(ut.TestCase):
             'data': data,
             'term': Terminal(),
             'row_sep': True,
+            'rows': 2
         }
         
         obj = termui.Table(**expected)
@@ -151,6 +152,48 @@ class TableTestCase(ut.TestCase):
             actual = getattr(obj, attr)
             
             self.assertEqual(expected[attr], actual)
+    
+    def test_setting_rows_affects_data(self):
+        """If the value of the rows attribute is changed, the size of 
+        the data table should change.
+        """
+        fields = (
+            ('Eggs', '{}'),
+            ('Baked Beans', '{}')
+        )
+        rows = 4
+        exp = [
+            ['', ''],
+            ['', ''],
+            ['', ''],
+            ['', ''],
+        ]
+        
+        table = termui.Table('spam', fields, rows=rows)
+        act = table.data
+        
+        self.assertEqual(exp, act)
+    
+    def test_setting_data_affects_rows(self):
+        """If the value of the data attribute is changes, the value 
+        of the rows attribute should be updated.
+        """
+        exp = 4
+        
+        fields = (
+            ('Eggs', '{}'),
+            ('Baked Beans', '{}')
+        )
+        data = [
+            ['', ''],
+            ['', ''],
+            ['', ''],
+            ['', ''],
+        ]
+        table = termui.Table('spam', fields, data=data)
+        act = table.rows
+        
+        self.assertEqual(exp, act)
     
     # Table._draw_cell() tests.
     @patch('blackjack.termui.print')

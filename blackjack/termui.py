@@ -113,7 +113,8 @@ class Table(TerminalController):
     """Control a table displayed in the terminal."""
     def __init__(self, title:str, fields: abc.Sequence, 
                  frame: Box = None, data: abc.Sequence = None,
-                 term: Terminal = None, row_sep: bool = False) -> None:
+                 term: Terminal = None, row_sep: bool = False,
+                 rows: int = 1) -> None:
         """Initialize an instance of the class.
         
         :param title: The title for the table.
@@ -126,19 +127,23 @@ class Table(TerminalController):
         :param data: (Optional.) Initial values for the data table.
         :param term: (Optional.) The blessed.Terminal object that 
             runs the terminal output.
-        :param row_sep: Whether the frame elements that separate the 
-            rows are printed.
+        :param row_sep: (Optional.) Whether the frame elements that 
+            separate the rows are printed.
+        :param rows: (Optional.) The number of rows in the data table.
         :return: None.
         :rtype: None.
         """
+        self._data = []
+        self._rows = 0
+        
         self.title = title
         self.fields = [Field(*args) for args in fields]
         if not frame:
             frame = Box(custom='──   ───   ───')
         self.frame = frame
-        if not data:
-            data = [[field.fmt.format('') for field in self.fields],]
-        self.data = list(data)
+        self.rows = rows
+        if data:
+            self.data = list(data)
         self.row_sep = row_sep
         super().__init__(term)
     
@@ -162,6 +167,27 @@ class Table(TerminalController):
         for width in self._field_widths[:-1]:
             locs.append(locs[-1] + width + 1)
         setattr(self, fl_name, tuple(locs))
+    
+    @property
+    def rows(self):
+        return self._rows
+    
+    @rows.setter
+    def rows(self, value):
+        while value > len(self._data):
+            self._data.append(['' for item in range(len(self.fields))])
+        while value < len(self._data):
+            self._data.pop()
+        self._rows = value
+    
+    @property
+    def data(self):
+        return self._data
+    
+    @data.setter
+    def data(self, value):
+        self._rows = len(value)
+        self._data = value
     
     @property
     def _bot(self):
