@@ -9,6 +9,7 @@ This module manages a user interface run through a terminal.
 """
 from collections import namedtuple
 import collections.abc as abc
+from typing import Any, Sequence
 
 from blessed import Terminal
 
@@ -215,7 +216,16 @@ class Table(TerminalController):
         middle = self.frame.mtop.join(fields)
         return self.frame.rtop + middle + self.frame.ltop
     
-    def _draw_cell(self, row, col, value):
+    def _clear_footer(self) -> None:
+        """Clear the bottom of the table and the footer."""
+        self._clear_row(self.rows + 5)
+        self._clear_row(self.rows + 4)
+    
+    def _clear_row(self, y:int) -> None:
+        """Clear a line in the UI."""
+        print(self.term.move(y, 0) + ' ' * 80)
+    
+    def _draw_cell(self, row:int, col:int, value:Any) -> None:
         """Given a row, column, and value, draw that cell in the UI."""
         width = self._field_widths[col]
         text = self.term.wrap(str(value), width)
@@ -235,7 +245,7 @@ class Table(TerminalController):
         headers = [field.name for field in self.fields]
         print(self.term.move(2, 0) + head_fmt.format(*headers))
     
-    def _draw_table(self) -> None:
+    def _draw_table(self):
         """Draw a row in the table."""
         fields = self.frame.mver.join(field.fmt for field in self.fields)
         row_fmt = self.frame.rside + fields + self.frame.lside
@@ -251,6 +261,14 @@ class Table(TerminalController):
         """Draw the title in the UI."""
         print(self.term.move(0, 0) + self.term.bold + self.title)
     
+    def clear(self):
+        """Clear the UI."""
+        header_rows = 4
+        footer_rows = 2
+        rows = header_rows + self.rows + footer_rows
+        for y in range(rows):
+            self._clear_row(y)
+    
     def draw(self):
         """Draw the entire UI."""
         self._draw_title()
@@ -259,14 +277,14 @@ class Table(TerminalController):
         self._draw_table()
         self._draw_table_bottom()
     
-    def input(self, prompt, default=None):
+    def input(self, prompt:str, default: str = None) -> str:
         """Prompt the user for input, and return the input.
         
         :param prompt: The input prompt.
         :param default: (Optional.) The value to return if the user 
             doesn't provide input.
         :return: The user's input.
-        :rtype: Any
+        :rtype: str
         """
         y = len(self.data) + 5
         fmt = '{:<' + str(self.term.width) + '}'
@@ -278,11 +296,21 @@ class Table(TerminalController):
             resp = default
         return resp
     
-    def update(self, data):
+    def update(self, data:Sequence[list]) -> None:
         """Update the entire UI.
         
         :param data: A changed version of the data table.
         """
+        while self.rows > len(data):
+            self._clear_footer()
+            self.rows -= 1
+            self._draw_table_bottom()
+        
+        while self.rows < len(data):
+            self._clear_footer()
+            self.rows += 1
+            self._draw_table_bottom()
+        
         for row in range(len(self.data)):
             for col in range(len(self.data[row])):
                 if self.data[row][col] != data[row][col]:

@@ -264,6 +264,30 @@ class TableTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    # Table.clear() tests.
+    @patch('blackjack.termui.print')
+    def test_clear(self, mock_print):
+        """When called, clear should erase everything on the UI."""
+        line = ' ' * 80
+        exp = [call(self.loc.format(y, 1) + line) 
+               for y in range(1, 9)]
+        
+        title = 'Spam'
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        data = [[1, 2], [3, 4]]
+        box = termui.Box(custom='──   ───   ───')
+        ctlr = termui.Table(title, fields, data=data)
+        main = termui.main(ctlr)
+        next(main)
+        main.send(('clear',))
+        del main
+        act = mock_print.mock_calls[-8:]
+        
+        self.assertEqual(exp, act)
+    
     # Table.draw() tests.
     @patch('blackjack.termui.print')
     def test_draw(self, mock_print):
@@ -384,6 +408,66 @@ class TableTestCase(ut.TestCase):
         
         self.assertEqual(exp_data, act_data)
         self.assertEqual(exp_calls, act_calls)
+    
+    # Table.update() tests.
+    @patch('blackjack.termui.print')
+    def test_update_smaller_table(self, mock_print):
+        """When called with a data table that is smaller than the 
+        current table, update() should remove rows from the existing 
+        table to allow for the cell comparisons. It should then clear 
+        the removed rows from the UI and reprint the table bottom.
+        """
+        new_data = [[0, 0],]
+        frame = '\u2500' * 23
+        exp_calls = [
+            call(self.loc.format(8, 1) + ' ' * 80),
+            call(self.loc.format(7, 1) + ' ' * 80),
+            call(self.loc.format(6, 1) + frame),            
+        ]
+        
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        data = [[0, 0], [0, 0]]
+        ctlr = termui.Table('eggs', fields, data=data)
+        main = termui.main(ctlr)
+        next(main)
+        main.send(('update', new_data))
+        main.close()
+        act_calls = mock_print.mock_calls[-4:]
+        
+        self.assertListEqual(exp_calls, act_calls)
+    
+    # Table.update() tests.
+    @patch('blackjack.termui.print')
+    def test_update_bigger_table(self, mock_print):
+        """When called with a data table that is bigger than the 
+        current table, update() should add rows to the existing 
+        table to allow for the cell comparisons. It should then add 
+        the new rows to the UI and reprint the table bottom.
+        """
+        new_data = [[0, 0], [0, 0]]
+        frame = '\u2500' * 23
+        exp_calls = [
+            call(self.loc.format(7, 1) + ' ' * 80),
+            call(self.loc.format(6, 1) + ' ' * 80),
+            call(self.loc.format(7, 1) + frame),            
+        ]
+        
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        data = [[0, 0]]
+        ctlr = termui.Table('eggs', fields, data=data)
+        main = termui.main(ctlr)
+        next(main)
+        main.send(('update', new_data))
+        main.close()
+        act_calls = mock_print.mock_calls[:-2]
+        
+        self.assertListEqual(exp_calls, act_calls)
 
 
 class mainTestCase(ut.TestCase):
