@@ -554,12 +554,16 @@ class DynamicUI(game.BaseUI):
 class TableUI(game.EngineUI):
     """A table-based terminal UI for blackjack."""
     # General operation methods.
-    def __init__(self, ctlr: termui.TerminalController = None):
+    def __init__(self, ctlr: termui.TerminalController = None, 
+                 seats: int = 1) -> None:
         """Initialize and instance of the class.
         
         :param ctlr: (Optional.) The TerminalController object running 
             the UI.
+        :param seats: (Optional.) The number of seats that will be 
+            available for the game.
         """
+        self.seats = seats
         if not ctlr:
             ctlr = self._make_ctlr()
         self.ctlr = ctlr
@@ -574,7 +578,7 @@ class TableUI(game.EngineUI):
             ('Hand', '{:<27}'),
             ('Event', '{:<23}'),
         )
-        return termui.Table('Blackjack', fields)
+        return termui.Table('Blackjack', fields, rows=self.seats)
     
     def end(self):
         """End the UI loop gracefully."""

@@ -57,6 +57,7 @@ class TableUITestCase(ut.TestCase):
         ctlr = termui.Table('spam', fields)
         exp = {
             'ctlr': ctlr,
+            'seats': 6,
         }
         
         ui = cli.TableUI(**exp)
@@ -451,9 +452,6 @@ class UITestCase(ut.TestCase):
         lines = [
             '\n',
             'BLACKJACK!\n',
-#             '\n',
-#             self.tmp.format('Player', 'Action', 'Hand'),
-#             '\u2500' * 50 + '\n',
         ]
         expected = ''.join(lines)
         
