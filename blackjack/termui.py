@@ -9,6 +9,7 @@ This module manages a user interface run through a terminal.
 """
 from collections import namedtuple
 import collections.abc as abc
+from time import sleep
 from typing import Any, Sequence
 
 from blessed import Terminal
@@ -228,11 +229,14 @@ class Table(TerminalController):
     def _draw_cell(self, row:int, col:int, value:Any) -> None:
         """Given a row, column, and value, draw that cell in the UI."""
         width = self._field_widths[col]
-        text = self.term.wrap(str(value), width)
+        if value:
+            text = self.term.wrap(str(value), width)[0]
+        else:
+            text = ''
         y = row + 4
         x = list(self._field_locs)[col]
         fmt = self.fields[col].fmt
-        print(self.term.move(y, x) + fmt.format(text[0]))
+        print(self.term.move(y, x) + fmt.format(text))
     
     def _draw_table_bottom(self):
         """Draw the bottom of the table."""
@@ -292,7 +296,7 @@ class Table(TerminalController):
         with self.term.cbreak():
             resp = self.term.inkey()
         print(self.term.move(y, 1) + fmt.format(''))
-        if not resp:
+        if not resp or resp == '\n':
             resp = default
         return resp
     
@@ -319,7 +323,7 @@ class Table(TerminalController):
 
 
 # Main UI loop.
-def main(ctlr: TerminalController = None) -> None:
+def main(ctlr: TerminalController = None, is_interactive=False) -> None:
     """The main UI loop as a generator.
     
     Calling Parameters
@@ -349,4 +353,6 @@ def main(ctlr: TerminalController = None) -> None:
         while True:
             event, *args = yield resp
             resp = getattr(ctlr, event)(*args)
+            if is_interactive:
+                sleep(.15)
 

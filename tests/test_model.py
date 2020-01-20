@@ -302,9 +302,3 @@ class YesNoTestCase(unittest.TestCase):
         """A function named validate_bool should exist."""
         names = [item[0] for item in inspect.getmembers(model)]
         self.assertTrue('IsYes' in names)
-    
-    def test___init__(self):
-        """Given a yes or no on initialization, IsYes should store the 
-        value in the value attribute.
-        """
-    

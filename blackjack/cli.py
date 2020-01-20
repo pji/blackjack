@@ -584,14 +584,17 @@ class TableUI(game.EngineUI):
         """End the UI loop gracefully."""
         self.loop.close()
     
-    def start(self):
+    def start(self, is_interactive=False):
         """Start the UI."""
-        self.loop = termui.main(ctlr=self.ctlr)
+        self.loop = termui.main(self.ctlr, is_interactive)
         next(self.loop)
         self.loop.send(('draw',))
     
     
     # Input methods.
+    def _prompt(self, prompt, default):
+        return self.loop.send(('input', prompt, default))
+    
     def doubledown_prompt(self) -> model.IsYes:
         """Ask user if they want to double down."""    
     
@@ -602,7 +605,17 @@ class TableUI(game.EngineUI):
         """Ask user if they want to insure."""    
     
     def nextgame_prompt(self) -> model.IsYes:
-        """Ask user if they want to play another round."""    
+        """Ask user if they want to play another round."""
+        prompt = 'Play another round? [yn] >'
+        default = 'y'
+        valid = None
+        while not isinstance(valid, model.IsYes):
+            resp = self._prompt(prompt, default)
+            try:
+                valid = model.IsYes(resp)
+            except ValueError:
+                pass
+        return valid
     
     def split_prompt(self) -> model.IsYes:
         """Ask user if they want to split."""    
@@ -675,7 +688,7 @@ class TableUI(game.EngineUI):
         """The player's hand information needs to be updated."""
         row, data = self._get_player_row_and_data(player)
         if len(player.hands) == 2:
-            if hand is player.hands[1]:
+            if player.hands.index(hand) == 1:
                 row += 1
         
         affected_fields = ('Hand', 'Event')
@@ -703,7 +716,7 @@ class TableUI(game.EngineUI):
     
     def deal(self, player, hand):
         """Player recieves initial hand."""
-        self._update_hand(player, str(hand), 'Takes hand.')
+        self._update_hand(player, hand, 'Takes hand.')
     
     def doubledown(self, player, bet):
         """Player doubles down."""
@@ -711,11 +724,11 @@ class TableUI(game.EngineUI):
     
     def flip(self, player, hand):
         """Player flips a card."""
-        self._update_hand(player, str(hand), 'Flips card.')
+        self._update_hand(player, hand, 'Flips card.')
     
     def hit(self, player, hand):
         """Player hits."""
-        self._update_hand(player, str(hand), 'Hits.')
+        self._update_hand(player, hand, 'Hits.')
     
     def insures(self, player, bet):
         """Player insures their hand."""
@@ -798,7 +811,7 @@ class TableUI(game.EngineUI):
     
     def stand(self, player, hand):
         """Player stands."""
-        self._update_hand(player, str(hand), 'Stands.')
+        self._update_hand(player, hand, 'Stands.')
     
     def tie(self, player, bet):
         """Player ties."""
@@ -1087,7 +1100,7 @@ def dui():
 
 def test():
     try:
-        ui = DynamicUI(True)
+        ui = TableUI(seats=5)
         deck = cards.Deck.build(6)
         deck.shuffle()
         deck.random_cut()
@@ -1106,11 +1119,11 @@ def test():
         deck.size = 1
         dealer = players.Dealer(name='Dealer')
         playerlist = []
-    #     playerlist = [players.AutoPlayer(name='Spam', chips=100),]
+#         playerlist = [players.AutoPlayer(name='Spam', chips=100),]
         for index in range(4):
-            playerlist.append(players.make_player(chips=10000))
-        g = game.Game(deck, dealer, playerlist, ui=ui, buyin=1000)
-        ui.enter(len(playerlist) + 1)
+            playerlist.append(players.make_player(chips=1000))
+        g = game.Engine(deck, dealer, playerlist, ui=ui, buyin=20)
+        ui.start(True)
         g.new_game()
         play = True
         while play:
@@ -1118,7 +1131,9 @@ def test():
             g.deal()
             g.play()
             g.end()
-            play = ui.input('nextgame').value
+            play = ui.nextgame_prompt().value
+            if play:
+                ui.cleanup()
     except Exception as ex:
         with open('exception.txt', 'w') as fh:
             fh.write(str(ex.args))

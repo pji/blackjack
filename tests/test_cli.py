@@ -34,7 +34,6 @@ def mock_run_terminal_only_yesno():
     values = [None, model.IsYes(True)]
     for value in values:
         yield value
-    
 
 
 # Tests.
@@ -85,7 +84,7 @@ class TableUITestCase(ut.TestCase):
         ui = cli.TableUI()
         term = ui.ctlr
         exp = [
-            call(ctlr=ui.ctlr),
+            call(ui.ctlr, False),
             call().__next__(),
             call().send(('draw',))
         ]
@@ -282,10 +281,10 @@ class TableUITestCase(ut.TestCase):
         ])
         handstr = str(hand)
         exp = [
-            call(player, handstr, 'Takes hand.'),
-            call(player, handstr, 'Flips card.'),
-            call(player, handstr, 'Hits.'),
-            call(player, handstr, 'Stands.'),
+            call(player, hand, 'Takes hand.'),
+            call(player, hand, 'Flips card.'),
+            call(player, hand, 'Hits.'),
+            call(player, hand, 'Stands.'),
         ]
         
         data = [[player, 80, 20, '', ''],]
@@ -504,6 +503,59 @@ class TableUITestCase(ut.TestCase):
         act = mock_main.mock_calls[-1]
         
         self.assertEqual(exp, act)
+    
+    
+    # Input method tests.
+    @patch('blackjack.termui.main')
+    def test___prompt_calls(self, mock_main):
+        """When called, _prompt() should send the UI a prompt for user 
+        input and return the result.
+        """
+        exp_call = call().send(('input', 'spam', 'y'))
+        
+        
+        ui = cli.TableUI()
+        ui.start()
+        act_resp = ui._prompt('spam', 'y')
+        act_call = mock_main.mock_calls[-1]
+        ui.end()
+        
+        self.assertEqual(exp_call, act_call)
+    
+    @patch('blackjack.termui.main')
+    @patch('blackjack.cli.TableUI._prompt')
+    def test_nextgame_prompt(self, mock_main, _):
+        """When called, mextgame_prompt() should prompt the user 
+        whether they would like to play another game. The response 
+        should be returned.
+        """
+        exp_resp = model.IsYes('y')
+        exp_call = call('Play another round? [yn] >', 'y')
+        
+        ui = cli.TableUI()
+        mock_main.return_value = 'y'
+        ui.start()
+        act_resp = ui.nextgame_prompt()
+        ui.end()
+        act_call = mock_main.mock_calls[-1]
+        
+        self.assertEqual(exp_resp.value, act_resp.value)
+        self.assertEqual(exp_call, act_call)
+    
+    @patch('blackjack.termui.main')
+    def test_nextgame_prompt_(self, mock_main):
+        """If the user responds with an invalid value, the prompt 
+        should be repeated.
+        """
+        exp_resp = model.IsYes('n')
+        
+        ui = cli.TableUI()
+        mock_main.return_value = (item for item in [None, None, 'z', ' ', 'n'])
+        ui.start()
+        act_resp = ui.nextgame_prompt()
+        ui.end()
+        
+        self.assertEqual(exp_resp.value, act_resp.value)
 
 
 class UITestCase(ut.TestCase):
