@@ -674,6 +674,9 @@ class TableUI(game.EngineUI):
     def _update_hand(self, player, hand, event):
         """The player's hand information needs to be updated."""
         row, data = self._get_player_row_and_data(player)
+        if len(player.hands) == 2:
+            if hand is player.hands[1]:
+                row += 1
         
         affected_fields = ('Hand', 'Event')
         i_hand, i_event = self._get_field_index(affected_fields)
@@ -685,6 +688,18 @@ class TableUI(game.EngineUI):
     def bet(self, player, bet):
         """Player places initial bet."""
         self._update_bet(player, bet, 'Bets.')
+    
+    def cleanup(self):
+        """Clean up information from the previous round."""
+        data = [row[:] for row in self.ctlr.data]
+        affected = ['Player', 'Bet', 'Hand', 'Event']
+        i_play, i_bet, i_hand, i_event = self._get_field_index(affected)
+        data = [row for row in data if isinstance(row[i_play], players.Player)]
+        for row in data:
+            row[i_bet] = ''
+            row[i_hand] = ''
+            row[i_event] = ''
+        self.loop.send(('update', data))
     
     def deal(self, player, hand):
         """Player recieves initial hand."""

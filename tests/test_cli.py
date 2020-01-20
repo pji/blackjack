@@ -440,6 +440,70 @@ class TableUITestCase(ut.TestCase):
         ui.end()
         
         self.assertEqual(exp, act)
+    
+    @patch('blackjack.termui.main')
+    def test__update_hand_split(self, mock_main):
+        """If sent a split hand, _update_hand() should update the 
+        split row of the table.
+        """
+        hands = [
+            cards.Hand([cards.Card(11, 0),]),
+            cards.Hand([cards.Card(11, 3),]),
+        ]
+        player = players.Player(hands, name='spam', chips=100)
+        player2 = players.Player(name='eggs', chips=100)
+        new_data = [
+            [player, 100, 20, 'J♣', 'Splits hand.'], 
+            ['  \u2514\u2500', '', 20, 'J♠ 5♣', 'Hits.'],
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+        ]
+        exp = call().send(('update', new_data))
+        
+        data = [
+            [player, 100, 20, 'J♣', 'Splits hand.'], 
+            ['  \u2514\u2500', '', 20, 'J♠', 'Splits hand.'],
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+        ]
+        ui = cli.TableUI()
+        ui.ctlr.data = data
+        ui.start()
+        hands[1].append(cards.Card(5, 0))
+        ui._update_hand(player, hands[1], 'Hits.')
+        act = mock_main.mock_calls[-1]
+        ui.end()
+        
+        self.assertEqual(exp, act)
+    
+    @patch('blackjack.termui.main')
+    def test_cleanup(self, mock_main):
+        """When called, cleanup() should clear the bet, hand, and 
+        event field of every row in the data table, then send it to 
+        the UI.
+        """
+        hands = [
+            cards.Hand([cards.Card(11, 0),]),
+            cards.Hand([cards.Card(11, 3),]),
+        ]
+        player = players.Player(hands, name='spam', chips=100)
+        player2 = players.Player(hands, name='eggs', chips=100)
+        new_data = [
+            [player, 100, '', '', ''],
+            [player2, 100, '', '', ''],
+        ]
+        exp = call().send(('update', new_data))
+        
+        data = [
+            [player, 100, 20, 'J♣', 'Splits hand.'], 
+            ['  \u2514\u2500', '', 20, 'J♠', 'Splits hand.'],
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+        ]
+        ui = cli.TableUI()
+        ui.ctlr.data = data
+        ui.start()
+        ui.cleanup()
+        act = mock_main.mock_calls[-1]
+        
+        self.assertEqual(exp, act)
 
 
 class UITestCase(ut.TestCase):
