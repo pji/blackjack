@@ -9,9 +9,7 @@ a command line interface.
 :license: MIT, see LICENSE for more details.
 """
 import argparse
-from collections import namedtuple, OrderedDict
-from copy import deepcopy
-import sys
+from collections import namedtuple
 from time import sleep
 import traceback as tb
 from typing import Sequence
