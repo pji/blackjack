@@ -581,7 +581,7 @@ def dui():
                 if play:
                     ui.cleanup()
     except Exception as ex:
-        with open('exception.txt', 'w') as fh:
+        with open('exception.log', 'w') as fh:
             fh.write(str(ex.args))
             tb_str = ''.join(tb.format_tb(ex.__traceback__))
             fh.write(tb_str)
@@ -626,7 +626,7 @@ def test():
             if play:
                 ui.cleanup()
     except Exception as ex:
-        with open('exception.txt', 'w') as fh:
+        with open('exception.log', 'w') as fh:
             fh.write(str(ex.args))
             tb_str = ''.join(tb.format_tb(ex.__traceback__))
             fh.write(tb_str)
@@ -690,9 +690,9 @@ if __name__ == '__main__':
         deck = cards.Deck.build(6)
         deck.shuffle()
         deck.random_cut()
-        ui = DynamicUI(True)
-        g = game.Game(deck, None, playerlist, ui, args.cost)
-        ui.enter(len(playerlist) + 1)
+        ui = TableUI(seats=len(playerlist) + 1)
+        g = game.Engine(deck, None, playerlist, ui, args.cost)
+        ui.start(True)
         g.new_game()
         
         play_again = True
@@ -702,9 +702,11 @@ if __name__ == '__main__':
                 g.deal()
                 g.play()
                 g.end()
-                play_again = ui.input('nextgame').value
+                play_again = ui.nextgame_prompt().value
+                if play_again:
+                    ui.cleanup()
             except Exception as ex:
-                with open('exception.txt', 'w') as fh:
+                with open('exception.log', 'w') as fh:
                     fh.write(str(ex.args))
                     tb_str = ''.join(tb.format_tb(ex.__traceback__))
                     fh.write(tb_str)
