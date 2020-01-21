@@ -135,10 +135,11 @@ class EngineUI(ABC):
         """Player wins on their split hand."""
 
 
-class BaseUI:
+class BaseUI(EngineUI):
     """A base class for UI classes. It demonstrates the UI API, and it 
     serves as a silent UI for use in testing.
     """
+    # Old UI methods
     def enter(self):
         pass
     
@@ -150,9 +151,7 @@ class BaseUI:
     
     def update(self, event, player, detail):
         pass
-
-
-class _BaseUI(EngineUI):
+    
     # General operation methods.
     def end(self):
         """End the UI."""
@@ -585,7 +584,7 @@ class Engine:
         self.dealer = dealer
         
         if not ui:
-            ui = _BaseUI()
+            ui = BaseUI()
         self.ui = ui
         
         self.buyin = buyin

@@ -513,7 +513,6 @@ class TableUITestCase(ut.TestCase):
         """
         exp_call = call().send(('input', 'spam', 'y'))
         
-        
         ui = cli.TableUI()
         ui.start()
         act_resp = ui._prompt('spam', 'y')
@@ -524,26 +523,25 @@ class TableUITestCase(ut.TestCase):
     
     @patch('blackjack.termui.main')
     @patch('blackjack.cli.TableUI._prompt')
-    def test_nextgame_prompt(self, mock_main, _):
-        """When called, mextgame_prompt() should prompt the user 
-        whether they would like to play another game. The response 
-        should be returned.
+    def test__yesno_prompt(self, mock_prompt, _):
+        """When called, _yesno_prompt() should prompt the user 
+        for a yes/no answer. The response should be returned.
         """
         exp_resp = model.IsYes('y')
-        exp_call = call('Play another round? [yn] >', 'y')
+        exp_call = call('Play another round? [yn] > ', 'y')
         
         ui = cli.TableUI()
-        mock_main.return_value = 'y'
+        mock_prompt.return_value = 'y'
         ui.start()
-        act_resp = ui.nextgame_prompt()
+        act_resp = ui._yesno_prompt('Play another round?', 'y')
         ui.end()
-        act_call = mock_main.mock_calls[-1]
+        act_call = mock_prompt.mock_calls[-1]
         
         self.assertEqual(exp_resp.value, act_resp.value)
         self.assertEqual(exp_call, act_call)
     
     @patch('blackjack.termui.main')
-    def test_nextgame_prompt_(self, mock_main):
+    def test__yesno_prompt_unit_valid(self, mock_main):
         """If the user responds with an invalid value, the prompt 
         should be repeated.
         """
@@ -552,10 +550,43 @@ class TableUITestCase(ut.TestCase):
         ui = cli.TableUI()
         mock_main.return_value = (item for item in [None, None, 'z', ' ', 'n'])
         ui.start()
-        act_resp = ui.nextgame_prompt()
+        act_resp = ui._yesno_prompt('spam', 'y')
         ui.end()
         
         self.assertEqual(exp_resp.value, act_resp.value)
+    
+    @patch('blackjack.termui.main')
+    @patch('blackjack.cli.TableUI._yesno_prompt')
+    def test__yesnos(self, mock_yesno, _):
+        """The individual yes/no prompts should sent their prompt and 
+        a default response value to _yesno_prompt and return the 
+        response.
+        """
+        exp_resp = model.IsYes('y')
+        exp_calls = [
+            call('Double down?', 'y'),
+            call('Hit?', 'y'),
+            call('Buy insurance?', 'y'),
+            call('Play another round?', 'y'),
+            call('Split your hand?', 'y'),
+        ]
+        
+        mock_yesno.return_value = exp_resp
+        ui = cli.TableUI()
+        ui.start()
+        act_resps = []
+        act_resps.append(ui.doubledown_prompt())
+        act_resps.append(ui.hit_prompt())
+        act_resps.append(ui.insure_prompt())
+        act_resps.append(ui.nextgame_prompt())
+        act_resps.append(ui.split_prompt())
+        act_calls = mock_yesno.mock_calls[-5:]
+        ui.end()
+        
+        for act_resp in act_resps:
+            self.assertEqual(exp_resp, act_resp)
+        for exp, act in zip(exp_calls, act_calls):
+            self.assertEqual(exp, act)
 
 
 class UITestCase(ut.TestCase):
@@ -1048,6 +1079,7 @@ class UITestCase(ut.TestCase):
         self.assertEqual(expected, actual)
 
 
+@ut.skip
 class DynamicUITestCase(ut.TestCase):
     def test_init(self):
         """A DynamicUI object should initialize the following 
@@ -1474,6 +1506,7 @@ class DynamicUITestCase(ut.TestCase):
         self.assertEqual(ex_return, ac_return)
 
 
+@ut.skip
 class run_terminalTestCase(ut.TestCase):
     bold = '\x1b[1m'
     ascii = '\x1b(B'

@@ -73,7 +73,7 @@ class EngineTestCase(ut.TestCase):
         """If no UI is given, the game should create a _BaseUI 
         object.
         """
-        expected = game._BaseUI
+        expected = game.BaseUI
         
         g = game.Engine()
         actual = g.ui

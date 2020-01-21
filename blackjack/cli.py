@@ -21,536 +21,7 @@ from blessed import Terminal
 from blackjack import cards, game, model, players, termui
 
 
-# Objects and functions for advanced terminal control.
-FieldInfo = namedtuple('FieldInfo', 'loc fmt')
-
-def run_terminal(is_interactive=False, ctlr=None):
-    """A coroutine to run the dynamic terminal UI.
-    
-    :param is_interactive: (Optional.) Whether the terminal should 
-        expect user input. This is mainly used for automated testing.
-    :yield: None.
-    :ytype: None.
-    """
-    term = None
-    if not ctlr:
-        term = Terminal()
-        ctlr = TerminalController(term, is_interactive)
-    else:
-        term = ctlr.term
-    resp = None
-    with term.fullscreen(), term.hidden_cursor():
-        while True:
-            method, *args = yield resp
-            resp = getattr(ctlr, method)(*args)
-            if is_interactive:
-                sleep(.15)
-
-
-class TerminalController:
-    """A controller to handle UI events sent to the run_terminal 
-    coroutine.
-    """
-    def __init__(self, term, is_interactive=False):
-        self.term = term
-        self.playerlist = []
-        self.h_tmp = '{:<14} {:>7} {:>3} {:<27} {:<}'
-        self.r_tmp = '{:<14} {:>7} {:>3} {:<27} {:<}'
-        self.is_interactive = is_interactive
-        self.fields = OrderedDict([
-            ('Player', FieldInfo(0, '{:<14}'),),
-            ('Chips', FieldInfo(15, '{:>7}'),),
-            ('Bet', FieldInfo(23, '{:>3}'),),
-            ('Hand', FieldInfo(27, '{:<27}'),),
-            ('Event', FieldInfo(55, '{:<' + str(self.term.width-56) + '}'),),
-        ])
-        self.data = []
-    
-    
-    # Update messages.
-    def _update_bet(self, player, bet, msg):
-        """The game event updates the player's bet.
-        
-        :param player: The player making the bet.
-        :param bet: The amount of the bet.
-        :param msg: The event's explanation.
-        :return: None.
-        :rtype: None.
-        """
-        table = [row[:] for row in self.data]
-        row = [row[0] for row in table].index(player)
-        
-        if bet:
-            bet = str(int(bet))
-            if len(bet) > 3:
-                bet = '{}e{}'.format(bet[0], len(bet))
-        table[row][1] = player.chips
-        table[row][2] = bet
-        table[row][4] = msg
-        self._update_table(table)
-    
-    def _update_hand(self, player, hand, msg):
-        """The game event updates the player's hand.
-        
-        :param player: The player who was dealt the hand.
-        :param hand: The hand that was dealt.
-        :param msg: The event's explanation.
-        :return: None.
-        :rtype: None.
-        """
-        table = [row[:] for row in self.data]
-        row = [row[0] for row in table].index(player)
-        
-        # Handle split hands.
-        if len(player.hands) == 2:
-            row += player.hands.index(hand)
-        
-        table[row][3] = str(hand)
-        table[row][4] = msg
-        self._update_table(table)
-    
-    def _update_table(self, data):
-        if len(data) < len(self.data):
-            y = len(self.data) + 5
-            print(self.term.move(y, 0) + (' ' * self.term.width))
-            while len(data) < len(self.data):
-                _ = self.data.pop()
-                y = len(self.data) + 5
-                print(self.term.move(y, 0) + (' ' * self.term.width))
-        elif len(data) > len(self.data):
-            y = len(data) + 4
-            print(self.term.move(y, 0) + ('\u2500' * self.term.width))
-            while len(data) > len(self.data):
-                y = len(self.data) + 4
-                print(self.term.move(y, 0) + ' ' * self.term.width)
-                self.data.append(['', '', '', '', ''])
-        for row in range(len(data)):
-            for col in range(len(self.fields)):
-                if data[row][col] != self.data[row][col]:
-                    fields = list(self.fields.keys())
-                    y = row + 4
-                    x, fmt = self.fields[fields[col]]
-                    print(self.term.move(y, x) + fmt.format(data[row][col]))
-        self.data = data
-    
-    def buyin(self, player, bet):
-        """A player bets on a round.
-        
-        :param player: The player making the bet.
-        :param bet: The amount of the bet.
-        :return: None.
-        :rtype: None.
-        """
-        self._update_bet(player, bet, 'Bets.')
-    
-    def deal(self, player, hand):
-        """A player was dealt a hand.
-        
-        :param player: The player who was dealt the hand.
-        :param hand: The hand that was dealt.
-        :return: None.
-        :rtype: None.
-        """
-        self._update_hand(player, hand, 'Takes hand.')
-    
-    def doubled(self, player, bet):
-        """The player doubles down.
-        
-        :param player: The player doubling down.
-        :param bet: The player's new bet total.
-        :return: None.
-        :rtype: None.
-        """
-        self._update_bet(player, bet, 'Doubles down.')
-    
-    def flip(self, dealer, hand):
-        """The dealer flipped a card.
-        
-        :param dealer: The dealer who was dealt the hand.
-        :param hand: The hand that was dealt.
-        :return: None.
-        :rtype: None.
-        """
-        self._update_hand(dealer, hand, 'Flips card.')
-    
-    def hit(self, player, hand):
-        """A player hits.
-        
-        :param player: The player who was dealt the hand.
-        :param hand: The hand that was dealt.
-        :return: None.
-        :rtype: None.
-        """
-        self._update_hand(player, hand, 'Hits.')
-    
-    def init(self, seats):
-        """Blackjack has started.
-        
-        :param seats: The number of players that can be in the game.
-        :return: None.
-        :rtype: None.
-        """
-        for i in range(seats):
-            self.data.append(['', '', '', '', ''])
-        print(self.term.bold('BLACKJACK'))
-        print(self.term.move_down + self.r_tmp.format(*self.fields.keys()))
-        print('\u2500' * self.term.width)
-        for line in range(seats):
-            print()
-        print('\u2500' * self.term.width)
-    
-    def insure(self, player, bet):
-        """The player purchased insurance.
-        
-        :param player: The player purchasing insurance.
-        :param bet: The player's new bet total.
-        :return: None.
-        :rtype: None.
-        """
-        self._update_bet(player, bet, 'Buys insurance.')
-    
-    def insurepay(self, player, bet):
-        """The player gets an insurance pay out.
-        
-        :param player: The player who bought insurance.
-        :param bet: How much the player recieved.
-        :return: None.
-        :rtype: None.
-        """
-        msg = f'Insurance pays {bet}.'
-        self._update_bet(player, '', msg)
-    
-    def join(self, player):
-        """A new player joined the game.
-        
-        :param player: The player joining the game.
-        :return: None.
-        :rtype: None.
-        """
-        playerlist = [row[0] for row in self.data]
-        msg = 'Joins game.'
-        try:
-            index = playerlist.index('')
-        except ValueError:
-            reason = ('Player tried to join, but there are no empty '
-                      f'seats at the table. {playerlist}')
-            raise ValueError(reason)
-        else:
-            table = [row[:] for row in self.data]
-            table[index][0] = player
-            table[index][1] = player.chips
-            table[index][4] = msg
-            
-            self._update_table(table)
-            self.playerlist = [row[0] for row in self.data]
-            
-    def lost(self, player):
-        """The player loses the hand.
-        
-        :param player: The player who lost.
-        :return: None.
-        :rtype: None.
-        """
-        msg = f'Loses.'
-        self._update_bet(player, '', msg)
-    
-    def payout(self, player, bet):
-        """The player wins the hand.
-        
-        :param player: The player who won.
-        :param bet: How much the player won.
-        :return: None.
-        :rtype: None.
-        """
-        msg = f'Wins {bet}.'
-        self._update_bet(player, '', msg)
-    
-    def remove(self, player):
-        """A player leaves the game.
-        
-        :param player: The player who left.
-        :return: None
-        :rtype: None
-        """
-        msg = 'Walks away.'
-        data = [row[:] for row in self.data]
-        row = [row[0] for row in data].index(player)
-        data[row][4] = msg
-        self._update_table(data)
-        self.data[row] = ['', '', '', '', '']
-    
-    def shuffled(self):
-        """The dealer shuffles."""
-        msg = 'Shuffles deck.'
-        data = [row[:] for row in self.data]
-        data[0][4] = msg
-        self._update_table(data)
-    
-    def split(self, player, bet):
-        """The player split their hand.
-        
-        :param player: The player splitting.
-        :param bet: The player's new bet total.
-        :return: None.
-        :rtype: None.
-        """
-        row = [row[0] for row in self.data].index(player)
-        table = [row[:] for row in self.data[0:row + 1]]
-        table.append(['  \u2514\u2500', '', '', '', ''])
-        for new_row in self.data[row + 1:]:
-            table.append(new_row[:])
-        table[row][2] = bet
-        table[row][3] = str(player.hands[0])
-        table[row][4] = 'Splits.'
-        table[row + 1][2] = bet
-        table[row + 1][3] = str(player.hands[1])
-        self._update_table(table)
-    
-    def splitlost(self, player, bet):
-        """The player split their hand and lost.
-        
-        :param player: The player splitting.
-        :param bet: The player's new bet total.
-        :return: None.
-        :rtype: None.
-        """
-        msg = 'Loses.'
-        table = [row[:] for row in self.data]
-        row = [row[0] for row in table].index(player)
-        row += 1
-        table[row][2] = ''
-        table[row][4] = msg
-        self._update_table(table)
-    
-    def splitpayout(self, player, bet):
-        """The player split their hand and won.
-        
-        :param player: The player splitting.
-        :param bet: The player's new bet total.
-        :return: None.
-        :rtype: None.
-        """
-        msg = f'Wins {bet}.'
-        table = [row[:] for row in self.data]
-        row = [row[0] for row in table].index(player)
-        row += 1
-        table[row][2] = ''
-        table[row][4] = msg
-        self._update_table(table)
-    
-    def splittie(self, player, bet):
-        """The player split their hand and tied.
-        
-        :param player: The player splitting.
-        :param bet: The player's new bet total.
-        :return: None.
-        :rtype: None.
-        """
-        msg = f'Ties. Keeps {bet}.'
-        table = [row[:] for row in self.data]
-        row = [row[0] for row in table].index(player)
-        row += 1
-        table[row][2] = ''
-        table[row][4] = msg
-        self._update_table(table)
-    
-    def stand(self, player, hand):
-        """A player hits.
-        
-        :param player: The player who was dealt the hand.
-        :param hand: The hand that was dealt.
-        :return: None.
-        :rtype: None.
-        """
-        scores = [score for score in hand.score() if score <= 21]
-        if scores:
-            self._update_hand(player, hand, 'Stands.')
-        else:
-            self._update_hand(player, hand, 'Busts.')
-        
-    def tie(self, player, bet):
-        """The player ties the hand.
-        
-        :param player: The player who won.
-        :param bet: How much the player kept.
-        :return: None.
-        :rtype: None.
-        """
-        msg = f'Ties. Keeps {bet}.'
-        self._update_bet(player, '', msg)
-    
-    
-    # Input messages.
-    def _yesno_prompt(self, msg) -> model.IsYes:
-        """Prompt the user with a yes/no question.
-        
-        :param msg: The question to prompt with.
-        :return: The user's decision.
-        :rtype: model.IsYes
-        """
-        row = len(self.data) + 5
-        clearline = self.term.move(row, 0) + (' ' * self.term.width)
-        msg = self.term.move(row, 0) + f'{msg} (Y/n) > _'
-        is_yes = None
-        while not is_yes:
-            print(clearline)
-            if self.is_interactive:
-                sleep(.2)
-            print(msg)
-            with self.term.cbreak():
-                resp = self.term.inkey()
-            try:
-                is_yes = model.IsYes(resp)
-            except ValueError:
-                pass
-        print(clearline)
-        return is_yes
-    
-    def doubledown_prompt(self) -> model.IsYes:
-        """Does the user want to double down?
-        
-        :return: The user's decision.
-        :rtype: model.IsYes
-        """
-        return self._yesno_prompt('Double down?')
-    
-    def hit_prompt(self) -> model.IsYes:
-        """Does the user want to hit?
-        
-        :return: The user's decision.
-        :rtype: model.IsYes
-        """
-        return self._yesno_prompt('Hit?')
-    
-    def insure_prompt(self) -> model.IsYes:
-        """Does the user want to insure the hand?
-        
-        :return: The user's decision.
-        :rtype: model.IsYes
-        """
-        return self._yesno_prompt('Insure?')
-    
-    def nextgame_prompt(self) -> model.IsYes:
-        """Does the user want to play again?
-        
-        :return: The user's decision.
-        :rtype: model.IsYes
-        """
-        resp = self._yesno_prompt('Another round?')
-        if resp.value:
-            # Undo splits.
-            playerlist = [row[0] for row in self.data]
-            while '  \u2514\u2500' in playerlist:
-                index = playerlist.index('  \u2514\u2500')
-                _ = playerlist.pop(index)
-                _ = self.data.pop(index)
-                y = len(self.data) + 5
-                print(self.term.move(y, 0) + (' ' * self.term.width))
-            y = len(self.data) + 4
-            print(self.term.move(y, 0) + ('\u2500' * self.term.width))
-            for index in range(len(playerlist)):
-                y = index + 4
-                print(self.term.move(y, self.fields['Player'].loc) 
-                      + self.fields['Player'].fmt.format(playerlist[index]))
-        
-            # Clear previous round.
-            table = [row[:] for row in self.data]
-            for row in table:
-                row[1] = row[0].chips
-                row[2] = ''
-                row[3] = ''
-                row[4] = ''
-            self._update_table(table)
-        return resp
-    
-    def split_prompt(self) -> model.IsYes:
-        """Does the user want to split the hand?
-        
-        :return: The user's decision.
-        :rtype: model.IsYes
-        """
-        return self._yesno_prompt('Split?')
-
-
 # UI objects.
-class DynamicUI(game.BaseUI):
-    def __init__(self, is_interactive=False):
-        """Initialize an instance of the class."""
-        self.rows = []
-        self.t = run_terminal(is_interactive)
-        next(self.t)
-    
-    def enter(self, seats):
-        self.t.send(('init', seats))
-    
-    def input(self, event, details=None, default=None):
-        """Get user input from the UI.
-        
-        :param event: The event you need input for.
-        :param details: (Optional.) Details specific to the event.
-        :param default: (Optional.) The default value for the input. 
-            This is mainly to make input easier to test.
-        :return: The input received from the UI.
-        :rtype: Any. (May need an response object in the future.)
-        """
-        resp = None
-        if event == 'doubledown':
-            resp = self.t.send(('doubledown_prompt',))
-        elif event == 'hit':
-            resp = self.t.send(('hit_prompt',))
-        elif event == 'insure':
-            resp = self.t.send(('insure_prompt',))
-        elif event == 'nextgame':
-            resp = self.t.send(('nextgame_prompt',))
-        elif event == 'split':
-            resp = self.t.send(('split_prompt',))
-        else:
-            reason = f'Dynamic UI does not recognize {event}.'
-            raise ValueError(reason)
-        return resp
-    
-    def update(self, event, player, detail):
-        if event == 'buyin':
-            self.t.send((event, player, detail[0]))
-        elif event == 'deal':
-            self.t.send((event, player, detail))
-        elif event == 'doubled':
-            self.t.send((event, player, detail[0]))
-        elif event == 'flip':
-            self.t.send((event, player, detail))
-        elif event == 'hit':
-            self.t.send((event, player, detail))
-        elif event == 'insure':
-            self.t.send((event, player, detail[0]))
-        elif event == 'insurepay':
-            self.t.send((event, player, detail[0]))
-        elif event == 'join':
-            self.t.send((event, player))
-        elif event == 'lost':
-            self.t.send((event, player))
-        elif event == 'payout':
-            self.t.send((event, player, detail[0]))
-        elif event == 'remove':
-            self.t.send((event, player))
-        elif event == 'shuffled':
-            self.t.send((event,))
-        elif event == 'split':
-            self.t.send((event, player, detail[0]))
-        elif event == 'splitlost':
-            self.t.send((event, player, detail[0]))
-        elif event == 'splitpayout':
-            self.t.send((event, player, detail[0]))
-        elif event == 'splittie':
-            self.t.send((event, player, detail[0]))
-        elif event == 'stand':
-            self.t.send((event, player, detail))
-        elif event == 'tie':
-            self.t.send((event, player, detail[0]))
-        else:
-            reason = f'Event not recognized. {event}'
-            raise NotImplementedError(reason)
-
-
 class TableUI(game.EngineUI):
     """A table-based terminal UI for blackjack."""
     # General operation methods.
@@ -593,23 +64,13 @@ class TableUI(game.EngineUI):
     
     # Input methods.
     def _prompt(self, prompt, default):
+        """Prompt for a response from the user."""
         return self.loop.send(('input', prompt, default))
     
-    def doubledown_prompt(self) -> model.IsYes:
-        """Ask user if they want to double down."""    
-    
-    def hit_prompt(self) -> model.IsYes:
-        """Ask user if they want to hit."""    
-    
-    def insure_prompt(self) -> model.IsYes:
-        """Ask user if they want to insure."""    
-    
-    def nextgame_prompt(self) -> model.IsYes:
-        """Ask user if they want to play another round."""
-        prompt = 'Play another round? [yn] >'
-        default = 'y'
+    def _yesno_prompt(self, prompt, default):
+        prompt = f'{prompt} [yn] > '
         valid = None
-        while not isinstance(valid, model.IsYes):
+        while not valid:
             resp = self._prompt(prompt, default)
             try:
                 valid = model.IsYes(resp)
@@ -617,9 +78,36 @@ class TableUI(game.EngineUI):
                 pass
         return valid
     
-    def split_prompt(self) -> model.IsYes:
-        """Ask user if they want to split."""    
+    def doubledown_prompt(self) -> model.IsYes:
+        """Ask user if they want to double down."""
+        prompt = 'Double down?'
+        default = 'y'
+        return self._yesno_prompt(prompt, default)
     
+    def hit_prompt(self) -> model.IsYes:
+        """Ask user if they want to hit."""
+        prompt = 'Hit?'
+        default = 'y'
+        return self._yesno_prompt(prompt, default)
+    
+    def insure_prompt(self) -> model.IsYes:
+        """Ask user if they want to insure."""
+        prompt = 'Buy insurance?'
+        default = 'y'
+        return self._yesno_prompt(prompt, default)
+    
+    def nextgame_prompt(self) -> model.IsYes:
+        """Ask user if they want to play another round."""
+        prompt = 'Play another round?'
+        default = 'y'
+        return self._yesno_prompt(prompt, default)
+    
+    def split_prompt(self) -> model.IsYes:
+        """Ask user if they want to split."""
+        prompt = 'Split your hand?'
+        default = 'y'
+        return self._yesno_prompt(prompt, default)
+
     
     # Update methods.
     def _get_field_index(self, needed: Sequence[str]) -> list:
@@ -1070,37 +558,39 @@ def four_player():
 
 
 def dui():
-    ui = DynamicUI(True)
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    deck.random_cut()
-    dealer = players.Dealer(name='Dealer')
-    playerlist = []
-    for index in range(4):
-        playerlist.append(players.make_player(bet=20))
-    playerlist.append(players.UserPlayer(name='You', chips=200))
-    g = game.Game(deck, dealer, playerlist, ui=ui, buyin=20)
-    ui.enter(len(playerlist) + 1)
-    g.new_game()
-    play = True
-    while play:
-        try:
-            g.start()
-            g.deal()
-            g.play()
-            g.end()
-            play = ui.input('nextgame').value
-        except Exception as ex:
-            with open('exception.txt', 'w') as fh:
-                fh.write(str(ex.args))
-                tb_str = ''.join(tb.format_tb(ex.__traceback__))
-                fh.write(tb_str)
-            raise ex
+    try:
+        ui = TableUI(seats=6)
+        deck = cards.Deck.build(6)
+        deck.shuffle()
+        deck.random_cut()
+        dealer = players.Dealer(name='Dealer')
+        playerlist = []
+        for index in range(4):
+            playerlist.append(players.make_player(bet=20))
+        playerlist.append(players.UserPlayer(name='You', chips=200))
+        g = game.Engine(deck, dealer, playerlist, ui=ui, buyin=20)
+        ui.start(True)
+        g.new_game()
+        play = True
+        while play:
+                g.start()
+                g.deal()
+                g.play()
+                g.end()
+                play = ui.nextgame_prompt().value
+                if play:
+                    ui.cleanup()
+    except Exception as ex:
+        with open('exception.txt', 'w') as fh:
+            fh.write(str(ex.args))
+            tb_str = ''.join(tb.format_tb(ex.__traceback__))
+            fh.write(tb_str)
+        raise ex
 
 
 def test():
     try:
-        ui = TableUI(seats=5)
+        ui = TableUI(seats=6)
         deck = cards.Deck.build(6)
         deck.shuffle()
         deck.random_cut()
@@ -1116,12 +606,13 @@ def test():
     #         cards.Card(7, 0, cards.DOWN),
     #         cards.Card(10, 0, cards.DOWN),
     #     ])
-        deck.size = 1
+#         deck.size = 1
         dealer = players.Dealer(name='Dealer')
         playerlist = []
 #         playerlist = [players.AutoPlayer(name='Spam', chips=100),]
         for index in range(4):
-            playerlist.append(players.make_player(chips=1000))
+            playerlist.append(players.make_player(chips=200))
+        playerlist.append(players.UserPlayer(name='You', chips=200))
         g = game.Engine(deck, dealer, playerlist, ui=ui, buyin=20)
         ui.start(True)
         g.new_game()

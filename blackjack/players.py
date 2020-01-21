@@ -173,7 +173,9 @@ def will_hit_recommended(self, hand:Hand, the_game) -> bool:
 
 def will_hit_user(self, hand:Hand, the_game) -> bool:
     """Get a hit decision from the user."""
-    is_yes = the_game.ui.input('hit')
+#     is_yes = the_game.ui.input('hit')
+    is_yes = the_game.ui.hit_prompt()
+    
     return is_yes.value
 
 
@@ -214,7 +216,8 @@ def will_split_recommended(self, hand:Hand, the_game) -> bool:
 
 def will_split_user(self, hand:Hand, the_game) -> bool:
     """Get a split decision from the user."""
-    is_yes = the_game.ui.input('split')
+#     is_yes = the_game.ui.input('split')
+    is_yes = the_game.ui.split_prompt()
     return is_yes.value
 
 
@@ -276,7 +279,8 @@ def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
 
 def will_double_down_user(self, hand:Hand, the_game) -> bool:
     """Get a double down decision from the user."""
-    is_yes = the_game.ui.input('doubledown')
+#     is_yes = the_game.ui.input('doubledown')
+    is_yes = the_game.ui.doubledown_prompt()
     return is_yes.value
 
 
@@ -312,8 +316,12 @@ def will_insure_never(self, the_game) -> bool:
 
 def will_insure_user(self, the_game) -> bool:
     """Get a insurance decision from the user."""
-    is_yes = the_game.ui.input('insure')
-    return is_yes.value
+#     is_yes = the_game.ui.input('insure')
+    is_yes = the_game.ui.insure_prompt()
+    insurance = 0
+    if is_yes.value:
+        insurance = the_game.buyin // 2
+    return insurance
 
 
 def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn, 

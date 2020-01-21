@@ -12,7 +12,7 @@ import inspect
 import unittest as ut
 from unittest.mock import Mock, patch
 
-from blackjack import cards, players, game, model
+from blackjack import cards, cli,   players, game, model
 
 
 class PlayerTestCase(ut.TestCase):
@@ -319,7 +319,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
 
 
 class will_hit_userTestCase(ut.TestCase):
-    @patch('blackjack.game.BaseUI.input')
+    @patch('blackjack.game.BaseUI.hit_prompt')
     def test_hit(self, mock_input):
         """When the user chooses to hit, will_hit_user() returns 
         True.
@@ -327,13 +327,14 @@ class will_hit_userTestCase(ut.TestCase):
         expected = True
         
         mock_input.return_value = model.IsYes(expected)
+        ui = cli.TableUI()
         g = game.Game(None, None, None, None, None)
         actual = players.will_hit_user(None, None, g)
         
         mock_input.assert_called()
         self.assertEqual(expected, actual)
     
-    @patch('blackjack.game.BaseUI.input')
+    @patch('blackjack.game.BaseUI.hit_prompt')
     def test_stand(self, mock_input):
         """When the user chooses to hit, will_hit_user() returns 
         False.
@@ -341,6 +342,7 @@ class will_hit_userTestCase(ut.TestCase):
         expected = False
         
         mock_input.return_value = model.IsYes(expected)
+        ui = cli.TableUI()
         g = game.Game(None, None, None, None, None)
         actual = players.will_hit_user(None, None, g)
         
@@ -487,7 +489,7 @@ class will_split_recommendedTestCase(ut.TestCase):
 
 
 class will_split_userTestCase(ut.TestCase):
-    @patch('blackjack.game.BaseUI.input')
+    @patch('blackjack.game.BaseUI.split_prompt')
     def test_split(self, mock_input):
         """When the user chooses to split, will_split_user() returns 
         True.
@@ -501,7 +503,7 @@ class will_split_userTestCase(ut.TestCase):
         mock_input.assert_called()
         self.assertEqual(expected, actual)
     
-    @patch('blackjack.game.BaseUI.input')
+    @patch('blackjack.game.BaseUI.split_prompt')
     def test_stand(self, mock_input):
         """When the user chooses to split, will_split_user() returns 
         False.
@@ -706,7 +708,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
 
 
 class will_double_down_userTestCase(ut.TestCase):
-    @patch('blackjack.game.BaseUI.input')
+    @patch('blackjack.game.BaseUI.doubledown_prompt')
     def test_double_down(self, mock_input):
         """When the user chooses to double down, 
         will_double_down_user() returns True.
@@ -720,7 +722,7 @@ class will_double_down_userTestCase(ut.TestCase):
         mock_input.assert_called()
         self.assertEqual(expected, actual)
     
-    @patch('blackjack.game.BaseUI.input')
+    @patch('blackjack.game.BaseUI.doubledown_prompt')
     def test_not_double_down(self, mock_input):
         """When the user chooses to double down, 
         will_double_down_user() returns False.
@@ -792,29 +794,29 @@ class will_insure_neverTestCase(ut.TestCase):
 
 
 class will_insure_userTestCase(ut.TestCase):
-    @patch('blackjack.game.BaseUI.input')
+    @patch('blackjack.game.BaseUI.insure_prompt')
     def test_insure(self, mock_input):
         """When the user chooses to double down, 
         will_insure_user() returns True.
         """
-        expected = True
+        expected = 10
         
-        mock_input.return_value = model.IsYes(expected)
-        g = game.Game(None, None, None, None, None)
+        mock_input.return_value = model.IsYes('y')
+        g = game.Game(None, None, None, None, expected * 2)
         actual = players.will_insure_user(None, g)
         
         mock_input.assert_called()
         self.assertEqual(expected, actual)
     
-    @patch('blackjack.game.BaseUI.input')
+    @patch('blackjack.game.BaseUI.insure_prompt')
     def test_not_insure(self, mock_input):
         """When the user chooses to double down, 
         will_insure_user() returns False.
         """
-        expected = False
+        expected = 0
         
-        mock_input.return_value = model.IsYes(expected)
-        g = game.Game(None, None, None, None, None)
+        mock_input.return_value = model.IsYes('n')
+        g = game.Game(None, None, None, None, 20)
         actual = players.will_insure_user(None, g)
         
         mock_input.assert_called()
