@@ -110,3 +110,9 @@ class IsYes:
         :rtype: None.
         """
         self.value = value
+    
+    def __eq__(self, other):
+        cls = self.__class__
+        if not isinstance(other, cls):
+            return NotImplemented
+        return self.value == other.value

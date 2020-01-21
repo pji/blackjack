@@ -12,7 +12,7 @@ import argparse
 from collections import namedtuple
 from time import sleep
 import traceback as tb
-from typing import Sequence
+from typing import Any, Sequence
 
 from blessed import Terminal
 
@@ -20,6 +20,206 @@ from blackjack import cards, game, model, players, termui
 
 
 # UI objects.
+class LogUI(game.BaseUI):
+    tmp = '{:<15} {:<15} {:<}'
+    
+    def __init__(self, silent: bool = False) -> None:
+        self.is_interactive = silent
+    
+    # Engine UI protocol.
+    def end(self, is_interactive: bool = True) -> None:
+        """Print the initial banners for the game.
+        
+        :param is_interactive: Whether the session is viewed by a 
+            player.
+        :return: None.
+        :rtype: NoneType
+        """
+        self.is_interactive = is_interactive
+        if self.is_interactive:
+            print('\u2500' * 50)
+            print()
+    
+    def start(self, is_interactive: bool = True) -> None:
+        """Print the initial banners for the game.
+        
+        :param is_interactive: Whether the session is viewed by a 
+            player.
+        :return: None.
+        :rtype: NoneType
+        """
+        self.is_interactive = is_interactive
+        if self.is_interactive:
+            print()
+            print('BLACKJACK!')
+            print()
+            print(self.tmp.format('Player', 'Action', 'Hand'))
+            print('\u2500' * 50)
+    
+    # Update methods.
+    def _update_bet(self, player:players.Player, bet:int,
+                     event:str) -> None:
+        """Report that a hand has changed.
+        
+        :param player: The player who owns the hand.
+        :param bet: The amount of the bet that changed.
+        :param event: The specific event to report.
+        :return: None.
+        :rtype: NoneType
+        """
+        fmt = f'{bet} ({player.chips})'
+        self._update_event(player, event, fmt)
+    
+    def _update_event(self, player:players.Player, event:str, 
+                      detail: Any = '') -> None:
+        """Report that an event has occurred.
+        
+        :param player: The player who owns the hand.
+        :param event: The specific event to report.
+        :param detail: A relevant detail about the event that can be 
+            coerced into a string.
+        :return: None.
+        :rtype: NoneType
+        """
+        print(self.tmp.format(player, event, detail))
+    
+    def _update_hand(self, player:players.Player, hand:cards.Hand,
+                     event:str) -> None:
+        """Report that a hand has changed.
+        
+        :param player: The player who owns the hand.
+        :param hand: The hand that changed.
+        :param event: The specific event to report.
+        :return: None.
+        :rtype: NoneType
+        """
+        self._update_event(player, event, hand)
+    
+    def bet(self, player, bet):
+        """Player places initial bet."""
+        self._update_bet(player, bet, 'Bet.')
+    
+    def cleanup(self):
+        """Clean up after the round ends."""
+        self.end()
+        self.start()
+    
+    def deal(self, player, hand):
+        """Player receives initial hand."""
+        self._update_hand(player, hand, 'Dealt hand.')
+    
+    def doubledown(self, player, bet):
+        """Player doubles down."""
+        self._update_bet(player, bet, 'Double down.')
+    
+    def flip(self, player, hand):
+        """Player flips a card."""
+        self._update_hand(player, hand, 'Flip.')
+    
+    def hit(self, player, hand):
+        """Player hits."""            
+        self._update_hand(player, hand, 'Hit.')
+    
+    def insures(self, player, bet):
+        """Player insures their hand."""
+        self._update_bet(player, bet, 'Insures.')
+    
+    def insurepay(self, player, bet):
+        """Insurance is paid to player."""
+        self._update_bet(player, bet, 'Insure pay.')
+    
+    def joins(self, player):
+        """Player joins the game."""
+        self._update_event(player, 'Joins.')
+    
+    def leaves(self, player):
+        """Player leaves the game."""
+        self._update_event(player, 'Leaves.')
+    
+    def loses(self, player):
+        """Player loses."""
+        self._update_bet(player, '', 'Loses.')
+    
+    def loses_split(self, player):
+        """Player loses on their split hand."""
+        self.loses(player)
+    
+    def shuffles(self, player):
+        """The deck is shuffled."""
+        self._update_event(player, 'Shuffles.')
+    
+    def splits(self, player, bet):
+        """Player splits their hand."""
+        self._update_bet(player, bet, 'Splits.')
+    
+    def stand(self, player, hand):
+        """Player stands."""
+        self._update_hand(player, hand, 'Stand.')
+    
+    def tie(self, player, bet):
+        """Player ties."""
+        self._update_bet(player, bet, 'Tie.')
+    
+    def ties_split(self, player, bet):
+        """Player ties on their split hand."""
+        self.tie(player, bet)
+    
+    def wins(self, player, bet):
+        """Player wins."""
+        self._update_bet(player, bet, 'Wins.')
+    
+    def wins_split(self, player, bet):
+        """Player wins on their split hand."""
+        self.wins(player, bet)
+    
+    
+    # Input methods.
+    def _yesno_prompt(self, prompt:str, default: bool = True) -> model.IsYes:
+        """Prompt the user for a yes/no answer."""
+        response = None
+        fmt = '{} [yn] > '
+        
+        # Repeat the prompt until you get a valid response.
+        while not response:
+            untrusted = input(fmt.format(prompt))
+            
+            # Allow the response to default to true. Saves typing when 
+            # playing. 
+            if not untrusted:
+                untrusted = default
+            
+            # Determine if the input is valid.
+            try:
+                response = model.IsYes(untrusted)
+            
+            # If it's not valid, the ValueError will be caught, 
+            # response won't be set, so the prompt will be repeated.
+            except ValueError:
+                pass
+        
+        return response
+        
+    def doubledown_prompt(self) -> model.IsYes:
+        """Ask user if they want to double down."""    
+        return self._yesno_prompt('Double down?', 'y')
+    
+    def hit_prompt(self) -> model.IsYes:
+        """Ask user if they want to hit."""    
+        return self._yesno_prompt('Hit?', 'y')
+    
+    def insure_prompt(self) -> model.IsYes:
+        """Ask user if they want to insure."""    
+        return self._yesno_prompt('Insure?', 'y')
+    
+    def nextgame_prompt(self) -> model.IsYes:
+        """Ask user if they want to play another round."""    
+        return self._yesno_prompt('Next game?', 'y')
+    
+    def split_prompt(self) -> model.IsYes:
+        """Ask user if they want to split."""    
+        return self._yesno_prompt('Split?', 'y')
+
+
 class TableUI(game.EngineUI):
     """A table-based terminal UI for blackjack."""
     # General operation methods.
@@ -316,243 +516,96 @@ class TableUI(game.EngineUI):
         self._update_bet(player, '', f'Wins {bet}.', True)
 
 
-class UI(game.BaseUI):
-    tmp = '{:<15} {:<15} {:<}'
-    
-    def __init__(self, silent: bool = False) -> None:
-        if not silent:
-            print()
-            print('BLACKJACK!')
-    
-    def enter(self):
-        print()
-        print(self.tmp.format('Player', 'Action', 'Hand'))
-        print('\u2500' * 50)
-    
-    def exit(self):
-        print('\u2500' * 50)
-        print()
-    
-    def input(self, event, details=None, default=None):
-        """Get user input from the UI.
-        
-        :param event: The event you need input for.
-        :param details: (Optional.) Details specific to the event.
-        :param default: (Optional.) The default value for the input. 
-            This is mainly to make input easier to test.
-        :return: The input received from the UI.
-        :rtype: Any. (May need an response object in the future.)
-        """
-        prompt = None
-        if event == 'doubledown':
-            prompt = 'Double down? Y/n > '
-        elif event == 'hit':
-            prompt = 'Hit? Y/n > '
-        elif event == 'insure':
-            prompt = 'Insure? Y/n > '
-        elif event == 'nextgame':
-            prompt = 'Another round? Y/n > '
-        elif event == 'split':
-            prompt = 'Split? Y/n > '
-        if not prompt:
-            reason = 'Invalid event sent to UI.input().'
-            raise NotImplementedError(reason)
-        return self._yesno_prompt(prompt)
-    
-    def _yesno_prompt(self, prompt:str, default: bool = True) -> model.IsYes:
-        """Prompt the user for a yes/no answer."""
-        response = None
-        
-        # Repeat the prompt until you get a valid response.
-        while not response:
-            untrusted = input(prompt)
-            
-            # Allow the response to default to true. Saves typing when 
-            # playing. 
-            if not untrusted:
-                untrusted = default
-            
-            # Determine if the input is valid.
-            try:
-                response = model.IsYes(untrusted)
-            
-            # If it's not valid, the ValueError will be caught, 
-            # response won't be set, so the prompt will be repeated.
-            except ValueError:
-                pass
-        
-        return response
-        
-    def update(self, event:str, player:str, detail: object) -> None:
-        """Update the UI.
-        
-        :param event: The event the UI needs to display.
-        :param player: The player name involved in the event.
-        :param hand: The hand to display.
-        :return: None.
-        :rtype: None.
-        """
-        def get_handstr(hand):
-            return ' '.join([str(card) for card in hand])
-        
-        msg = None
-        if detail and isinstance(detail, cards.Hand):
-            handstr = get_handstr(detail)
-        if event == 'buyin':
-            fmt = '{} ({})'.format(*detail)
-            msg = self.tmp.format(player, 'Initial bet.', fmt)
-        if event == 'deal':
-            msg = self.tmp.format(player,  'Initial deal.', handstr)
-        if event == 'doubled':
-            fmt = '{} ({})'.format(*detail)
-            msg = self.tmp.format(player, 'Doubled down.', fmt)
-        if event == 'flip':
-            msg = self.tmp.format(player, 'Flipped card.', handstr)
-        if event == 'hit':
-            msg = self.tmp.format(player, 'Hit.', handstr)
-        if event == 'insured':
-            fmt = '{} ({})'.format(*detail)
-            msg = self.tmp.format(player, 'Insured.', fmt)
-        if event == 'insurepay':
-            fmt = '{} ({})'.format(*detail)
-            msg = self.tmp.format(player, 'Insurance pay out.', fmt)
-        if event == 'join':
-            phrase = 'Walks up.'
-            if player.name == 'You':
-                phrase = 'Walk up.'
-            msg = self.tmp.format(player, phrase, '')
-        if event == 'lost':
-            msg = self.tmp.format(player, 'Loses.', '')
-        if event == 'payout':
-            fmt = '{} ({})'.format(*detail)
-            msg = self.tmp.format(player, 'Wins.', fmt)
-        if event == 'remove':
-            msg = self.tmp.format(player, 'Walks away.', '')
-        if event == 'shuffled':
-            msg = self.tmp.format(player, 'Shuffled deck.', '')
-        if event == 'split':
-            hands = player.hands
-            lines = [
-                self.tmp.format(player, 'Hand split.', get_handstr(hands[0])),
-                self.tmp.format('', '', get_handstr(hands[1])),
-            ]
-            msg = '\n'.join(lines)
-        if event == 'splitlost':
-            msg = self.tmp.format(player, 'Loses.', '')
-        if event == 'splitpayout':
-            fmt = '{} ({})'.format(*detail)
-            msg = self.tmp.format(player, 'Wins.', fmt)
-        if event == 'splittie':
-            fmt = '{} ({})'.format(*detail)
-            msg = self.tmp.format(player, 'Stand-off.', fmt)
-        if event == 'stand':
-            scores = [score for score in detail.score() if score <= 21]
-            try:
-                score = scores[-1]
-            except IndexError:
-                score = 'Bust.'
-            msg = self.tmp.format(player, 'Stand.', score)
-        if event == 'tie':
-            fmt = '{} ({})'.format(*detail)
-            msg = self.tmp.format(player, 'Stand-off.', fmt)
-        if not msg:
-            reason = 'Invalid event sent to UI.update().' + msg
-            raise NotImplementedError(reason)
-        print(msg)
-
-
 # Command scripts.
 def dealer_only():
-    ui = UI()
-    g = game.Game(ui=ui)
+    ui = LogUI()
+    g = game.Engine(ui=ui)
     g.deck.shuffle()
+    ui.start()
     g.deal()
     g.play()
-    ui.exit()
+    ui.end()
 
 
 def one_player():
-    ui = UI()
+    ui = LogUI()
     play = True
     deck = cards.Deck.build(6)
     deck.shuffle()
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
     player = players.AutoPlayer(name='Player', chips=200)
-    g = game.Game(deck, dealer, (player,), ui=ui, buyin=2)
+    g = game.Engine(deck, dealer, (player,), ui=ui, buyin=2)
     while play:
-        ui.enter()
+        ui.start()
         g.start()
         g.deal()
         g.play()
         g.end()
-        ui.exit()
-        play = ui.input('nextgame').value
+        ui.end()
+        play = ui.nextgame_prompt().value
 
 
 def two_player():
-    ui = UI()
+    p1 = players.AutoPlayer(name='John', chips=200)
+    p2 = players.BetterPlayer(name='Michael', chips=200)
+    ui = LogUI()
     play = True
     deck = cards.Deck.build(6)
     deck.shuffle()
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
-    p1 = players.AutoPlayer(name='John', chips=200)
-    p2 = players.BetterPlayer(name='Michael', chips=200)
-    g = game.Game(deck, dealer, (p1, p2), ui=ui, buyin=2)
-    g.new_game()
+    g = game.Engine(deck, dealer, (p1, p2,), ui=ui, buyin=2)
     while play:
-        ui.enter()
+        ui.start()
         g.start()
         g.deal()
         g.play()
         g.end()
-        ui.exit()
-        play = ui.input('nextgame').value
+        ui.end()
+        play = ui.nextgame_prompt().value
 
 
 def three_player():
-    ui = UI()
-    play = True
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    deck.random_cut()
-    dealer = players.Dealer(name='Dealer')
     p1 = players.AutoPlayer(name='John', chips=200)
     p2 = players.BetterPlayer(name='Michael', chips=200)
     p3 = players.UserPlayer(name='You', chips=200)
-    g = game.Game(deck, dealer, (p1, p2, p3), ui=ui, buyin=2)
-    g.new_game()
-    while play:
-        ui.enter()
-        g.start()
-        g.deal()
-        g.play()
-        g.end()
-        ui.exit()
-        play = ui.input('nextgame').value
-
-
-def four_player():
-    ui = UI()
+    ui = LogUI()
     play = True
     deck = cards.Deck.build(6)
     deck.shuffle()
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
-    playerlist = []
-    for index in range(4):
-        playerlist.append(players.make_player())
-    g = game.Game(deck, dealer, playerlist, ui=ui, buyin=2)
-    g.new_game()
+    g = game.Engine(deck, dealer, (p1, p2, p3,), ui=ui, buyin=2)
     while play:
-        ui.enter()
+        ui.start()
         g.start()
         g.deal()
         g.play()
         g.end()
-        ui.exit()
-        play = ui.input('nextgame').value
+        ui.end()
+        play = ui.nextgame_prompt().value
+
+
+def four_player():
+    playerlist = []
+    for index in range(4):
+        playerlist.append(players.make_player())
+    ui = LogUI()
+    play = True
+    deck = cards.Deck.build(6)
+    deck.shuffle()
+    deck.random_cut()
+    dealer = players.Dealer(name='Dealer')
+    g = game.Engine(deck, dealer, playerlist, ui=ui, buyin=2)
+    while play:
+        ui.start()
+        g.start()
+        g.deal()
+        g.play()
+        g.end()
+        ui.end()
+        play = ui.nextgame_prompt().value
 
 
 def dui():

@@ -112,7 +112,7 @@ class will_hit_dealerTestCase(ut.TestCase):
             cards.Card(11, 0),
             cards.Card(11, 3),
         ])
-        g = game.Game()
+        g = game.Engine()
         _ = players.will_hit_dealer(player, hand, g)
     
     def test_stand_on_bust(self):
@@ -189,7 +189,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(2, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         actual = players.will_hit_recommended(None, phand, g)
         
         self.assertEqual(expected, actual)
@@ -210,7 +210,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(2, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         actual = players.will_hit_recommended(None, phand, g)
         
         self.assertEqual(expected, actual)
@@ -231,7 +231,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(2, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         actual = players.will_hit_recommended(None, phand, g)
         
         self.assertEqual(expected, actual)
@@ -252,7 +252,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(2, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         actual = players.will_hit_recommended(None, phand, g)
         
         self.assertEqual(expected, actual)
@@ -272,7 +272,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(2, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         actual = players.will_hit_recommended(None, phand, g)
         
         self.assertEqual(expected, actual)
@@ -291,7 +291,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(2, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         actual = players.will_hit_recommended(None, phand, g)
         
         self.assertEqual(expected, actual)
@@ -312,7 +312,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(2, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         actual = players.will_hit_recommended(None, phand, g)
         
         self.assertEqual(expected, actual)
@@ -328,7 +328,7 @@ class will_hit_userTestCase(ut.TestCase):
         
         mock_input.return_value = model.IsYes(expected)
         ui = cli.TableUI()
-        g = game.Game(None, None, None, None, None)
+        g = game.Engine(None, None, None, None, None)
         actual = players.will_hit_user(None, None, g)
         
         mock_input.assert_called()
@@ -343,7 +343,7 @@ class will_hit_userTestCase(ut.TestCase):
         
         mock_input.return_value = model.IsYes(expected)
         ui = cli.TableUI()
-        g = game.Game(None, None, None, None, None)
+        g = game.Engine(None, None, None, None, None)
         actual = players.will_hit_user(None, None, g)
         
         mock_input.assert_called()
@@ -358,7 +358,7 @@ class will_split_alwaysTestCase(ut.TestCase):
         """
         hand = cards.Hand()
         player = players.Player((hand,), 'John Cleese')
-        g = game.Game()
+        g = game.Engine()
         player.will_split = partial(players.will_split_always, None)
         player.will_split(hand, g)
         
@@ -391,7 +391,7 @@ class will_split_recommendedTestCase(ut.TestCase):
             cards.Card(10, 0, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual = players.will_split_recommended(player, hand, g)
         
         self.assertEqual(expected, actual)
@@ -410,7 +410,7 @@ class will_split_recommendedTestCase(ut.TestCase):
             cards.Card(10, 0, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual = players.will_split_recommended(player, hand, g)
         
         self.assertEqual(expected, actual)
@@ -432,7 +432,7 @@ class will_split_recommendedTestCase(ut.TestCase):
             cards.Card(10, 0, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual1 = players.will_split_recommended(player, hand, g)
         
         self.assertEqual(expected1, actual1)
@@ -447,7 +447,7 @@ class will_split_recommendedTestCase(ut.TestCase):
             cards.Card(10, 0, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual2 = players.will_split_recommended(player, hand, g)
         
         self.assertEqual(expected2, actual2)
@@ -467,7 +467,7 @@ class will_split_recommendedTestCase(ut.TestCase):
             cards.Card(10, 0, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual1 = players.will_split_recommended(player, hand, g)
         
         self.assertEqual(expected1, actual1)
@@ -482,7 +482,7 @@ class will_split_recommendedTestCase(ut.TestCase):
             cards.Card(10, 0, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual2 = players.will_split_recommended(player, hand, g)
         
         self.assertEqual(expected2, actual2)
@@ -497,7 +497,7 @@ class will_split_userTestCase(ut.TestCase):
         expected = True
         
         mock_input.return_value = model.IsYes(expected)
-        g = game.Game(None, None, None, None, None)
+        g = game.Engine(None, None, None, None, None)
         actual = players.will_split_user(None, None, g)
         
         mock_input.assert_called()
@@ -511,7 +511,7 @@ class will_split_userTestCase(ut.TestCase):
         expected = False
         
         mock_input.return_value = model.IsYes(expected)
-        g = game.Game(None, None, None, None, None)
+        g = game.Engine(None, None, None, None, None)
         actual = players.will_split_user(None, None, g)
         
         mock_input.assert_called()
@@ -524,7 +524,7 @@ class will_buyin_always(ut.TestCase):
         accept the following parameter: game.
         """
         player = players.Player()
-        g = game.Game()
+        g = game.Engine()
         
         player.will_buyin = partial(players.will_buyin_always, None)
         player.will_buyin(game)
@@ -535,7 +535,7 @@ class will_buyin_always(ut.TestCase):
     
     def test_always_true(self):
         """will_buyin_always() will always return True."""
-        g = game.Game()
+        g = game.Engine()
         p = players.Player()
         p.will_buyin = partial(players.will_buyin_always, None)
         actual = p.will_buyin(g)
@@ -550,7 +550,7 @@ class will_double_down_alwaysTestCase(ut.TestCase):
         """
         player = players.Player()
         hand = cards.Hand()
-        g = game.Game()
+        g = game.Engine()
         
         _ = players.will_double_down_always(player, hand, game)
         
@@ -560,7 +560,7 @@ class will_double_down_alwaysTestCase(ut.TestCase):
     
     def test_always_true(self):
         """will_double_down_always() will always return True."""
-        g = game.Game()
+        g = game.Engine()
         h = cards.Hand()
         p = players.Player()
         actual = players.will_double_down_always(p, h, g)
@@ -583,7 +583,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
             cards.Card(8, 3),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual = players.will_double_down_recommended(player, phand, g)
         
         self.assertEqual(expected, actual)
@@ -604,7 +604,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
             cards.Card(8, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual = players.will_double_down_recommended(player, phand, g)
         
         self.assertEqual(expected, actual)
@@ -625,7 +625,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
             cards.Card(8, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual = players.will_double_down_recommended(player, phand, g)
         
         self.assertEqual(expected, actual)
@@ -642,7 +642,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
             cards.Card(8, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual = players.will_double_down_recommended(player, phand, g)
         
         self.assertEqual(expected, actual)
@@ -663,7 +663,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
             cards.Card(8, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual = players.will_double_down_recommended(player, phand, g)
         
         self.assertEqual(expected, actual)
@@ -684,7 +684,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
             cards.Card(8, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual = players.will_double_down_recommended(player, phand, g)
         
         self.assertEqual(expected, actual)
@@ -701,7 +701,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
             cards.Card(8, 3, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, (player,), None, None)
+        g = game.Engine(None, dealer, (player,), None, None)
         actual = players.will_double_down_recommended(player, phand, g)
         
         self.assertEqual(expected, actual)
@@ -716,7 +716,7 @@ class will_double_down_userTestCase(ut.TestCase):
         expected = True
         
         mock_input.return_value = model.IsYes(expected)
-        g = game.Game(None, None, None, None, None)
+        g = game.Engine(None, None, None, None, None)
         actual = players.will_double_down_user(None, None, g)
         
         mock_input.assert_called()
@@ -730,7 +730,7 @@ class will_double_down_userTestCase(ut.TestCase):
         expected = False
         
         mock_input.return_value = model.IsYes(expected)
-        g = game.Game(None, None, None, None, None)
+        g = game.Engine(None, None, None, None, None)
         actual = players.will_double_down_user(None, None, g)
         
         mock_input.assert_called()
@@ -744,7 +744,7 @@ class will_insure_alwaysTestCase(ut.TestCase):
         """
         player = players.Player()
         hand = cards.Hand()
-        g = game.Game()
+        g = game.Engine()
         
         _ = players.will_insure_always(player, g)
         
@@ -759,7 +759,7 @@ class will_insure_alwaysTestCase(ut.TestCase):
         
         h = cards.Hand()
         p = players.Player()
-        g = game.Game(None, None, (p,), None, 20)
+        g = game.Engine(None, None, (p,), None, 20)
         actual = players.will_insure_always(p, g)
         
         self.assertEqual(expected, actual)
@@ -772,7 +772,7 @@ class will_insure_neverTestCase(ut.TestCase):
         """
         player = players.Player()
         hand = cards.Hand()
-        g = game.Game()
+        g = game.Engine()
         
         _ = players.will_insure_never(player, g)
         
@@ -787,7 +787,7 @@ class will_insure_neverTestCase(ut.TestCase):
         
         h = cards.Hand()
         p = players.Player()
-        g = game.Game(None, None, (p,), None, 20)
+        g = game.Engine(None, None, (p,), None, 20)
         actual = players.will_insure_always(p, g)
         
         self.assertEqual(expected, actual)
@@ -802,7 +802,7 @@ class will_insure_userTestCase(ut.TestCase):
         expected = 10
         
         mock_input.return_value = model.IsYes('y')
-        g = game.Game(None, None, None, None, expected * 2)
+        g = game.Engine(None, None, None, None, expected * 2)
         actual = players.will_insure_user(None, g)
         
         mock_input.assert_called()
@@ -816,7 +816,7 @@ class will_insure_userTestCase(ut.TestCase):
         expected = 0
         
         mock_input.return_value = model.IsYes('n')
-        g = game.Game(None, None, None, None, 20)
+        g = game.Engine(None, None, None, None, 20)
         actual = players.will_insure_user(None, g)
         
         mock_input.assert_called()
@@ -936,7 +936,7 @@ class make_playerTestCase(ut.TestCase):
             cards.Card(1, 2),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Game(None, dealer, None, None, 0)
+        g = game.Engine(None, dealer, None, None, 0)
         player = players.make_player()
         
         methods = [
