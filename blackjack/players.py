@@ -18,16 +18,32 @@ from blackjack.cards import Hand
 # Global values.
 HIT = True
 STAND = False
-NAMES = ['Jennifer', 'Amy', 'Melissa', 'Heather', 'Angela', 'Michelle', 
-         'Kimberly', 'Jessica', 'Lisa', 'Amanda', 'Michael', 'Jason', 
-         'Christopher', 'David', 'James', 'John', 'Robert', 'Brian', 
-         'Matthew', 'Daniel', 'Sophia', 'Olivia', 'Emma', 'Ava', 'Aria', 
-         'Isabella', 'Amelia', 'Mia', 'Riley', 'Aaliyah', 'Liam', 'Jackson', 
-         'Noah', 'Aiden', 'Grayson', 'Caden', 'Lucas', 'Elijah', 'Oliver', 
-         'Mason', 'Emily', 'Jessica', 'Ashley', 'Sarah', 'Samantha', 'Taylor', 
-         'Hannah', 'Alexis', 'Rachel', 'Elizabeth', 'Michael', 'Matthew', 
-         'Jacob', 'Christopher', 'Joshua', 'Nicholas', 'Tyler', 'Brandon', 
-         'Austin', 'Andrew']
+
+# Popular baby names from specific years taken from "Official US List" 
+# from babycenter.com.
+NAMES = [
+    # 2019
+    'Sophia', 'Olivia', 'Emma', 'Ava', 'Aria', 'Isabella', 'Amelia', 
+    'Mia', 'Riley', 'Aaliyah', 'Liam', 'Jackson', 'Noah', 'Aiden', 
+    'Grayson', 'Caden', 'Lucas', 'Elijah', 'Oliver', 'Mason', 'Emily', 
+    
+    # 1996
+    'Jessica', 'Ashley', 'Sarah', 'Samantha', 'Taylor', 'Hannah', 
+    'Alexis', 'Rachel', 'Elizabeth', 'Michael', 'Matthew', 'Jacob', 
+    'Christopher', 'Joshua', 'Nicholas', 'Tyler', 'Brandon', 'Austin', 
+    'Andrew'
+    
+    # 1976
+    'Jennifer', 'Amy', 'Melissa', 'Heather', 'Angela', 'Michelle', 
+    'Kimberly', 'Jessica', 'Lisa', 'Amanda', 'Michael', 'Jason', 
+    'Christopher', 'David', 'James', 'John', 'Robert', 'Brian', 
+    'Matthew', 'Daniel', 
+    
+    # 1956
+    'Mary', 'Debra', 'Linda', 'Deborah', 'Susan', 'Patricia', 'Karen', 
+    'Cynthia', 'Barbara', 'Donna', 'Michael', 'James', 'Robert', 
+    'David', 'John', 'William', 'Richard', 'Mark', 'Thomas', 'Steven',
+]
 
 
 # Utility functions.

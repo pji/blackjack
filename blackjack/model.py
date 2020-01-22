@@ -23,7 +23,7 @@ class _BaseDescriptor:
         setattr(instance, self.storage_name, value)
     
     def __get__(self, instance, owner):
-        if instance:
+        if instance != None:
             return getattr(instance, self.storage_name)
         return self
 
@@ -44,7 +44,10 @@ class Validated(ABC, _BaseDescriptor):
         if attr_name:
             cls = self.__class__
             self.storage_name = f'_{cls.__name__}__{attr_name}'
-        
+    
+    def __repr__(self):
+        cls = self.__class__.__name__
+        return f'{cls}(storage_name={self.storage_name!r})'
     
     def __set__(self, instance, value):
         valid = self.validate(value)
@@ -78,6 +81,15 @@ def validate_bool(self, value):
     raise ValueError(self.msg.format(reason))
 
 
+def validate_integer(self, value):
+    """Normalize and validate integers."""
+    try:
+        return int(value)
+    except ValueError:
+        reason = 'cannot be made an integer'
+        raise ValueError(self.msg.format(reason))
+
+
 def validate_yesno(self, value):
     """Validate yes/no responses from a UI."""
     if isinstance(value, bool):
@@ -94,6 +106,7 @@ def validate_yesno(self, value):
 
 # Common validator functions.
 Boolean = valfactory('Boolean', validate_bool, 'Invalid bool({}).')
+Integer_ = valfactory('Integer_', validate_integer, 'Invalid integer ({}).')
 YesNo = valfactory('YesNo', validate_yesno, 'Invalid yes/no answer ({}).')
 
 

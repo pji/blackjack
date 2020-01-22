@@ -43,6 +43,8 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
+* Fix the 119 test cases that break when I force Pile.cards to be a 
+  tuple
 * Save game state.
 * Restore game state.
 * Add optional card count to display.

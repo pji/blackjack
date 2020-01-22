@@ -827,6 +827,22 @@ class HandTestCase(unittest.TestCase):
             _ = h.split()
 
 
+class validate_cardtuple(unittest.TestCase):
+    def test_valid(self):
+        """Given a valid value, validate_cardtuple should normalize 
+        and validate it then return the normalized value.
+        """
+        exp = (
+            cards.Card(11, 3),
+            cards.Card(1, 1),
+        )
+        
+        value = list(exp)
+        act = cards.validate_cardtuple(None, value)
+        
+        self.assertEqual(exp, act)
+
+
 class validate_rankTestCase(unittest.TestCase):
     def test_exists(self):
         """A function named validate_rank should exist."""

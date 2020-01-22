@@ -244,6 +244,28 @@ class validate_boolTestCase(unittest.TestCase):
             _ = model.validate_bool(Spam(), 'eggs')
 
 
+class validate_integerTestCase(unittest.TestCase):
+    def test_valid(self):
+        """If passed a valid value, validate_integer should return it."""
+        exp = [4, 3]
+        values = [4, 3.0]
+        act = [model.validate_integer(None, item) for item in exp]
+        self.assertListEqual(exp, act)
+    
+    def test_invalid(self):
+        """If passed an invalid value, validate_integer() should raise 
+        a ValueError.
+        """
+        exp = ValueError
+        
+        class Spam:
+            msg = '{}'
+        test = 'eggs'
+        
+        with self.assertRaises(exp):
+            _ = model.validate_integer(Spam(), test)
+
+
 class validate_yesnoTestCase(unittest.TestCase):
     def test_valid_yes(self):
         """If passed a valid value, validate_yesno should return True 

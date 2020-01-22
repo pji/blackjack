@@ -13,8 +13,9 @@ from collections.abc import MutableSequence
 from copy import copy, deepcopy
 from itertools import product
 from random import randrange, shuffle
+from typing import Sequence
 
-from blackjack.model import Boolean, valfactory
+from blackjack.model import Boolean, Integer_, valfactory
 
 # Global values.
 UP = True
@@ -29,6 +30,20 @@ SUITS = OrderedDict([
 
 
 # Validator functions.
+def validate_cardtuple(self, value: 'Sequence[Card]') -> tuple:
+    """Validate a sequence of cards."""
+    try:
+        normal = tuple(value)
+    except TypeError:
+        reason = 'cannot be made a tuple'
+        raise ValueError(self.msg.format(reason))
+    else:
+        for item in normal:
+            if not isinstance(item, Card):
+                reason = 'contains non-card'
+                raise ValueError(self.msg.format(reason))
+        return normal
+
 def validate_rank(self, value: int) -> int:
     """Validate card ranks."""
     try:
@@ -64,9 +79,10 @@ def validate_suit(self, value):
     
     reason = 'not a valid suit'
     raise ValueError(self.msg.format(reason))
-    
+
 
 # Validator classes.
+CardTuple = valfactory('CardTuple', validate_cardtuple, 'Invalid ({}).')
 Rank = valfactory('Rank', validate_rank, 'Invalid rank ({}).')
 Suit = valfactory('Suit', validate_suit, 'Invalid suit ({}).')
 
@@ -145,6 +161,9 @@ class Card:
 
 class Pile(MutableSequence):
     """A generic pile of cards."""
+    _iter_index = Integer_('_iter_index')
+    # cards = CardTuple('cards')
+    
     def __init__(self, cards: list = None) -> None:
         """Initialize and instance of the class.
         
@@ -164,7 +183,8 @@ class Pile(MutableSequence):
         return NotImplemented
     
     def __repr__(self):
-        return 'Hand' + str([str(card) for card in self.cards])
+        cls = self.__class__.__name__
+        return cls + str([str(card) for card in self.cards])
     
     # Sized protocol.
     def __len__(self):
