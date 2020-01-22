@@ -15,7 +15,7 @@ from itertools import product
 from random import randrange, shuffle
 from typing import Sequence
 
-from blackjack.model import Boolean, Integer_, valfactory
+from blackjack.model import Boolean, Integer_, PosInt, valfactory
 
 # Global values.
 UP = True
@@ -247,6 +247,8 @@ class Pile(MutableSequence):
 
 class Deck(Pile):
     """A deck of playing cards for blackjack."""
+    size = PosInt('size')
+    
     @classmethod
     def build(cls, num_decks: int = 1):
         """(Class method.) Create a Deck object that is populated 
@@ -301,6 +303,8 @@ class Hand(Pile):
     Bicycle rules for Blackjack at bicyclecards.com, so it doesn't 
     implement that rule.
     """
+    doubled_down = Boolean('doubled_down')
+    
     def __init__(self, *args, **kwargs) -> None:
         """Initialize an instance of the class."""
         super().__init__(*args, **kwargs)

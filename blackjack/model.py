@@ -90,6 +90,16 @@ def validate_integer(self, value):
         raise ValueError(self.msg.format(reason))
 
 
+def validate_positive_int(self, value):
+    """Validate integers that are positive numbers."""
+    normal = validate_integer(self, value)
+    if normal < 0:
+        reason = 'cannot be less than 0'
+        raise ValueError(self.msg.format(reason))
+    return normal
+
+
+
 def validate_yesno(self, value):
     """Validate yes/no responses from a UI."""
     if isinstance(value, bool):
@@ -107,6 +117,7 @@ def validate_yesno(self, value):
 # Common validator functions.
 Boolean = valfactory('Boolean', validate_bool, 'Invalid bool({}).')
 Integer_ = valfactory('Integer_', validate_integer, 'Invalid integer ({}).')
+PosInt = valfactory('PosInt', validate_positive_int, 'Invalid ({}).')
 YesNo = valfactory('YesNo', validate_yesno, 'Invalid yes/no answer ({}).')
 
 
