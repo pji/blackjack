@@ -10,6 +10,7 @@ data model.
 """
 from abc import ABC, abstractmethod
 from typing import Union
+from unicodedata import normalize
 
 class _BaseDescriptor:
     """A basic data descriptor."""
@@ -99,6 +100,23 @@ def validate_positive_int(self, value):
     return normal
 
 
+def validate_text(self, value):
+    """Normalize and validate text strings."""
+    if isinstance(value, bytes):
+        try:
+            value = value.decode('utf_8')
+        except UnicodeDecodeError:
+            reason = 'contains invalid unicode characters'
+            raise ValueError(self.msg.format(reason))
+    try:
+        canon = str(value)
+    except (TypeError, ValueError):
+        reason = 'cannot be made a string'
+        raise ValueError(self.msg.format(reason))
+    else:
+        normal = normalize('NFC', canon)
+        return normal
+
 
 def validate_yesno(self, value):
     """Validate yes/no responses from a UI."""
@@ -118,6 +136,7 @@ def validate_yesno(self, value):
 Boolean = valfactory('Boolean', validate_bool, 'Invalid bool({}).')
 Integer_ = valfactory('Integer_', validate_integer, 'Invalid integer ({}).')
 PosInt = valfactory('PosInt', validate_positive_int, 'Invalid ({}).')
+Text = valfactory('PosInt', validate_text, 'Invalid text ({}).')
 YesNo = valfactory('YesNo', validate_yesno, 'Invalid yes/no answer ({}).')
 
 

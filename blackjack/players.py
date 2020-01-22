@@ -13,6 +13,7 @@ from random import choice
 from types import MethodType
 
 from blackjack.cards import Hand, HandTuple
+from blackjack.model import Integer_, PosInt, Text
 
 
 # Global values.
@@ -104,6 +105,9 @@ def name_builder(start:str, end:str) -> str:
 class Player:
     """A blackjack player."""
     hands = HandTuple('hand')
+    name = Text('name')
+    chips = Integer_('chips')
+    insured = PosInt('insured')
     
     def __init__(self, hands: tuple = (), name: str = 'Player', 
                  chips: int = 0) -> None:
@@ -117,6 +121,8 @@ class Player:
         """
         self.hands = hands
         self.name = name
+        if not chips:
+            chips = 0
         self.chips = chips
         self.insured = 0
     
