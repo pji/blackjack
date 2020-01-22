@@ -340,12 +340,12 @@ class EngineTestCase(ut.TestCase):
             cards.Card(11, 0, cards.DOWN),
             cards.Card(11, 3, cards.DOWN),
         ])
-        dealer = players.Dealer('Dealer')
+        dealer = players.Dealer(name='Dealer')
         dealer.hands = [cards.Hand([
             cards.Card(5, 0),
             cards.Card(5, 1),
         ]),]
-        player = players.AutoPlayer('Player')
+        player = players.AutoPlayer(name='Player')
         player.hands = [cards.Hand([
             cards.Card(5, 2),
             cards.Card(4, 3),
@@ -964,10 +964,10 @@ class EngineTestCase(ut.TestCase):
         """Given a hand and a player, if the hand cannot be split, 
         _split() should not split it and return false.
         """
-        expected_h1 = [cards.Hand([
+        expected_h1 = (cards.Hand([
             cards.Card(11, 3),
             cards.Card(2, 1),
-        ]),]
+        ]),)
         expected_return = False
         
         p1 = players.AutoPlayer(copy(expected_h1), name='John')

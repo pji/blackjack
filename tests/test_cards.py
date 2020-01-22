@@ -843,6 +843,28 @@ class validate_cardtuple(unittest.TestCase):
         self.assertEqual(exp, act)
 
 
+class validate_handtuple(unittest.TestCase):
+    def test_valid(self):
+        """Given a valid value, validate_handtuple should normalize 
+        and validate it then return the normalized value.
+        """
+        exp = (
+            cards.Hand((
+                cards.Card(11, 3),
+                cards.Card(1, 1),
+            )),
+            cards.Hand((
+                cards.Card(3, 1),
+                cards.Card(5, 1),
+            )),
+        )
+        
+        value = list(exp)
+        act = cards.validate_handtuple(None, value)
+        
+        self.assertEqual(exp, act)
+
+
 class validate_rankTestCase(unittest.TestCase):
     def test_exists(self):
         """A function named validate_rank should exist."""

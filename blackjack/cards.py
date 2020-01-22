@@ -40,10 +40,23 @@ def validate_cardtuple(self, value: 'Sequence[Card]') -> tuple:
     else:
         for item in normal:
             if not isinstance(item, Card):
-#                 print()
-#                 print(value)
-#                 print()
                 reason = 'contains non-card'
+                raise ValueError(self.msg.format(reason))
+        return normal
+
+def validate_handtuple(self, value: 'Sequence[Hand]') -> tuple:
+    """Validate a sequence of cards."""
+    if value == None:
+        return value
+    try:
+        normal = tuple(value)
+    except TypeError:
+        reason = 'cannot be made a tuple'
+        raise ValueError(self.msg.format(reason))
+    else:
+        for item in normal:
+            if not isinstance(item, Hand):
+                reason = 'contains non-hand'
                 raise ValueError(self.msg.format(reason))
         return normal
 
@@ -86,6 +99,7 @@ def validate_suit(self, value):
 
 # Validator classes.
 CardTuple = valfactory('CardTuple', validate_cardtuple, 'Invalid ({}).')
+HandTuple = valfactory('HandTuple', validate_handtuple, 'Invalid ({}).')
 Rank = valfactory('Rank', validate_rank, 'Invalid rank ({}).')
 Suit = valfactory('Suit', validate_suit, 'Invalid suit ({}).')
 

@@ -12,7 +12,7 @@ from functools import partial
 from random import choice
 from types import MethodType
 
-from blackjack.cards import Hand
+from blackjack.cards import Hand, HandTuple
 
 
 # Global values.
@@ -103,6 +103,8 @@ def name_builder(start:str, end:str) -> str:
 # Base class.
 class Player:
     """A blackjack player."""
+    hands = HandTuple('hand')
+    
     def __init__(self, hands: tuple = (), name: str = 'Player', 
                  chips: int = 0) -> None:
         """Initialize and instance of the class.

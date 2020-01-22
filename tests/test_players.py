@@ -183,7 +183,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(10, 1),
             cards.Card(6, 2),
         ])
-        player = players.Player(phand, 'John')
+        player = players.Player((phand,), 'John')
         dhand = cards.Hand([
             cards.Card(10, 1),
             cards.Card(2, 3, cards.DOWN),
@@ -204,7 +204,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(5, 1),
             cards.Card(7, 2),
         ])
-        player = players.Player(phand, 'John')
+        player = players.Player((phand,), 'John')
         dhand = cards.Hand([
             cards.Card(2, 1),
             cards.Card(2, 3, cards.DOWN),
@@ -225,7 +225,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(4, 1),
             cards.Card(7, 2),
         ])
-        player = players.Player(phand, 'John')
+        player = players.Player((phand,), 'John')
         dhand = cards.Hand([
             cards.Card(5, 1),
             cards.Card(2, 3, cards.DOWN),
@@ -246,7 +246,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(1, 1),
             cards.Card(7, 2),
         ])
-        player = players.Player(phand, 'John')
+        player = players.Player((phand,), 'John')
         dhand = cards.Hand([
             cards.Card(2, 1),
             cards.Card(2, 3, cards.DOWN),
@@ -266,7 +266,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(6, 2),
             cards.Card(2, 2),
         ])
-        player = players.Player(phand, 'John')
+        player = players.Player((phand,), 'John')
         dhand = cards.Hand([
             cards.Card(2, 1),
             cards.Card(2, 3, cards.DOWN),
@@ -285,7 +285,7 @@ class will_hit_recommendedTestCase(ut.TestCase):
             cards.Card(10, 1),
             cards.Card(11, 2),
         ])
-        player = players.Player(phand, 'John')
+        player = players.Player((phand,), 'John')
         dhand = cards.Hand([
             cards.Card(5, 1),
             cards.Card(2, 3, cards.DOWN),
@@ -300,13 +300,13 @@ class will_hit_recommendedTestCase(ut.TestCase):
         """If the hand is bust, stand."""
         expected = False
         
-        phand = cards.Hand([
+        phand = cards.Hand((
             cards.Card(8, 2),
             cards.Card(6, 1),
             cards.Card(2, 1),
             cards.Card(7, 2),
-        ])
-        player = players.Player(phand, 'John')
+        ))
+        player = players.Player((phand,), 'John')
         dhand = cards.Hand([
             cards.Card(5, 1),
             cards.Card(2, 3, cards.DOWN),
