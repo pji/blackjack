@@ -229,11 +229,11 @@ class PileTestCase(unittest.TestCase):
         """An instance of Pile should be able to hold cards in its 
         cards attribute.
         """
-        expected = [
+        expected = (
             cards.Card(1, 3),
             cards.Card(2, 3),
             cards.Card(3, 3),
-        ]
+        )
         
         d = cards.Pile(expected)
         actual = d.cards
@@ -488,7 +488,7 @@ class PileTestCase(unittest.TestCase):
             cards.Card(2, 0),
             cards.Card(3, 0),
         ]
-        expected = [card_list[0], card_list[2]]
+        expected = (card_list[0], card_list[2])
         
         d = cards.Pile(card_list)
         d.__delitem__(1)
@@ -652,11 +652,11 @@ class DeckTestCase(unittest.TestCase):
 class HandTestCase(unittest.TestCase):
     # Utility methods.
     def cardlist(self):
-        return [
+        return (
             cards.Card(1, 0),
             cards.Card(2, 0),
             cards.Card(3, 0),
-        ]
+        )
 
     # Tests.
     def test_exists(self):

@@ -40,6 +40,9 @@ def validate_cardtuple(self, value: 'Sequence[Card]') -> tuple:
     else:
         for item in normal:
             if not isinstance(item, Card):
+#                 print()
+#                 print(value)
+#                 print()
                 reason = 'contains non-card'
                 raise ValueError(self.msg.format(reason))
         return normal
@@ -162,7 +165,7 @@ class Card:
 class Pile(MutableSequence):
     """A generic pile of cards."""
     _iter_index = Integer_('_iter_index')
-    # cards = CardTuple('cards')
+    cards = CardTuple('cards')
     
     def __init__(self, cards: list = None) -> None:
         """Initialize and instance of the class.
@@ -173,9 +176,9 @@ class Pile(MutableSequence):
         :rtype: None
         """
         self._iter_index = 0
+        if not cards:
+            cards = ()
         self.cards = cards
-        if not self.cards:
-            self.cards = []
     
     def __eq__(self, other):
         if isinstance(other, Pile):
@@ -216,18 +219,30 @@ class Pile(MutableSequence):
     
     # MutableSequence protocol.
     def __setitem__(self, key, value):
-        self.cards.__setitem__(key, value)
+        cards = list(self.cards)
+        cards.__setitem__(key, value)
+        self.cards = tuple(cards)
     
     def __delitem__(self, key):
-        self.cards.__delitem__(key)
+        cards = list(self.cards)
+        cards.__delitem__(key)
+        self.cards = tuple(cards)
     
     def insert(self, key, item):
-        self.cards.insert(key, item)
+        cards = list(self.cards)
+        cards.insert(key, item)
+        self.cards = cards
     
     #Utility methods.
     def copy(self):
         """Return a copy of the Deck object."""
         return copy(self)
+    
+    def extend(self, iterable):
+        """Append all items from the given iterable."""
+        cards = list(self.cards)
+        cards.extend(iterable)
+        self.cards = tuple(cards)
 
 
 class Deck(Pile):
@@ -248,7 +263,7 @@ class Deck(Pile):
         std_deck = [Card(rank, suit, DOWN) for suit, rank 
                     in product(SUITS, ranks)]
         for i in range(d.size):
-            d.cards.extend(deepcopy(std_deck))
+            d.extend(deepcopy(std_deck))
         return d
     
     def draw(self):
@@ -265,7 +280,9 @@ class Deck(Pile):
     
     def shuffle(self):
         """Randomize the order of the deck."""
-        shuffle(self.cards)
+        cards = list(self.cards)
+        shuffle(cards)
+        self.cards = tuple(cards)
     
     def random_cut(self):
         """Remove the last 60-75 cards from the deck. This is done 
@@ -297,7 +314,9 @@ class Hand(Pile):
         return ' '.join(str(card) for card in self.cards)
     
     def append(self, item):
-        self.cards.append(item)
+        cards = list(self.cards)
+        cards.append(item)
+        self.cards = tuple(cards)
     
     def score(self):
         scores = set()

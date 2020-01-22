@@ -270,13 +270,13 @@ class EngineTestCase(ut.TestCase):
         hand, play() should deal cards to the dealer until the dealer 
         stands on a bust.
         """
-        expected = [
+        expected = (
             cards.Card(2, 1),
             cards.Card(3, 2),
             cards.Card(6, 0),
             cards.Card(5, 1), 
             cards.Card(11, 3),
-        ]
+        )
         
         h = cards.Hand([
             expected[0],
@@ -300,11 +300,11 @@ class EngineTestCase(ut.TestCase):
         deal cards to the dealer until the dealer stands on a score of 
         17 or more.
         """
-        expected = [
+        expected = (
             cards.Card(10, 1),
             cards.Card(3, 2),
             cards.Card(7, 0),
-        ]
+        )
         
         h = cards.Hand([
             expected[0],
