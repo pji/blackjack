@@ -843,6 +843,29 @@ class validate_cardtuple(unittest.TestCase):
         self.assertEqual(exp, act)
 
 
+class validate_deckTestCase(unittest.TestCase):
+    def test_valid(self):
+        """Given a valid value, validate_deck should validate and 
+        return it.
+        """
+        exp = cards.Deck.build(3)
+        act = cards.validate_deck(None, exp)
+        self.assertEqual(exp, act)
+    
+    def test_invalid(self):
+        """Given an invalid value, validate_deck should raise a 
+        ValueError exception.
+        """
+        exp = ValueError
+        
+        class Spam:
+            msg = '{}'
+        value = 'eggs'
+        
+        with self.assertRaises(exp):
+            _ = cards.validate_deck(Spam(), value)
+
+
 class validate_handtuple(unittest.TestCase):
     def test_valid(self):
         """Given a valid value, validate_handtuple should normalize 

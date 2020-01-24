@@ -640,49 +640,8 @@ def dui():
 
 
 def test():
-    try:
-        ui = TableUI(seats=6)
-        deck = cards.Deck.build(6)
-        deck.shuffle()
-        deck.random_cut()
-    #     deck = cards.Deck([
-    #         cards.Card(10, 0, cards.DOWN),
-    #         cards.Card(10, 0, cards.DOWN),
-    #         cards.Card(10, 0, cards.DOWN),
-    #         cards.Card(6, 0, cards.DOWN),
-    #         cards.Card(2, 0, cards.DOWN),
-    #         cards.Card(8, 0, cards.DOWN),
-    #         cards.Card(10, 0, cards.DOWN),
-    #         cards.Card(10, 0, cards.DOWN),
-    #         cards.Card(7, 0, cards.DOWN),
-    #         cards.Card(10, 0, cards.DOWN),
-    #     ])
-#         deck.size = 1
-        dealer = players.Dealer(name='Dealer')
-        playerlist = []
-#         playerlist = [players.AutoPlayer(name='Spam', chips=100),]
-        for index in range(4):
-            playerlist.append(players.make_player(chips=200))
-        playerlist.append(players.UserPlayer(name='You', chips=200))
-        g = game.Engine(deck, dealer, playerlist, ui=ui, buyin=20)
-        ui.start(True)
-        g.new_game()
-        play = True
-        while play:
-            g.start()
-            g.deal()
-            g.play()
-            g.end()
-            play = ui.nextgame_prompt().value
-            if play:
-                ui.cleanup()
-    except Exception as ex:
-        with open('exception.log', 'w') as fh:
-            fh.write(str(ex.args))
-            tb_str = ''.join(tb.format_tb(ex.__traceback__))
-            fh.write(tb_str)
-        raise ex
-
+    player = players.make_player()
+    print(player.asdict())
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Blackjack')

@@ -44,6 +44,13 @@ def validate_cardtuple(self, value: 'Sequence[Card]') -> tuple:
                 raise ValueError(self.msg.format(reason))
         return normal
 
+def validate_deck(self, value: 'Deck') -> 'Deck':
+    """Validate a deck."""
+    if isinstance(value, Deck):
+        return value
+    reason = 'object is not a Deck'
+    raise ValueError(self.msg.format(reason))
+
 def validate_handtuple(self, value: 'Sequence[Hand]') -> tuple:
     """Validate a sequence of cards."""
     if value == None:
@@ -99,6 +106,7 @@ def validate_suit(self, value):
 
 # Validator classes.
 CardTuple = valfactory('CardTuple', validate_cardtuple, 'Invalid ({}).')
+DeckObj = valfactory('DeckObj', validate_deck, 'Invalid deck ({}).')
 HandTuple = valfactory('HandTuple', validate_handtuple, 'Invalid ({}).')
 Rank = valfactory('Rank', validate_rank, 'Invalid rank ({}).')
 Suit = valfactory('Suit', validate_suit, 'Invalid suit ({}).')

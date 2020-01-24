@@ -11,6 +11,7 @@ data model.
 from abc import ABC, abstractmethod
 from typing import Union
 from unicodedata import normalize
+from typing import Sequence
 
 class _BaseDescriptor:
     """A basic data descriptor."""
@@ -64,15 +65,6 @@ class Validated(ABC, _BaseDescriptor):
         """
 
 
-def valfactory(name, validator, message):
-    """A factor for creating Validator subclasses."""
-    attrs = {
-        'validate': validator,
-        'msg': message,
-    }
-    return type(name, (Validated,), attrs)
-
-
 # Common validate functions.
 def validate_bool(self, value):
     """Validate booleans."""
@@ -118,6 +110,14 @@ def validate_text(self, value):
         return normal
 
 
+def validate_whitelist(self, value):
+    """Validate items in a whitelist."""
+    if value in self.whitelist:
+        return value
+    reason = 'not in list'
+    raise ValueError(self.msg.format(reason))
+
+
 def validate_yesno(self, value):
     """Validate yes/no responses from a UI."""
     if isinstance(value, bool):
@@ -129,7 +129,33 @@ def validate_yesno(self, value):
         return False
     reason = 'Not "yes" or "no".' + str(value)
     raise ValueError(self.msg.format(reason))
-        
+
+
+def valfactory(name, validator, message):
+    """A factor for creating Validator subclasses."""
+    attrs = {
+        'validate': validator,
+        'msg': message,
+    }
+    return type(name, (Validated,), attrs)
+
+
+def wlistfactory(name:str, whitelist:Sequence, msg:str) -> type:
+    """Create whitelist validators.
+    
+    :param name: The name of the validator.
+    :param whitelist: The list of valid items.
+    :param msg: The format string for the exceptions raised by the 
+        validator.
+    :return: A validating descriptor for the whitelist.
+    :rtype: type
+    """
+    attrs = {
+        'validate': validate_whitelist,
+        'msg': msg,
+        'whitelist': whitelist,
+    }
+    return type(name, (Validated,), attrs)
 
 
 # Common validator functions.

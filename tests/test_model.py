@@ -219,6 +219,70 @@ class valfactoryTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
+class wlistfactoryTestCase(unittest.TestCase):
+    def test_return_Validator_subclasses(self):
+        """valfactory(), when given a name, a validator function, and 
+        a message, should return subclasses of Validated.
+        """
+        expected = model.Validated
+        
+        name = 'Eggs'
+        whitelist = ['spam', 'eggs']
+        msg = 'Bad.'
+        actual = model.wlistfactory(name, whitelist, msg)
+        
+        self.assertTrue(issubclass(actual, expected))
+    
+    def test_class_name(self):
+        """The name of classes created by valfactory() should be the 
+        name passed to valfactory.
+        """
+        expected = 'Spam'
+        
+        cls = model.wlistfactory(expected, Mock(), None)
+        actual = cls.__name__
+        
+        self.assertEqual(expected, actual)    
+    
+    def test_class_message(self):
+        """The value of the msg attribute for the class created by 
+        valfactory should be the value of message passed to 
+        valfactory().
+        """
+        expected = 'Bad.'
+        
+        cls = model.wlistfactory('Spam', Mock(), expected)
+        actual = cls.msg
+        
+        self.assertEqual(expected, actual)
+    
+    def test_class_whitelist(self):
+        """The value of the msg attribute for the class created by 
+        valfactory should be the value of message passed to 
+        valfactory().
+        """
+        expected = ['spam', 'eggs']
+        
+        cls = model.wlistfactory('Spam', expected, expected)
+        actual = cls.whitelist
+        
+        self.assertEqual(expected, actual)
+    
+    def test_validate(self):
+        """The class returned should reject invalid values."""
+        exp = ValueError
+        
+        value = 1
+        wl = ['spam', 'eggs']
+        cls = model.wlistfactory('cls', wl, '({})')
+        class Bacon:
+            item = cls('item')
+        obj = Bacon()
+        
+        with self.assertRaises(exp):
+            obj.item = value
+
+
 class validate_boolTestCase(unittest.TestCase):
     def test_exists(self):
         """A function named validate_bool should exist."""
@@ -314,6 +378,36 @@ class validate_textTestCase(unittest.TestCase):
         
         with self.assertRaises(exp):
             _ = model.validate_integer(Spam(), test)
+
+
+class validate_whitelistTestCase(unittest.TestCase):
+    def test_valid(self):
+        """Given a valid value, validate_whitelist() should return 
+        it.
+        """
+        exp = 'spam'
+        
+        class Eggs:
+            msg = '({})'
+            whitelist = ['spam', 'eggs', 'ham']
+        act = model.validate_whitelist(Eggs(), exp)
+        
+        self.assertEqual(exp, act)
+    
+    def test_invalid(self):
+        """Given an invalid value, validate_whitelist() should raise 
+        a ValueError exception.
+        """
+        exp = ValueError
+        
+        class Eggs:
+            msg = '({})'
+            whitelist = ['spam', 'eggs', 'ham']
+        value = 1
+        
+        with self.assertRaises(exp):
+            _ = model.validate_whitelist(Eggs(), value)
+
 
 
 class validate_yesnoTestCase(unittest.TestCase):

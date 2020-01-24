@@ -10,10 +10,11 @@ players, including the dealer.
 """
 from functools import partial
 from random import choice
+from typing import Callable
 from types import MethodType
 
 from blackjack.cards import Hand, HandTuple
-from blackjack.model import Integer_, PosInt, Text
+from blackjack.model import Integer_, PosInt, Text, wlistfactory
 
 
 # Global values.
@@ -99,57 +100,6 @@ def name_builder(start:str, end:str) -> str:
         index_start = get_change_index(start, vowels)
         name = start[0:index_start] + end
     return name[0].upper() + name[1:]
-
-
-# Base class.
-class Player:
-    """A blackjack player."""
-    hands = HandTuple('hand')
-    name = Text('name')
-    chips = Integer_('chips')
-    insured = PosInt('insured')
-    
-    def __init__(self, hands: tuple = (), name: str = 'Player', 
-                 chips: int = 0) -> None:
-        """Initialize and instance of the class.
-        
-        :param hands: The player's hands of blackjack.
-        :param name: The player's name.
-        :param chips: The chips the player has for betting.
-        :return: None.
-        :rtype: None.
-        """
-        self.hands = hands
-        self.name = name
-        if not chips:
-            chips = 0
-        self.chips = chips
-        self.insured = 0
-    
-    def __str__(self):
-        return self.name
-    
-    def __repr__(self):
-        cls = self.__class__
-        return f'{cls.__name__}[{self.name!r}]'
-    
-    def __format__(self, format_spec):
-        return self.name.__format__(format_spec)
-    
-    def will_hit(self, hand:Hand, the_game) -> bool:
-        raise NotImplementedError
-    
-    def will_split(self, hand:Hand, the_game) -> bool:
-        raise NotImplementedError
-    
-    def will_buyin(self, hand:Hand, the_game) -> bool:
-        raise NotImplementedError
-    
-    def will_double_down(self, hand:Hand, the_game) -> bool:
-        raise NotImplementedError
-    
-    def will_insure(self, hand:Hand, the_game) -> bool:
-        raise NotImplementedError
 
 
 # will_hit functions.
@@ -348,6 +298,129 @@ def will_insure_user(self, the_game) -> bool:
     return insurance
 
 
+# Decision methods lists.
+will_hits = [will_hit_user, will_hit_dealer, will_hit_recommended]
+will_splits = [will_split_user, will_split_always, will_split_recommended]
+will_buyins = [will_buyin_always,]
+will_double_downs = [will_double_down_user, will_double_down_always, 
+                     will_double_down_recommended]
+will_insures = [will_insure_user, will_insure_always, will_insure_never]
+
+
+# Base class.
+class Player:
+    """A blackjack player."""
+    hands = HandTuple('hand')
+    name = Text('name')
+    chips = Integer_('chips')
+    insured = PosInt('insured')
+    
+    @classmethod
+    def fromdict(cls, dict_:dict) -> 'Player':
+        """Deserialize an instance of Player from a dictionary.
+        
+        :param dict_: A serialized instance of Player in a dictionary. 
+        :return: An instance of Player.
+        :rtype: Player
+        """
+        if dict_['class'] != cls.__name__:
+            msg('Wrong constructor for serialized class.')
+            raise TypeError(msg)
+        
+        player = cls(dict_['hands'], dict_['name'], dict_['chips'])
+        methods = {
+            'will_hit': will_hits,
+            'will_split': will_splits,
+            'will_buyin': will_buyins,
+            'will_double_down': will_double_downs,
+            'will_insure': will_insures,
+        }
+        for meth in methods:
+            fn_names = [fn.__name__ for fn in methods[meth]]
+            try:
+                index = fn_names.index(dict_[meth])
+            except ValueError:
+                msg = f'Invalid {meth} given.'
+                raise ValueError(msg)
+            setattr(player, meth, methods[meth][index])
+        
+        return player
+    
+    def __init__(self, hands: tuple = (), name: str = 'Player', 
+                 chips: int = 0) -> None:
+        """Initialize and instance of the class.
+        
+        :param hands: The player's hands of blackjack.
+        :param name: The player's name.
+        :param chips: The chips the player has for betting.
+        :return: None.
+        :rtype: None.
+        """
+        self.hands = hands
+        self.name = name
+        if not chips:
+            chips = 0
+        self.chips = chips
+        self.insured = 0
+    
+    def __str__(self):
+        return self.name
+    
+    def __repr__(self):
+        cls = self.__class__
+        return f'{cls.__name__}[{self.name!r}]'
+    
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        
+        return (
+            self.hands == other.hands
+            and self.name == other.name
+            and self.chips == other.chips 
+            and self.will_buyin.__name__ == other.will_buyin.__name__
+            and self.will_double_down.__name__ == other.will_double_down.__name__
+            and self.will_hit.__name__ == other.will_hit.__name__
+            and self.will_insure.__name__ == other.will_insure.__name__
+            and self.will_split.__name__ == other.will_split.__name__
+        )
+    
+    def __format__(self, format_spec):
+        return self.name.__format__(format_spec)
+    
+    def asdict(self):
+        """Return a dictionary that is a representation of the 
+        class.
+        """
+        return {
+            'class': self.__class__.__name__,
+            'chips': self.chips,
+            'hands': self.hands,
+            'insured': self.insured,
+            'name': self.name,
+            'will_buyin': self.will_buyin.__name__,
+            'will_double_down': self.will_double_down.__name__,
+            'will_hit': self.will_hit.__name__,
+            'will_insure': self.will_insure.__name__,
+            'will_split': self.will_split.__name__,
+        }
+    
+    def will_hit(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+    
+    def will_split(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+    
+    def will_buyin(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+    
+    def will_double_down(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+    
+    def will_insure(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+
+
 def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn, 
                   will_double_down, will_insure) -> type:
     """A factory function for Player subclasses."""
@@ -373,12 +446,11 @@ def make_player(chips=200, bet=None) -> Player:
         chips = get_chips(bet)
     
     methods = {
-        'will_hit': choice([will_hit_dealer, will_hit_recommended]),
-        'will_split': choice([will_split_always, will_split_recommended]),
+        'will_hit': choice(will_hits[1:]),
+        'will_split': choice(will_splits[1:]),
         'will_buyin': will_buyin_always,
-        'will_double_down': choice([will_double_down_always, 
-                                    will_double_down_recommended]),
-        'will_insure': choice([will_insure_always, will_insure_never]),
+        'will_double_down': choice(will_double_downs[1:]),
+        'will_insure': choice(will_insures[1:]),
     }
     player = Player(name=name, chips=chips)
     

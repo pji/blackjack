@@ -10,7 +10,7 @@ The module contains the main game loop for blackjack.
 from abc import ABC, abstractmethod
 from typing import Union
 
-from blackjack.cards import Deck, DOWN, Hand
+from blackjack.cards import Deck, DeckObj, DOWN, Hand
 from blackjack.model import IsYes
 from blackjack.players import Dealer, Player, make_player
 
@@ -249,6 +249,8 @@ class BaseUI(EngineUI):
 
 class Engine:
     """A game engine for blackjack."""
+    deck = DeckObj('deck')
+    
     def __init__(self, deck: Deck = None, dealer: Player = None, 
                  playerlist: tuple = None, ui: EngineUI = None, 
                  buyin: float = 0) -> None:
@@ -547,7 +549,3 @@ class Engine:
         if p_score < d_score:
             return False
         return None
-    
-    
-
-

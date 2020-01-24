@@ -9,6 +9,7 @@ This module contains the unit tests for the blackjack.players module.
 """
 from functools import partial
 import inspect
+from types import MethodType
 import unittest as ut
 from unittest.mock import Mock, patch
 
@@ -95,7 +96,69 @@ class PlayerTestCase(ut.TestCase):
         actual = tmp.format(p)
         
         self.assertEqual(expected, actual)
-
+    
+    def test_asdict(self):
+        """When called, asdict() should serialize the object to a 
+        dictionary.
+        """
+        hands = (cards.Hand((
+                cards.Card(11, 3),
+                cards.Card(2, 1),
+            )),)
+        exp = {
+            'class': 'Player',
+            'chips': 200,
+            'hands': hands,
+            'insured': 0,
+            'name': 'spam',
+            'will_buyin': 'will_buyin_always',
+            'will_double_down': 'will_double_down_always',
+            'will_hit': 'will_hit_dealer',
+            'will_insure': 'will_insure_always',
+            'will_split': 'will_split_always',
+        }
+        
+        player = players.Player(hands, 'spam', 200)
+        player.will_buyin = MethodType(players.will_buyin_always, player)
+        player.will_double_down = MethodType(players.will_double_down_always, 
+                                             player)
+        player.will_hit = MethodType(players.will_hit_dealer, player)
+        player.will_insure = MethodType(players.will_insure_always, player)
+        player.will_split = MethodType(players.will_split_always, player)
+        act = player.asdict()
+        
+        self.assertEqual(exp, act)
+    
+    def test_fromdict(self):
+        """Given a dictionary as created by asdict(), fromdict() 
+        should deserialize the Player object.
+        """
+        hands = (cards.Hand((
+                cards.Card(11, 3),
+                cards.Card(2, 1),
+            )),)
+        exp = players.Player(hands, 'spam', 200)
+        exp.will_buyin = MethodType(players.will_buyin_always, exp)
+        exp.will_double_down = MethodType(players.will_double_down_always, exp)
+        exp.will_hit = MethodType(players.will_hit_dealer, exp)
+        exp.will_insure = MethodType(players.will_insure_always, exp)
+        exp.will_split = MethodType(players.will_split_always, exp)
+        
+        value = {
+            'class': 'Player',
+            'chips': 200,
+            'hands': hands,
+            'insured': 0,
+            'name': 'spam',
+            'will_buyin': 'will_buyin_always',
+            'will_double_down': 'will_double_down_always',
+            'will_hit': 'will_hit_dealer',
+            'will_insure': 'will_insure_always',
+            'will_split': 'will_split_always',
+        }
+        act = players.Player.fromdict(value)
+        
+        self.assertEqual(exp, act)
 
 class will_hit_dealerTestCase(ut.TestCase):
     def test_exists(self):
@@ -359,6 +422,7 @@ class will_split_alwaysTestCase(ut.TestCase):
         hand = cards.Hand()
         player = players.Player((hand,), 'John Cleese')
         g = game.Engine()
+        method = MethodType(players.will_split_always, player)
         player.will_split = partial(players.will_split_always, None)
         player.will_split(hand, g)
         
@@ -1037,7 +1101,7 @@ class name_builderTestCase(ut.TestCase):
         self.assertEqual(expected, actual)
     
 
-class get_chips(ut.TestCase):
+class get_chipsTestCase(ut.TestCase):
     def test_accepts_bet(self):
         """The get_chips() function should accept the initial buyin 
         value for a game of blackjack.
@@ -1059,3 +1123,4 @@ class get_chips(ut.TestCase):
         
         self.assertTrue(exp_high >= actual)
         self.assertTrue(exp_low <= actual)
+
