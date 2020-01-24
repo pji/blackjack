@@ -323,7 +323,8 @@ class Player:
         :return: An instance of Player.
         :rtype: Player
         """
-        if dict_['class'] != cls.__name__:
+        names = [cls_.__name__ for cls_ in trusted_Players]
+        if dict_['class'] not in names:
             msg('Wrong constructor for serialized class.')
             raise TypeError(msg)
         
@@ -474,3 +475,7 @@ BetterPlayer = playerfactory('BetterPlayer', will_hit_recommended,
 UserPlayer = playerfactory('UserPlayer', will_hit_user, will_split_user, 
                            will_buyin_always, will_double_down_user, 
                            will_insure_user)
+
+
+# List of trusted Player subclasses for deserialization:
+trusted_Players = [Player, Dealer, AutoPlayer, BetterPlayer, UserPlayer]

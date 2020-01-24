@@ -7,6 +7,7 @@ This module contains the unit tests for the blackjack.players module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from copy import copy
 from functools import partial
 import inspect
 from types import MethodType
@@ -159,6 +160,37 @@ class PlayerTestCase(ut.TestCase):
         act = players.Player.fromdict(value)
         
         self.assertEqual(exp, act)
+    
+    def test_fromdict_invalid_method(self):
+        """Given a dictionary as created by asdict(), fromdict() 
+        should deserialize the Player object.
+        """
+        exp = ValueError
+        
+        hands = (cards.Hand((
+                cards.Card(11, 3),
+                cards.Card(2, 1),
+            )),)
+        dict_ = {
+            'class': 'Player',
+            'chips': 200,
+            'hands': hands,
+            'insured': 0,
+            'name': 'spam',
+            'will_buyin': 'will_buyin_always',
+            'will_double_down': 'will_double_down_always',
+            'will_hit': 'will_hit_dealer',
+            'will_insure': 'will_insure_always',
+            'will_split': 'will_split_always',
+        }
+        methkeys = [key for key in dict_ if key.startswith('will_')]
+        test = 'spam'
+        for key in methkeys:
+            test_dict = copy(dict_)
+            test_dict[key] = test
+            
+            with self.assertRaises(exp):
+                act = players.Player.fromdict(test_dict)
 
 class will_hit_dealerTestCase(ut.TestCase):
     def test_exists(self):
