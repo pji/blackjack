@@ -161,6 +161,35 @@ class PlayerTestCase(ut.TestCase):
         
         self.assertEqual(exp, act)
     
+    def test_fromdict_methods(self):
+        """Given a dictionary as created by asdict(), fromdict() 
+        should deserialize the Player object.
+        """
+        exp = MethodType
+        
+        hands = (cards.Hand((
+                cards.Card(11, 3),
+                cards.Card(2, 1),
+            )),)
+        value = {
+            'class': 'Player',
+            'chips': 200,
+            'hands': hands,
+            'insured': 0,
+            'name': 'spam',
+            'will_buyin': 'will_buyin_always',
+            'will_double_down': 'will_double_down_always',
+            'will_hit': 'will_hit_dealer',
+            'will_insure': 'will_insure_always',
+            'will_split': 'will_split_always',
+        }
+        methods = [key for key in value if key.startswith('will_')]
+        player = players.Player.fromdict(value)        
+        for method in methods:
+            act = getattr(player, method)
+            
+            self.assertIsInstance(act, exp)
+    
     def test_fromdict_invalid_method(self):
         """Given a dictionary as created by asdict(), fromdict() 
         should deserialize the Player object.

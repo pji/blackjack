@@ -147,7 +147,6 @@ def will_hit_recommended(self, hand:Hand, the_game) -> bool:
 
 def will_hit_user(self, hand:Hand, the_game) -> bool:
     """Get a hit decision from the user."""
-#     is_yes = the_game.ui.input('hit')
     is_yes = the_game.ui.hit_prompt()
     
     return is_yes.value
@@ -194,6 +193,11 @@ def will_split_user(self, hand:Hand, the_game) -> bool:
     is_yes = the_game.ui.split_prompt()
     return is_yes.value
 
+def will_split_dealer(self, *args):
+    """Dealers cannot split."""
+    msg = 'Dealers cannot split.'
+    raise TypeError(msg)
+
 
 # will_buyin functions.
 # will_buyin functions determine whether the player will buy into the 
@@ -211,6 +215,11 @@ def will_buyin_always(self, the_game) -> bool:
     :rtype: bool
     """
     return True
+
+def will_buyin_dealer(self, *args):
+    """Dealers cannot buyin."""
+    msg = 'Dealers cannot buuyin.'
+    raise TypeError(msg)
 
 
 # will_double_down functions.
@@ -257,6 +266,11 @@ def will_double_down_user(self, hand:Hand, the_game) -> bool:
     is_yes = the_game.ui.doubledown_prompt()
     return is_yes.value
 
+def will_double_down_dealer(self, *args):
+    """Dealers cannot double down."""
+    msg = 'Dealers cannot double down.'
+    raise TypeError(msg)
+
 
 # will_insure functions.
 # will_insure functions determine whether the player will buy 
@@ -297,14 +311,33 @@ def will_insure_user(self, the_game) -> bool:
         insurance = the_game.buyin // 2
     return insurance
 
+def will_insure_dealer(self, *args):
+    """Dealers cannot insure."""
+    msg = 'Dealers cannot insure.'
+    raise TypeError(msg)
+
 
 # Decision methods lists.
 will_hits = [will_hit_user, will_hit_dealer, will_hit_recommended]
-will_splits = [will_split_user, will_split_always, will_split_recommended]
-will_buyins = [will_buyin_always,]
-will_double_downs = [will_double_down_user, will_double_down_always, 
-                     will_double_down_recommended]
-will_insures = [will_insure_user, will_insure_always, will_insure_never]
+will_splits = [
+    will_split_user, 
+    will_split_dealer, 
+    will_split_always, 
+    will_split_recommended
+]
+will_buyins = [will_buyin_dealer, will_buyin_always,]
+will_double_downs = [
+    will_double_down_user, 
+    will_double_down_dealer,
+    will_double_down_always, 
+    will_double_down_recommended
+]
+will_insures = [
+    will_insure_user, 
+    will_insure_dealer,
+    will_insure_always, 
+    will_insure_never
+]
 
 
 # Base class.
@@ -343,7 +376,8 @@ class Player:
             except ValueError:
                 msg = f'Invalid {meth} given.'
                 raise ValueError(msg)
-            setattr(player, meth, methods[meth][index])
+            bound = MethodType(methods[meth][index], player)
+            setattr(player, meth, bound)
         
         return player
     
@@ -437,35 +471,33 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
 
 def make_player(chips=200, bet=None) -> Player:
     """Make a random player for a blackjack game."""
-    name = ''
-    if 0 != choice(range(3)):
-        name = get_name()
-    else:
-        name = name_builder(get_name(), get_name())
+    def make_name() -> str:
+        if 0 != choice(range(3)):
+            return get_name()
+        else:
+            return name_builder(get_name(), get_name())
     
     if bet:
         chips = get_chips(bet)
-    
-    methods = {
-        'will_hit': choice(will_hits[1:]),
-        'will_split': choice(will_splits[1:]),
-        'will_buyin': will_buyin_always,
-        'will_double_down': choice(will_double_downs[1:]),
-        'will_insure': choice(will_insures[1:]),
+    attrs = {
+        'class': 'Player',
+        'hands': (),
+        'name': make_name(),
+        'chips': chips,
+        'will_hit': choice(will_hits[2:]).__name__,
+        'will_split': choice(will_splits[2:]).__name__,
+        'will_buyin': will_buyin_always.__name__,
+        'will_double_down': choice(will_double_downs[2:]).__name__,
+        'will_insure': choice(will_insures[2:]).__name__,
     }
-    player = Player(name=name, chips=chips)
-    
-    # Patches in the randomly chosen methods. type.MethodType has to 
-    # be called here to coerce the functions into methods. Without 
-    # it, Python won't send self to the methods.
-    for method in methods:
-        setattr(player, method, MethodType(methods[method], player))
-    
+    player = Player.fromdict(attrs)
     return player
 
 
 # Player subclasses.
-Dealer = playerfactory('Dealer', will_hit_dealer, None, None, None, None)
+Dealer = playerfactory('Dealer', will_hit_dealer, will_split_dealer, 
+                       will_buyin_dealer, will_double_down_dealer, 
+                       will_insure_dealer)
 AutoPlayer = playerfactory('AutoPlayer', will_hit_dealer, will_split_always,
                            will_buyin_always, will_double_down_always, 
                            will_insure_always)
