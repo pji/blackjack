@@ -14,7 +14,7 @@ from typing import Callable
 from types import MethodType
 
 from blackjack.cards import Hand, HandTuple
-from blackjack.model import Integer_, PosInt, Text, wlistfactory
+from blackjack.model import Integer_, PosInt, Text, valtupfactory
 
 
 # Global values.
@@ -511,3 +511,16 @@ UserPlayer = playerfactory('UserPlayer', will_hit_user, will_split_user,
 
 # List of trusted Player subclasses for deserialization:
 trusted_Players = [Player, Dealer, AutoPlayer, BetterPlayer, UserPlayer]
+
+
+# Player validation functions.
+def validate_player_or_none(self, value):
+    """Validate Players and None."""
+    if not isinstance(value, (Player, type(None))):
+        reason = 'not an instance of Player'
+        raise ValueError(self.msg.format(reason))
+    return value
+
+
+# Player validating descriptors.
+ValidPlayers = valtupfactory('ValidPlayers', validate_player_or_none, 'Invalid contents ({}).')

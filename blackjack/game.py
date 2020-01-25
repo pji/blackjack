@@ -12,7 +12,7 @@ from typing import Union
 
 from blackjack.cards import Deck, DeckObj, DOWN, Hand
 from blackjack.model import IsYes
-from blackjack.players import Dealer, Player, make_player
+from blackjack.players import Dealer, Player, make_player, ValidPlayers
 
 
 # Internal utility functions.
@@ -250,6 +250,7 @@ class BaseUI(EngineUI):
 class Engine:
     """A game engine for blackjack."""
     deck = DeckObj('deck')
+    playerlist = ValidPlayers('playerlist')
     
     def __init__(self, deck: Deck = None, dealer: Player = None, 
                  playerlist: tuple = None, ui: EngineUI = None, 

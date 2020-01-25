@@ -1185,3 +1185,27 @@ class get_chipsTestCase(ut.TestCase):
         self.assertTrue(exp_high >= actual)
         self.assertTrue(exp_low <= actual)
 
+
+class validate_player_or_noneTestCase(ut.TestCase):
+    def test_valid(self):
+        """Given a Player object, validate_player() should return it."""
+        exp = players.Player(name='spam')
+        
+        class Eggs:
+            msg = '{}'
+        act = players.validate_player_or_none(Eggs(), exp)
+        
+        self.assertEqual(exp, act)
+    
+    def test_invalid(self):
+        """Given a non-Player object, validate_player() should raise a 
+        ValueError exception.
+        """
+        exp = ValueError
+        
+        value = 0
+        class Spam():
+            msg = '{}'
+        
+        with self.assertRaises(exp):
+            _ = players.validate_player_or_none(Spam(), value)

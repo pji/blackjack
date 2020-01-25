@@ -159,29 +159,440 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(expected, actual)
     
     
-    # Test Engine.new_game().
-    def test_players_join(self):
-        """When players join a game, it should send a join 
-        event to the UI for each player in the game.
+    # Test Engine._ace_split_hit()
+    def test__ace_split_hit(self):
+        """Given a hand with an ace that had been split, 
+        _ace_split_hit() should give hand one hit and then 
+        stand.
         """
-        ui = Mock()
-        playerlist = [
-            players.Player(),
-            players.Player(),
-            players.Player(),
-        ]
-        e = game.Engine(playerlist=playerlist, ui=ui)
+        expected = cards.Hand([
+            cards.Card(1, 3),
+            cards.Card(11, 0, cards.DOWN),
+        ])
+        
+        deck = cards.Deck([
+            expected[1],
+        ])
+        hand = cards.Hand([
+            expected[0],
+        ])
+        player = players.AutoPlayer((hand,), name='Eric')
+        g = game.Engine(deck, None, (player,))
+        g._ace_split_hit(player, hand)
+        actual = player.hands[0]
+        
+        self.assertEqual(expected, actual)
+    
+    def test__ace_split_hit_ui(self):
+        """Given a hand with an ace that had been split, 
+        _ace_split_hit() should send an event to the UI 
+        for the single hit and the stand.
+        """
+        hand = cards.Hand([
+            cards.Card(1, 3),
+        ])
+        player = players.AutoPlayer([hand,], name='John')
         expected = [
-            call.joins(e.dealer),
-            call.joins(playerlist[0]),
-            call.joins(playerlist[1]),
-            call.joins(playerlist[2]),
+            call.hit(player, hand),
+            call.stand(player, hand),
         ]
         
-        e.new_game()
+        deck = cards.Deck([
+            cards.Card(11, 0, cards.DOWN),
+        ])
+        ui = Mock()
+        g = game.Engine(deck, None, (player,), ui)
+        g._ace_split_hit(player, hand)
         actual = ui.mock_calls
         
-        self.assertListEqual(expected, actual)
+        self.assertEqual(expected, actual)
+    
+    
+    # Test Engine._add_player().
+    def test__add_player(self):
+        """Given a player, _add_player() adds that player in the first 
+        empty slot in the playerlist.
+        """
+        player = players.Player(name='Spam')
+        expected = (player,)
+        
+        playerlist = [None,]
+        g = game.Engine(None, None, playerlist, None, None)
+        g._add_player(player)
+        actual = g.playerlist
+        
+        self.assertEqual(expected, actual)
+    
+    
+    # Test Engine._compare_score().
+    def test__compare_score_player_win(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return True if the player's score is higher.
+        """
+        expected = True
+        
+        p_hand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(11, 3),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(7, 2),
+        ])
+        g = game.Engine()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+    
+    def test__compare_score_player_lose(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return False if the player's score is lower.
+        """
+        expected = False
+        
+        p_hand = cards.Hand([
+            cards.Card(3, 1),
+            cards.Card(11, 3),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(7, 2),
+        ])
+        g = game.Engine()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+        
+    def test__compare_score_player_bust(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return False if the player busts.
+        """
+        expected = False
+        
+        p_hand = cards.Hand([
+            cards.Card(3, 1),
+            cards.Card(11, 3),
+            cards.Card(12, 2),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(7, 2),
+        ])
+        g = game.Engine()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+        
+    def test__compare_score_dealer_bust(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return True if the dealer busts.
+        """
+        expected = True
+        
+        p_hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(12, 2),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(6, 1),
+            cards.Card(7, 2),
+        ])
+        g = game.Engine()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+        
+    def test__compare_score_tie(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return None if it is a tie.
+        """
+        expected = None
+        
+        p_hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(12, 2),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(5, 1),
+            cards.Card(5, 2),
+        ])
+        g = game.Engine()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+        
+    def test__compare_score_dealer_wins_busts(self):
+        """Given a player hand and a dealer hand, _compare_score() 
+        should return True if the dealer busts.
+        """
+        expected = False
+        
+        p_hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(12, 2),
+            cards.Card(13, 0),
+        ])
+        d_hand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(6, 1),
+            cards.Card(7, 2),
+        ])
+        g = game.Engine()
+        actual = g._compare_score(d_hand, p_hand)
+        
+        self.assertEqual(expected, actual)
+    
+    
+    # Test Engine._double_down().
+    def test__double_down(self):
+        """Given a hand and a player who will double down and can 
+        double down, _double_down() should set the doubled_down 
+        attribute on the hand and take the player's additional bet.
+        """
+        expected_dd = True
+        expected_chips = 0
+        
+        hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+        ])
+        player = players.AutoPlayer([hand,], 'Eric', 20)
+        g = game.Engine(None, None, (player,), None, 20)
+        g._double_down(player, hand)
+        actual_dd = hand.doubled_down
+        actual_chips = player.chips
+        
+        self.assertEqual(expected_dd, actual_dd)
+        self.assertEqual(expected_chips, actual_chips)
+    
+    def test__double_down_ui(self):
+        """If the player doubles down, _double_down() should send that 
+        event to the UI.
+        """
+        hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+        ])
+        player = players.AutoPlayer([hand,], 'Eric', 20)
+        expected = (player, 20)
+
+        ui = Mock()
+        g = game.Engine(None, None, (player,), ui, 20)
+        g._double_down(player, hand)
+        
+        ui.doubledown.assert_called_with(*expected)
+    
+    def test__double_down_not_on_blackjack(self):
+        """If player has a blackjack, _double_down() should not allow 
+        the hand to be doubled down.
+        """
+        expected_dd = False
+        expected_chips = 20
+        
+        hand = cards.Hand([
+            cards.Card(1, 2),
+            cards.Card(13, 3),
+        ])
+        player = players.AutoPlayer([hand,], 'Eric', 20)
+        g = game.Engine(None, None, (player,), None, 20)
+        g._double_down(player, hand)
+        actual_dd = hand.doubled_down
+        actual_chips = player.chips
+        
+        self.assertEqual(expected_dd, actual_dd)
+        self.assertEqual(expected_chips, actual_chips)
+    
+    
+    # Test Engine._draw().
+    def test__draw_deck_with_cards(self):
+        """Draw a the top card from the game deck."""
+        deck = cards.Deck.build(6)
+        expected = deck[-1]
+        
+        g = game.Engine(deck)
+        actual = g._draw()
+        
+        self.assertEqual(expected, actual)
+    
+    def test__draw_deck_with_no_cards(self):
+        """If the game deck has no card, create, shuffle, and cut a 
+        new deck, then draw.
+        """
+        expected = cards.Card
+        
+        g = game.Engine()
+        g.deck = cards.Deck([])
+        g.deck.size = 6
+        actual = g._draw()
+        
+        self.assertTrue(isinstance(actual, expected))
+    
+    def test__draw_shuffled_ui(self):
+        """If the deck is shuffled, _draw() should send that 
+        event to the UI.
+        """
+        dhand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        ui = Mock()
+        g = game.Engine(None, dealer, None, ui, 20)
+        g.deck = cards.Deck([])
+        g.deck.size = 6
+        _ = g._draw()
+        
+        ui.shuffles.assert_called()
+    
+    
+    # Test Engine._insure()
+    def test__insure(self):
+        """Given a dealer hand a player can ensure and a player who 
+        will insure, _insure() should set the insured attribute on 
+        the player and take the player's additional bet.
+        """
+        expected_insured = 10
+        expected_chips = 0
+        
+        dhand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        player = players.AutoPlayer(cards.Hand(), 'Eric', 10)
+        g = game.Engine(None, dealer, (player,), None, 20)
+        g._insure(player)
+        actual_insured = player.insured
+        actual_chips = player.chips
+        
+        self.assertEqual(expected_insured, actual_insured)
+        self.assertEqual(expected_chips, actual_chips)
+    
+    def test__insure_zero(self):
+        """Given a dealer hand a player can ensure and a player who 
+        will insure, _insure() should set the insured attribute on 
+        the player and take the player's additional bet.
+        """
+        expected_insured = 0
+        expected_chips = 10
+        
+        dhand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        player = players.BetterPlayer(cards.Hand(), 'Eric', 10)
+        g = game.Engine(None, dealer, (player,), None, 20)
+        g._insure(player)
+        actual_insured = player.insured
+        actual_chips = player.chips
+        
+        self.assertEqual(expected_insured, actual_insured)
+        self.assertEqual(expected_chips, actual_chips)
+    
+    def test__insure_ui(self):
+        """If the player insures, _insure() should send that 
+        event to the UI.
+        """
+        dhand = cards.Hand([
+            cards.Card(1, 1),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        player = players.AutoPlayer(None, 'Eric', 20)
+        expected = (player, 10)
+
+        ui = Mock()
+        g = game.Engine(None, dealer, (player,), ui, 20)
+        g._insure(player)
+        
+        ui.insures.assert_called_with(*expected)
+    
+    
+    # Test Engine._remove_player().
+    def test__remove_player(self):
+        """Given player, _remove_player() should remove that player 
+        from the playlist attribute.
+        """
+        expected = (None,)
+        
+        p1 = players.Player(name='John', chips = 1)
+        g = game.Engine(None, None, [p1,], None, 20)
+        g._remove_player(p1)
+        actual = g.playerlist
+        
+        self.assertEqual(expected, actual)
+    
+    
+    # Engine._split() tests.
+    def test__split_cannot_split(self):
+        """Given a hand and a player, if the hand cannot be split, 
+        _split() should not split it and return false.
+        """
+        expected_h1 = (cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(2, 1),
+        ]),)
+        expected_return = False
+        
+        p1 = players.AutoPlayer(copy(expected_h1), name='John')
+        playerlist = [p1,]
+        g = game.Engine(None, None, playerlist)
+        actual_return = g._split(expected_h1[0], p1)
+        actual_h1 = p1.hands
+        
+        self.assertEqual(expected_h1, actual_h1)
+        self.assertEqual(expected_return, actual_return)
+    
+    def test__split_does_split(self):
+        """Given a hand and a player, if the hand can be split and the 
+        player says to split, the hand should be split, and the method 
+        should return True.
+        """
+        expected_hands = (
+            cards.Hand([cards.Card(11, 3),]),
+            cards.Hand([cards.Card(11, 1),]),
+        )
+        expected_return = True
+        exp_chips = 0
+        
+        h1 = [cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(11, 1),
+        ]),]
+        p1 = players.AutoPlayer(copy(h1), 'John', 20)
+        playerlist = [p1,]
+        g = game.Engine(None, None, playerlist, None, 20)
+        actual_return = g._split(h1[0], p1)
+        actual_hands = p1.hands
+        act_chips = p1.chips
+        
+        self.assertEqual(expected_hands, actual_hands)
+        self.assertEqual(expected_return, actual_return)
+        self.assertEqual(exp_chips, act_chips)
+    
+    def test__split_with_ui(self):
+        """If _split() splits the hand, it should send the event, 
+        the player, and the new hand to the UI.
+        """
+        hands = (
+            cards.Hand([cards.Card(11, 3),]),
+            cards.Hand([cards.Card(11, 1),]),
+        )
+        h1 = [cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(11, 1),
+        ]),]
+        p1 = players.AutoPlayer(copy(h1), 'John', 200)
+        expected = (p1, 20)
+        
+        playerlist = [p1,]
+        g = game.Engine(None, None, playerlist, Mock(), 20)
+        _ = g._split(h1[0], p1)
+
+        g.ui.splits.assert_called_with(*expected)
     
     
     # Engine.deal() tests.
@@ -264,282 +675,29 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(expected_deck_size, actual_deck_size)        
     
     
-    # Engine.play() tests.
-    def test_play_bust(self):
-        """In a Engine object with a deck and a dealer with a dealt 
-        hand, play() should deal cards to the dealer until the dealer 
-        stands on a bust.
+    # Test Engine.new_game().
+    def test_players_join(self):
+        """When players join a game, it should send a join 
+        event to the UI for each player in the game.
         """
-        expected = (
-            cards.Card(2, 1),
-            cards.Card(3, 2),
-            cards.Card(6, 0),
-            cards.Card(5, 1), 
-            cards.Card(11, 3),
-        )
-        
-        h = cards.Hand([
-            expected[0],
-            expected[1],
-        ])
-        deck = cards.Deck([
-            expected[4],
-            expected[3],
-            expected[2],
-        ])
-        g = game.Engine()
-        g.deck = deck
-        g.dealer.hands = (h,)
-        g.play()
-        actual = g.dealer.hands[0].cards
-        
-        self.assertEqual(expected, actual)
-    
-    def test_play_dealer_17_plus(self):
-        """In a Engine object with a deck and a dealer, play() should 
-        deal cards to the dealer until the dealer stands on a score of 
-        17 or more.
-        """
-        expected = (
-            cards.Card(10, 1),
-            cards.Card(3, 2),
-            cards.Card(7, 0),
-        )
-        
-        h = cards.Hand([
-            expected[0],
-            expected[1],
-        ])
-        deck = cards.Deck([
-            expected[2],
-        ])
-        g = game.Engine()
-        g.deck = deck
-        g.dealer.hands = [h,]
-        g.play()
-        actual = g.dealer.hands[0].cards
-        
-        self.assertEqual(expected, actual)
-
-    def test_play_with_players(self):
-        """In a Engine with a deck, dealer with a hand, and a player 
-        with a hand, play a round of blackjack.
-        """
-        expected_dhand = cards.Hand([
-            cards.Card(5, 0),
-            cards.Card(5, 1),
-            cards.Card(11, 0),
-        ])
-        expected_phand = cards.Hand([
-            cards.Card(5, 2),
-            cards.Card(4, 3),
-            cards.Card(11, 3),            
-        ])
-        
-        deck = cards.Deck([
-            cards.Card(11, 0, cards.DOWN),
-            cards.Card(11, 3, cards.DOWN),
-        ])
-        dealer = players.Dealer(name='Dealer')
-        dealer.hands = [cards.Hand([
-            cards.Card(5, 0),
-            cards.Card(5, 1),
-        ]),]
-        player = players.AutoPlayer(name='Player')
-        player.hands = [cards.Hand([
-            cards.Card(5, 2),
-            cards.Card(4, 3),
-        ]),]
-        g = game.Engine(deck, dealer, (player,))
-        g.play()
-        actual_dhand = dealer.hands[0]
-        actual_phand = player.hands[0]
-        
-        self.assertEqual(expected_dhand, actual_dhand)
-        self.assertEqual(expected_phand, actual_phand)
-    
-    def test_play_with_ui(self):
-        """Given a deck, dealer, and UI, play() should deal cards to 
-        the dealer until the dealer stands on a score of 17 or more 
-        and update the UI.
-        """
-        dealer = players.Dealer(name='Dealer')
-        cardlist = [
-            cards.Card(7, 0, cards.UP),
-            cards.Card(6, 0, cards.UP),
-            cards.Card(5, 0, cards.UP),
-        ]
-        expected_hand = cards.Hand(cardlist)
-        
-        # This looks a little weird. Shouldn't the hand be different 
-        # between the first two calls since the cards in the hand will 
-        # be different at those points?
-        # 
-        # No. game.play() is sending the dealer's hand object to 
-        # ui.hit(), and we are testing to make sure the same 
-        # hand is sent. Since objects are mutable, the hand has three 
-        # cards in it when assertEqual() runs, so the expected hand 
-        # needs to have all three cards, too.
-        expected = [
-            call.flip(dealer, expected_hand),
-            call.hit(dealer, expected_hand),
-            call.stand(dealer, expected_hand),
-        ]
-        
-        h = cards.Hand([
-            cards.Card(7, 0, cards.UP),
-            cards.Card(6, 0, cards.DOWN),
-        ])
-        deck = cards.Deck([
-            cards.Card(5, 0, cards.DOWN),
-        ])
-        dealer.hands = ((h,))
         ui = Mock()
-        g = game.Engine(dealer=dealer, ui=ui)
-        g.deck = deck
-        g.play()
+        playerlist = [
+            players.Player(),
+            players.Player(),
+            players.Player(),
+        ]
+        e = game.Engine(playerlist=playerlist, ui=ui)
+        expected = [
+            call.joins(e.dealer),
+            call.joins(playerlist[0]),
+            call.joins(playerlist[1]),
+            call.joins(playerlist[2]),
+        ]
+        
+        e.new_game()
         actual = ui.mock_calls
         
         self.assertListEqual(expected, actual)
-    
-    def test_play_with_split(self):
-        """If given a hand that can be split and a player who will 
-        split that hand, play() should handle both of the hands.
-        """
-        exp_h1 = cards.Hand([
-            cards.Card(11, 0),
-            cards.Card(2, 2),
-            cards.Card(9, 3),
-        ])
-        exp_h2 = cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(1, 3),
-        ])
-        expected = (exp_h1, exp_h2)
-        
-        hand = cards.Hand([
-            exp_h1[0],
-            exp_h2[0],
-        ])
-        dhand = cards.Hand([
-            cards.Card(10, 0),
-            cards.Card(10, 1),
-        ])
-        player = players.AutoPlayer((hand,), name='Terry')
-        dealer = players.Dealer((dhand,))
-        deck = cards.Deck([
-            cards.Card(1, 3, cards.DOWN),
-            cards.Card(9, 3, cards.DOWN),
-            cards.Card(2, 2, cards.DOWN),
-        ])
-        g = game.Engine(deck, dealer, (player,))
-        g.play()
-        actual = player.hands
-        
-        self.assertEqual(expected, actual)
-    
-    def test_play_with_ace_split(self):
-        """Given a hand with two aces and a player who will split that 
-        hand, play() should split the hand and hit each of the split 
-        hands only once before standing.
-        """
-        exp_h1 = cards.Hand([
-            cards.Card(1, 0),
-            cards.Card(2, 2),
-        ])
-        exp_h2 = cards.Hand([
-            cards.Card(1, 3),
-            cards.Card(1, 3),
-        ])
-        expected = (exp_h1, exp_h2)
-        
-        hand = cards.Hand([
-            exp_h1[0],
-            exp_h2[0],
-        ])
-        dhand = cards.Hand([
-            cards.Card(10, 0),
-            cards.Card(10, 1),
-        ])
-        player = players.AutoPlayer((hand,), name='Terry')
-        dealer = players.Dealer((dhand,))
-        deck = cards.Deck([
-            exp_h2[1],
-            exp_h1[1],
-        ])
-        for card in deck:
-            card.flip()
-        g = game.Engine(deck, dealer, (player,))
-        g.play()
-        actual = player.hands
-        
-        self.assertEqual(expected, actual)
-    
-    def test_play_with_double_down(self):
-        """Given a hand with a value from 9 to 11 and a player who 
-        will double down, play() should hit the hand once and stand.
-        """
-        expected_hand = cards.Hand([
-            cards.Card(4, 2),
-            cards.Card(6, 3),
-            cards.Card(11, 0),
-        ])
-        expected_dd = True
-        
-        hand = cards.Hand([
-            cards.Card(4, 2),
-            cards.Card(6, 3),
-        ])
-        player = players.AutoPlayer([hand,], 'Eric', 20)
-        deck = cards.Deck([
-            cards.Card(11, 0, cards.DOWN),
-        ])
-        dhand = cards.Hand([
-            cards.Card(10, 0),
-            cards.Card(7, 1),
-        ])
-        dealer = players.Dealer([dhand,], 'Dealer')
-        g = game.Engine(deck, dealer, (player,), None, 20)
-        g.play()
-        actual_hand = player.hands[0]
-        actual_dd = player.hands[0].doubled_down
-        
-        self.assertEqual(expected_hand, actual_hand)
-        self.assertEqual(expected_dd, actual_dd)
-    
-    def test_play_with_double_down(self):
-        """Given a dealer hand with an ace showing an a player who 
-        will insure, play() should insure the player then play the 
-        round as usual.
-        """
-        expected_hand = cards.Hand([
-            cards.Card(4, 2),
-            cards.Card(6, 3),
-            cards.Card(11, 0),
-        ])
-        expected_insured = 10
-        
-        hand = cards.Hand([
-            cards.Card(4, 2),
-            cards.Card(6, 3),
-        ])
-        player = players.AutoPlayer([hand,], 'Eric', 20)
-        deck = cards.Deck([
-            cards.Card(8, 1, cards.DOWN),
-            cards.Card(11, 0, cards.DOWN),
-        ])
-        dhand = cards.Hand([
-            cards.Card(1, 0),
-            cards.Card(7, 1, cards.DOWN),
-        ])
-        dealer = players.Dealer([dhand,], 'Dealer')
-        g = game.Engine(deck, dealer, (player,), None, 20)
-        g.play()
-        actual_hand = player.hands[0]
-        actual_insured = player.insured
-        
-        self.assertEqual(expected_hand, actual_hand)
-        self.assertEqual(expected_insured, actual_insured)        
     
     
     # Test Engine.end().
@@ -959,122 +1117,282 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(expected, actual)
     
     
-    # Engine._split() tests.
-    def test__split_cannot_split(self):
-        """Given a hand and a player, if the hand cannot be split, 
-        _split() should not split it and return false.
+    # Engine.play() tests.
+    def test_play_bust(self):
+        """In a Engine object with a deck and a dealer with a dealt 
+        hand, play() should deal cards to the dealer until the dealer 
+        stands on a bust.
         """
-        expected_h1 = (cards.Hand([
-            cards.Card(11, 3),
+        expected = (
             cards.Card(2, 1),
-        ]),)
-        expected_return = False
-        
-        p1 = players.AutoPlayer(copy(expected_h1), name='John')
-        playerlist = [p1,]
-        g = game.Engine(None, None, playerlist)
-        actual_return = g._split(expected_h1[0], p1)
-        actual_h1 = p1.hands
-        
-        self.assertEqual(expected_h1, actual_h1)
-        self.assertEqual(expected_return, actual_return)
-    
-    def test__split_does_split(self):
-        """Given a hand and a player, if the hand can be split and the 
-        player says to split, the hand should be split, and the method 
-        should return True.
-        """
-        expected_hands = (
-            cards.Hand([cards.Card(11, 3),]),
-            cards.Hand([cards.Card(11, 1),]),
-        )
-        expected_return = True
-        exp_chips = 0
-        
-        h1 = [cards.Hand([
+            cards.Card(3, 2),
+            cards.Card(6, 0),
+            cards.Card(5, 1), 
             cards.Card(11, 3),
-            cards.Card(11, 1),
-        ]),]
-        p1 = players.AutoPlayer(copy(h1), 'John', 20)
-        playerlist = [p1,]
-        g = game.Engine(None, None, playerlist, None, 20)
-        actual_return = g._split(h1[0], p1)
-        actual_hands = p1.hands
-        act_chips = p1.chips
-        
-        self.assertEqual(expected_hands, actual_hands)
-        self.assertEqual(expected_return, actual_return)
-        self.assertEqual(exp_chips, act_chips)
-    
-    def test__split_with_ui(self):
-        """If _split() splits the hand, it should send the event, 
-        the player, and the new hand to the UI.
-        """
-        hands = (
-            cards.Hand([cards.Card(11, 3),]),
-            cards.Hand([cards.Card(11, 1),]),
         )
-        h1 = [cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(11, 1),
-        ]),]
-        p1 = players.AutoPlayer(copy(h1), 'John', 200)
-        expected = (p1, 20)
         
-        playerlist = [p1,]
-        g = game.Engine(None, None, playerlist, Mock(), 20)
-        _ = g._split(h1[0], p1)
-
-        g.ui.splits.assert_called_with(*expected)
-    
-    
-    # Test Engine._ace_split_hit()
-    def test__ace_split_hit(self):
-        """Given a hand with an ace that had been split, 
-        _ace_split_hit() should give hand one hit and then 
-        stand.
-        """
-        expected = cards.Hand([
-            cards.Card(1, 3),
-            cards.Card(11, 0, cards.DOWN),
-        ])
-        
-        deck = cards.Deck([
+        h = cards.Hand([
+            expected[0],
             expected[1],
         ])
-        hand = cards.Hand([
-            expected[0],
+        deck = cards.Deck([
+            expected[4],
+            expected[3],
+            expected[2],
         ])
-        player = players.AutoPlayer((hand,), name='Eric')
-        g = game.Engine(deck, None, (player,))
-        g._ace_split_hit(player, hand)
-        actual = player.hands[0]
+        g = game.Engine()
+        g.deck = deck
+        g.dealer.hands = (h,)
+        g.play()
+        actual = g.dealer.hands[0].cards
         
         self.assertEqual(expected, actual)
     
-    def test__ace_split_hit_ui(self):
-        """Given a hand with an ace that had been split, 
-        _ace_split_hit() should send an event to the UI 
-        for the single hit and the stand.
+    def test_play_dealer_17_plus(self):
+        """In a Engine object with a deck and a dealer, play() should 
+        deal cards to the dealer until the dealer stands on a score of 
+        17 or more.
         """
-        hand = cards.Hand([
-            cards.Card(1, 3),
+        expected = (
+            cards.Card(10, 1),
+            cards.Card(3, 2),
+            cards.Card(7, 0),
+        )
+        
+        h = cards.Hand([
+            expected[0],
+            expected[1],
         ])
-        player = players.AutoPlayer([hand,], name='John')
-        expected = [
-            call.hit(player, hand),
-            call.stand(player, hand),
-        ]
+        deck = cards.Deck([
+            expected[2],
+        ])
+        g = game.Engine()
+        g.deck = deck
+        g.dealer.hands = [h,]
+        g.play()
+        actual = g.dealer.hands[0].cards
+        
+        self.assertEqual(expected, actual)
+
+    def test_play_with_players(self):
+        """In a Engine with a deck, dealer with a hand, and a player 
+        with a hand, play a round of blackjack.
+        """
+        expected_dhand = cards.Hand([
+            cards.Card(5, 0),
+            cards.Card(5, 1),
+            cards.Card(11, 0),
+        ])
+        expected_phand = cards.Hand([
+            cards.Card(5, 2),
+            cards.Card(4, 3),
+            cards.Card(11, 3),            
+        ])
         
         deck = cards.Deck([
             cards.Card(11, 0, cards.DOWN),
+            cards.Card(11, 3, cards.DOWN),
         ])
+        dealer = players.Dealer(name='Dealer')
+        dealer.hands = [cards.Hand([
+            cards.Card(5, 0),
+            cards.Card(5, 1),
+        ]),]
+        player = players.AutoPlayer(name='Player')
+        player.hands = [cards.Hand([
+            cards.Card(5, 2),
+            cards.Card(4, 3),
+        ]),]
+        g = game.Engine(deck, dealer, (player,))
+        g.play()
+        actual_dhand = dealer.hands[0]
+        actual_phand = player.hands[0]
+        
+        self.assertEqual(expected_dhand, actual_dhand)
+        self.assertEqual(expected_phand, actual_phand)
+    
+    def test_play_with_ui(self):
+        """Given a deck, dealer, and UI, play() should deal cards to 
+        the dealer until the dealer stands on a score of 17 or more 
+        and update the UI.
+        """
+        dealer = players.Dealer(name='Dealer')
+        cardlist = [
+            cards.Card(7, 0, cards.UP),
+            cards.Card(6, 0, cards.UP),
+            cards.Card(5, 0, cards.UP),
+        ]
+        expected_hand = cards.Hand(cardlist)
+        
+        # This looks a little weird. Shouldn't the hand be different 
+        # between the first two calls since the cards in the hand will 
+        # be different at those points?
+        # 
+        # No. game.play() is sending the dealer's hand object to 
+        # ui.hit(), and we are testing to make sure the same 
+        # hand is sent. Since objects are mutable, the hand has three 
+        # cards in it when assertEqual() runs, so the expected hand 
+        # needs to have all three cards, too.
+        expected = [
+            call.flip(dealer, expected_hand),
+            call.hit(dealer, expected_hand),
+            call.stand(dealer, expected_hand),
+        ]
+        
+        h = cards.Hand([
+            cards.Card(7, 0, cards.UP),
+            cards.Card(6, 0, cards.DOWN),
+        ])
+        deck = cards.Deck([
+            cards.Card(5, 0, cards.DOWN),
+        ])
+        dealer.hands = ((h,))
         ui = Mock()
-        g = game.Engine(deck, None, (player,), ui)
-        g._ace_split_hit(player, hand)
+        g = game.Engine(dealer=dealer, ui=ui)
+        g.deck = deck
+        g.play()
         actual = ui.mock_calls
         
+        self.assertListEqual(expected, actual)
+    
+    def test_play_with_split(self):
+        """If given a hand that can be split and a player who will 
+        split that hand, play() should handle both of the hands.
+        """
+        exp_h1 = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(2, 2),
+            cards.Card(9, 3),
+        ])
+        exp_h2 = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(1, 3),
+        ])
+        expected = (exp_h1, exp_h2)
+        
+        hand = cards.Hand([
+            exp_h1[0],
+            exp_h2[0],
+        ])
+        dhand = cards.Hand([
+            cards.Card(10, 0),
+            cards.Card(10, 1),
+        ])
+        player = players.AutoPlayer((hand,), name='Terry')
+        dealer = players.Dealer((dhand,))
+        deck = cards.Deck([
+            cards.Card(1, 3, cards.DOWN),
+            cards.Card(9, 3, cards.DOWN),
+            cards.Card(2, 2, cards.DOWN),
+        ])
+        g = game.Engine(deck, dealer, (player,))
+        g.play()
+        actual = player.hands
+        
         self.assertEqual(expected, actual)
+    
+    def test_play_with_ace_split(self):
+        """Given a hand with two aces and a player who will split that 
+        hand, play() should split the hand and hit each of the split 
+        hands only once before standing.
+        """
+        exp_h1 = cards.Hand([
+            cards.Card(1, 0),
+            cards.Card(2, 2),
+        ])
+        exp_h2 = cards.Hand([
+            cards.Card(1, 3),
+            cards.Card(1, 3),
+        ])
+        expected = (exp_h1, exp_h2)
+        
+        hand = cards.Hand([
+            exp_h1[0],
+            exp_h2[0],
+        ])
+        dhand = cards.Hand([
+            cards.Card(10, 0),
+            cards.Card(10, 1),
+        ])
+        player = players.AutoPlayer((hand,), name='Terry')
+        dealer = players.Dealer((dhand,))
+        deck = cards.Deck([
+            exp_h2[1],
+            exp_h1[1],
+        ])
+        for card in deck:
+            card.flip()
+        g = game.Engine(deck, dealer, (player,))
+        g.play()
+        actual = player.hands
+        
+        self.assertEqual(expected, actual)
+    
+    def test_play_with_double_down(self):
+        """Given a hand with a value from 9 to 11 and a player who 
+        will double down, play() should hit the hand once and stand.
+        """
+        expected_hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+            cards.Card(11, 0),
+        ])
+        expected_dd = True
+        
+        hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+        ])
+        player = players.AutoPlayer([hand,], 'Eric', 20)
+        deck = cards.Deck([
+            cards.Card(11, 0, cards.DOWN),
+        ])
+        dhand = cards.Hand([
+            cards.Card(10, 0),
+            cards.Card(7, 1),
+        ])
+        dealer = players.Dealer([dhand,], 'Dealer')
+        g = game.Engine(deck, dealer, (player,), None, 20)
+        g.play()
+        actual_hand = player.hands[0]
+        actual_dd = player.hands[0].doubled_down
+        
+        self.assertEqual(expected_hand, actual_hand)
+        self.assertEqual(expected_dd, actual_dd)
+    
+    def test_play_with_double_down(self):
+        """Given a dealer hand with an ace showing an a player who 
+        will insure, play() should insure the player then play the 
+        round as usual.
+        """
+        expected_hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+            cards.Card(11, 0),
+        ])
+        expected_insured = 10
+        
+        hand = cards.Hand([
+            cards.Card(4, 2),
+            cards.Card(6, 3),
+        ])
+        player = players.AutoPlayer([hand,], 'Eric', 20)
+        deck = cards.Deck([
+            cards.Card(8, 1, cards.DOWN),
+            cards.Card(11, 0, cards.DOWN),
+        ])
+        dhand = cards.Hand([
+            cards.Card(1, 0),
+            cards.Card(7, 1, cards.DOWN),
+        ])
+        dealer = players.Dealer([dhand,], 'Dealer')
+        g = game.Engine(deck, dealer, (player,), None, 20)
+        g.play()
+        actual_hand = player.hands[0]
+        actual_insured = player.insured
+        
+        self.assertEqual(expected_hand, actual_hand)
+        self.assertEqual(expected_insured, actual_insured)        
     
     
     # Test Engine.start().
@@ -1156,319 +1474,3 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(exp_calls, act_calls)
     
     
-    # Test Engine._remove_player().
-    def test__remove_player(self):
-        """Given player, _remove_player() should remove that player 
-        from the playlist attribute.
-        """
-        expected = [None,]
-        
-        p1 = players.Player(name='John', chips = 1)
-        g = game.Engine(None, None, [p1,], None, 20)
-        g._remove_player(p1)
-        actual = g.playerlist
-        
-        self.assertEqual(expected, actual)
-    
-    
-    # Test Engine._compare_score().
-    def test__compare_score_player_win(self):
-        """Given a player hand and a dealer hand, _compare_score() 
-        should return True if the player's score is higher.
-        """
-        expected = True
-        
-        p_hand = cards.Hand([
-            cards.Card(10, 1),
-            cards.Card(11, 3),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(7, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-        
-        self.assertEqual(expected, actual)
-    
-    def test__compare_score_player_lose(self):
-        """Given a player hand and a dealer hand, _compare_score() 
-        should return False if the player's score is lower.
-        """
-        expected = False
-        
-        p_hand = cards.Hand([
-            cards.Card(3, 1),
-            cards.Card(11, 3),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(7, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-        
-        self.assertEqual(expected, actual)
-        
-    def test__compare_score_player_bust(self):
-        """Given a player hand and a dealer hand, _compare_score() 
-        should return False if the player busts.
-        """
-        expected = False
-        
-        p_hand = cards.Hand([
-            cards.Card(3, 1),
-            cards.Card(11, 3),
-            cards.Card(12, 2),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(7, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-        
-        self.assertEqual(expected, actual)
-        
-    def test__compare_score_dealer_bust(self):
-        """Given a player hand and a dealer hand, _compare_score() 
-        should return True if the dealer busts.
-        """
-        expected = True
-        
-        p_hand = cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(12, 2),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(6, 1),
-            cards.Card(7, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-        
-        self.assertEqual(expected, actual)
-        
-    def test__compare_score_tie(self):
-        """Given a player hand and a dealer hand, _compare_score() 
-        should return None if it is a tie.
-        """
-        expected = None
-        
-        p_hand = cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(12, 2),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(5, 1),
-            cards.Card(5, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-        
-        self.assertEqual(expected, actual)
-        
-    def test__compare_score_dealer_wins_busts(self):
-        """Given a player hand and a dealer hand, _compare_score() 
-        should return True if the dealer busts.
-        """
-        expected = False
-        
-        p_hand = cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(12, 2),
-            cards.Card(13, 0),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(6, 1),
-            cards.Card(7, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-        
-        self.assertEqual(expected, actual)
-    
-    
-    # Test Engine._double_down().
-    def test__double_down(self):
-        """Given a hand and a player who will double down and can 
-        double down, _double_down() should set the doubled_down 
-        attribute on the hand and take the player's additional bet.
-        """
-        expected_dd = True
-        expected_chips = 0
-        
-        hand = cards.Hand([
-            cards.Card(4, 2),
-            cards.Card(6, 3),
-        ])
-        player = players.AutoPlayer([hand,], 'Eric', 20)
-        g = game.Engine(None, None, (player,), None, 20)
-        g._double_down(player, hand)
-        actual_dd = hand.doubled_down
-        actual_chips = player.chips
-        
-        self.assertEqual(expected_dd, actual_dd)
-        self.assertEqual(expected_chips, actual_chips)
-    
-    def test__double_down_ui(self):
-        """If the player doubles down, _double_down() should send that 
-        event to the UI.
-        """
-        hand = cards.Hand([
-            cards.Card(4, 2),
-            cards.Card(6, 3),
-        ])
-        player = players.AutoPlayer([hand,], 'Eric', 20)
-        expected = (player, 20)
-
-        ui = Mock()
-        g = game.Engine(None, None, (player,), ui, 20)
-        g._double_down(player, hand)
-        
-        ui.doubledown.assert_called_with(*expected)
-    
-    def test__double_down_not_on_blackjack(self):
-        """If player has a blackjack, _double_down() should not allow 
-        the hand to be doubled down.
-        """
-        expected_dd = False
-        expected_chips = 20
-        
-        hand = cards.Hand([
-            cards.Card(1, 2),
-            cards.Card(13, 3),
-        ])
-        player = players.AutoPlayer([hand,], 'Eric', 20)
-        g = game.Engine(None, None, (player,), None, 20)
-        g._double_down(player, hand)
-        actual_dd = hand.doubled_down
-        actual_chips = player.chips
-        
-        self.assertEqual(expected_dd, actual_dd)
-        self.assertEqual(expected_chips, actual_chips)
-    
-    
-    # Test Engine._insure()
-    def test__insure(self):
-        """Given a dealer hand a player can ensure and a player who 
-        will insure, _insure() should set the insured attribute on 
-        the player and take the player's additional bet.
-        """
-        expected_insured = 10
-        expected_chips = 0
-        
-        dhand = cards.Hand([
-            cards.Card(1, 1),
-            cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        player = players.AutoPlayer(cards.Hand(), 'Eric', 10)
-        g = game.Engine(None, dealer, (player,), None, 20)
-        g._insure(player)
-        actual_insured = player.insured
-        actual_chips = player.chips
-        
-        self.assertEqual(expected_insured, actual_insured)
-        self.assertEqual(expected_chips, actual_chips)
-    
-    def test__insure_zero(self):
-        """Given a dealer hand a player can ensure and a player who 
-        will insure, _insure() should set the insured attribute on 
-        the player and take the player's additional bet.
-        """
-        expected_insured = 0
-        expected_chips = 10
-        
-        dhand = cards.Hand([
-            cards.Card(1, 1),
-            cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        player = players.BetterPlayer(cards.Hand(), 'Eric', 10)
-        g = game.Engine(None, dealer, (player,), None, 20)
-        g._insure(player)
-        actual_insured = player.insured
-        actual_chips = player.chips
-        
-        self.assertEqual(expected_insured, actual_insured)
-        self.assertEqual(expected_chips, actual_chips)
-    
-    def test__insure_ui(self):
-        """If the player insures, _insure() should send that 
-        event to the UI.
-        """
-        dhand = cards.Hand([
-            cards.Card(1, 1),
-            cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        player = players.AutoPlayer(None, 'Eric', 20)
-        expected = (player, 10)
-
-        ui = Mock()
-        g = game.Engine(None, dealer, (player,), ui, 20)
-        g._insure(player)
-        
-        ui.insures.assert_called_with(*expected)
-    
-    
-    # Test Engine._draw().
-    def test__draw_deck_with_cards(self):
-        """Draw a the top card from the game deck."""
-        deck = cards.Deck.build(6)
-        expected = deck[-1]
-        
-        g = game.Engine(deck)
-        actual = g._draw()
-        
-        self.assertEqual(expected, actual)
-    
-    def test__draw_deck_with_no_cards(self):
-        """If the game deck has no card, create, shuffle, and cut a 
-        new deck, then draw.
-        """
-        expected = cards.Card
-        
-        g = game.Engine()
-        g.deck = cards.Deck([])
-        g.deck.size = 6
-        actual = g._draw()
-        
-        self.assertTrue(isinstance(actual, expected))
-    
-    def test__draw_shuffled_ui(self):
-        """If the deck is shuffled, _draw() should send that 
-        event to the UI.
-        """
-        dhand = cards.Hand([
-            cards.Card(1, 1),
-            cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        ui = Mock()
-        g = game.Engine(None, dealer, None, ui, 20)
-        g.deck = cards.Deck([])
-        g.deck.size = 6
-        _ = g._draw()
-        
-        ui.shuffles.assert_called()
-    
-    
-    # Test Engine._add_player().
-    def test__add_player(self):
-        """Given a player, _add_player() adds that player in the first 
-        empty slot in the playerlist.
-        """
-        player = players.Player(name='Spam')
-        expected = [player,]
-        
-        playerlist = [None,]
-        g = game.Engine(None, None, playerlist, None, None)
-        g._add_player(player)
-        actual = g.playerlist
-        
-        self.assertEqual(expected, actual)
