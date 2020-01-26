@@ -43,7 +43,7 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
-* Create validator for playerlist.
+* Fix double down on blackjack.
 * Allow for serialization/deserialization of game.Engine objects.
 * Save game state.
 * Restore game state.

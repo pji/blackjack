@@ -14,7 +14,7 @@ from typing import Callable
 from types import MethodType
 
 from blackjack.cards import Hand, HandTuple
-from blackjack.model import Integer_, PosInt, Text, valtupfactory
+from blackjack.model import Integer_, PosInt, Text, valfactory, valtupfactory
 
 
 # Global values.
@@ -523,4 +523,13 @@ def validate_player_or_none(self, value):
 
 
 # Player validating descriptors.
-ValidPlayers = valtupfactory('ValidPlayers', validate_player_or_none, 'Invalid contents ({}).')
+ValidPlayer = valfactory(
+    'ValidPlayer', 
+    validate_player_or_none, 
+    'Invalid player ({}).'
+)
+ValidPlayers = valtupfactory(
+    'ValidPlayers', 
+    validate_player_or_none, 
+    'Invalid contents ({}).'
+)

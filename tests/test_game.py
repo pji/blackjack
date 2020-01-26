@@ -183,7 +183,8 @@ class EngineTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test__ace_split_hit_ui(self):
+    @patch('blackjack.game.ValidUI.validate', return_value=Mock())
+    def test__ace_split_hit_ui(self, _):
         """Given a hand with an ace that had been split, 
         _ace_split_hit() should send an event to the UI 
         for the single hit and the stand.
@@ -200,10 +201,9 @@ class EngineTestCase(ut.TestCase):
         deck = cards.Deck([
             cards.Card(11, 0, cards.DOWN),
         ])
-        ui = Mock()
-        g = game.Engine(deck, None, (player,), ui)
+        g = game.Engine(deck, None, (player,))
         g._ace_split_hit(player, hand)
-        actual = ui.mock_calls
+        actual = g.ui.mock_calls
         
         self.assertEqual(expected, actual)
     
@@ -367,7 +367,8 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(expected_dd, actual_dd)
         self.assertEqual(expected_chips, actual_chips)
     
-    def test__double_down_ui(self):
+    @patch('blackjack.game.BaseUI.doubledown')
+    def test__double_down_ui(self, mock_dd):
         """If the player doubles down, _double_down() should send that 
         event to the UI.
         """
@@ -378,11 +379,10 @@ class EngineTestCase(ut.TestCase):
         player = players.AutoPlayer([hand,], 'Eric', 20)
         expected = (player, 20)
 
-        ui = Mock()
-        g = game.Engine(None, None, (player,), ui, 20)
+        g = game.Engine(None, None, (player,), None, 20)
         g._double_down(player, hand)
         
-        ui.doubledown.assert_called_with(*expected)
+        mock_dd.assert_called_with(*expected)
     
     def test__double_down_not_on_blackjack(self):
         """If player has a blackjack, _double_down() should not allow 
@@ -429,7 +429,8 @@ class EngineTestCase(ut.TestCase):
         
         self.assertTrue(isinstance(actual, expected))
     
-    def test__draw_shuffled_ui(self):
+    @patch('blackjack.game.BaseUI.shuffles')
+    def test__draw_shuffled_ui(self, mock_shuffles):
         """If the deck is shuffled, _draw() should send that 
         event to the UI.
         """
@@ -439,12 +440,12 @@ class EngineTestCase(ut.TestCase):
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
         ui = Mock()
-        g = game.Engine(None, dealer, None, ui, 20)
+        g = game.Engine(None, dealer, None, None, 20)
         g.deck = cards.Deck([])
         g.deck.size = 6
         _ = g._draw()
         
-        ui.shuffles.assert_called()
+        mock_shuffles.assert_called()
     
     
     # Test Engine._insure()
@@ -492,7 +493,8 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(expected_insured, actual_insured)
         self.assertEqual(expected_chips, actual_chips)
     
-    def test__insure_ui(self):
+    @patch('blackjack.game.BaseUI.insures')
+    def test__insure_ui(self, mock_insures):
         """If the player insures, _insure() should send that 
         event to the UI.
         """
@@ -505,10 +507,10 @@ class EngineTestCase(ut.TestCase):
         expected = (player, 10)
 
         ui = Mock()
-        g = game.Engine(None, dealer, (player,), ui, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         g._insure(player)
         
-        ui.insures.assert_called_with(*expected)
+        mock_insures.assert_called_with(*expected)
     
     
     # Test Engine._remove_player().
@@ -573,7 +575,8 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(expected_return, actual_return)
         self.assertEqual(exp_chips, act_chips)
     
-    def test__split_with_ui(self):
+    @patch('blackjack.game.BaseUI.splits')
+    def test__split_with_ui(self, mock_splits):
         """If _split() splits the hand, it should send the event, 
         the player, and the new hand to the UI.
         """
@@ -589,10 +592,10 @@ class EngineTestCase(ut.TestCase):
         expected = (p1, 20)
         
         playerlist = [p1,]
-        g = game.Engine(None, None, playerlist, Mock(), 20)
+        g = game.Engine(None, None, playerlist, None, 20)
         _ = g._split(h1[0], p1)
 
-        g.ui.splits.assert_called_with(*expected)
+        mock_splits.assert_called_with(*expected)
     
     
     # Engine.deal() tests.
@@ -617,7 +620,8 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(expected_dealer_facing, actual_dealer_facing)
         self.assertEqual(expected_deck_size, actual_deck_size)
     
-    def test_deal_with_ui(self):
+    @patch('blackjack.game.BaseUI.deal')
+    def test_deal_with_ui(self, mock_deal):
         """In a Engine object with a deck and dealer,  deal() should 
         deal an initial hand of blackjack to the dealer from the deck 
         and update the UI.
@@ -631,13 +635,12 @@ class EngineTestCase(ut.TestCase):
         dealer = players.Player()
         expected = [dealer, hand]
         
-        ui = Mock()
         deck = cards.Deck(cardlist)
-        g = game.Engine(dealer=dealer, ui=ui)
+        g = game.Engine(dealer=dealer)
         g.deck = deck
         g.deal()
         
-        ui.deal.assert_called_with(*expected)
+        mock_deal.assert_called_with(*expected)
     
     def test_deal_with_players(self):
         """In a Engine object with a deck, dealer, and player in the 
@@ -676,45 +679,68 @@ class EngineTestCase(ut.TestCase):
     
     
     # Test Engine.new_game().
-    def test_players_join(self):
+    @patch('blackjack.game.BaseUI.joins')
+    def test_new_game_players_join(self, mock_joins):
         """When players join a game, it should send a join 
         event to the UI for each player in the game.
         """
-        ui = Mock()
         playerlist = [
             players.Player(),
             players.Player(),
             players.Player(),
         ]
-        e = game.Engine(playerlist=playerlist, ui=ui)
+        e = game.Engine(playerlist=playerlist)
         expected = [
-            call.joins(e.dealer),
-            call.joins(playerlist[0]),
-            call.joins(playerlist[1]),
-            call.joins(playerlist[2]),
+            call(e.dealer),
+            call(playerlist[0]),
+            call(playerlist[1]),
+            call(playerlist[2]),
         ]
         
         e.new_game()
-        actual = ui.mock_calls
+        actual = mock_joins.mock_calls
         
         self.assertListEqual(expected, actual)
     
     
     # Test Engine.end().
-    def test_end_player_wins(self):
-        """If the player wins, the player gets double their initial 
-        bet.
+    def test_end_dealer_blackjack_player_21(self):
+        """Given a dealer hand that is a blackjack, all players who 
+        don't have blackjack lose.
         """
-        expected = 40
+        expected = 0
         
         phand = cards.Hand([
-            cards.Card(10, 1),
+            cards.Card(2, 1),
             cards.Card(10, 0),
+            cards.Card(9, 1),
         ])
         player = players.AutoPlayer((phand,), 'John', 0)
         dhand = cards.Hand([
-            cards.Card(7, 3),
+            cards.Card(1, 3),
             cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Engine(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
+        
+        self.assertEqual(expected, actual)
+    
+    def test_end_player_blackjack(self):
+        """If the player wins with a blackjack, they get two and a 
+        half times their initial bet back.
+        """
+        expected = 50
+        
+        phand = cards.Hand([
+            cards.Card(1, 3),
+            cards.Card(12, 1),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
+        dhand = cards.Hand([
+            cards.Card(13, 0),
+            cards.Card(12, 3),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
         g = game.Engine(None, dealer, (player,), None, 20)
@@ -735,54 +761,6 @@ class EngineTestCase(ut.TestCase):
         dhand = cards.Hand([
             cards.Card(10, 3),
             cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
-        g.end()
-        actual = player.chips
-        
-        self.assertEqual(expected, actual)
-    
-    def test_end_tie_with_ui(self):
-        """If the player ties, the player gets back their initial 
-        bet.
-        """
-        phand = cards.Hand([
-            cards.Card(10, 1),
-            cards.Card(10, 0),
-        ])
-        player = players.AutoPlayer((phand,), 'John', 0)
-        expected = 20
-        expected_call = call.tie(player, 20)
-        
-        dhand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer', None)
-        ui = Mock()
-        g = game.Engine(None, dealer, (player,), ui, 20)
-        g.end()
-        actual = player.chips
-        actual_call = ui.mock_calls[-1]
-        
-        self.assertEqual(expected, actual)
-        self.assertEqual(expected_call, actual_call)
-    
-    def test_end_player_blackjack(self):
-        """If the player wins with a blackjack, they get two and a 
-        half times their initial bet back.
-        """
-        expected = 50
-        
-        phand = cards.Hand([
-            cards.Card(1, 3),
-            cards.Card(12, 1),
-        ])
-        player = players.AutoPlayer((phand,), 'John', 0)
-        dhand = cards.Hand([
-            cards.Card(13, 0),
-            cards.Card(12, 3),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
         g = game.Engine(None, dealer, (player,), None, 20)
@@ -818,83 +796,36 @@ class EngineTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_end_with_ui_won(self):
-        """Once the payout is determined, end() should send the event 
-        to the UI.
+    def test_end_player_wins(self):
+        """If the player wins, the player gets double their initial 
+        bet.
         """
-        cardlist = [
-            cards.Card(7, 0, cards.UP),
-            cards.Card(6, 0, cards.UP),
-            cards.Card(5, 0, cards.UP),
-        ]
-        phand = cards.Hand(cardlist)
-        player = players.AutoPlayer((phand,), 'Michael', 180)
+        expected = 40
         
-        # This looks a little weird. Shouldn't the hand be different 
-        # between the first two call.updates() since the cards in the 
-        # hand will be different at those points?
-        # 
-        # No. game.play() is sending the dealer's hand object to 
-        # ui.update(), and we are testing to make sure the same 
-        # hand is sent. Since objects are mutable, the hand has three 
-        # cards in it when assertEqual() runs, so the expected hand 
-        # needs to have all three cards, too.
-        expected = [call.wins(player, 40),]
-        
+        phand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(10, 0),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
         dhand = cards.Hand([
-            cards.Card(7, 0, cards.UP),
-            cards.Card(10, 0, cards.DOWN),
+            cards.Card(7, 3),
+            cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        ui = Mock()
-        g = game.Engine(None, dealer, (player,), ui, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         g.end()
-        actual = ui.mock_calls
+        actual = player.chips
         
         self.assertEqual(expected, actual)
     
-    def test_end_with_ui_loses(self):
-        """Once the loss is determined, end() should send the event 
-        to the UI.
-        """
-        cardlist = [
-            cards.Card(7, 0, cards.UP),
-            cards.Card(6, 0, cards.UP),
-            cards.Card(10, 0, cards.UP),
-        ]
-        phand = cards.Hand(cardlist)
-        player = players.AutoPlayer((phand,), 'Michael', 180)
-        
-        # This looks a little weird. Shouldn't the hand be different 
-        # between the first two call.updates() since the cards in the 
-        # hand will be different at those points?
-        # 
-        # No. game.play() is sending the dealer's hand object to 
-        # ui.update(), and we are testing to make sure the same 
-        # hand is sent. Since objects are mutable, the hand has three 
-        # cards in it when assertEqual() runs, so the expected hand 
-        # needs to have all three cards, too.
-        expected = [call.loses(player)]
-        
-        dhand = cards.Hand([
-            cards.Card(7, 0, cards.UP),
-            cards.Card(10, 0, cards.DOWN),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer', None)
-        ui = Mock()
-        g = game.Engine(None, dealer, (player,), ui, 20)
-        g.end()
-        actual = ui.mock_calls
-        
-        self.assertEqual(expected, actual)
-    
-    def test_end_split_with_ui(self):
+    @patch('blackjack.game.BaseUI.wins_split')
+    def test_end_split_blackjack_with_ui(self, mock_wins):
         """Once the payout is determined, end() should send the event 
-        to the UI. If the hand is split, that event should be 
-        'splitpayout' if the hand wins.
+        to the UI. If the hand is split and it's a blackjack, the 
+        event should be wins_split().
         """
         hand2 = cards.Hand([
-            cards.Card(10, 1),
+            cards.Card(1, 1),
             cards.Card(10, 0),
         ])
         hand1 = cards.Hand([
@@ -913,21 +844,21 @@ class EngineTestCase(ut.TestCase):
         # hand is sent. Since objects are mutable, the hand has three 
         # cards in it when assertEqual() runs, so the expected hand 
         # needs to have all three cards, too.
-        expected = [call.wins_split(player, 40),]
+        expected = call(player, 40)
         
         dhand = cards.Hand([
             cards.Card(7, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        ui = Mock()
-        g = game.Engine(None, dealer, (player,), ui, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         g.end()
-        actual = [ui.mock_calls[-1],]
+        actual = mock_wins.mock_calls[-1]
         
         self.assertEqual(expected, actual)
     
-    def test_end_split_with_loss_ui(self):
+    @patch('blackjack.game.BaseUI.loses_split')
+    def test_end_split_with_loss_ui(self, mock_loses):
         """Once the payout is determined, end() should send the event 
         to the UI. If the hand is split, that event should be 
         'splitlost' if the hand loses.
@@ -952,21 +883,21 @@ class EngineTestCase(ut.TestCase):
         # hand is sent. Since objects are mutable, the hand has three 
         # cards in it when assertEqual() runs, so the expected hand 
         # needs to have all three cards, too.
-        expected = [call.loses_split(player),]
+        expected = call(player)
         
         dhand = cards.Hand([
             cards.Card(7, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        ui = Mock()
-        g = game.Engine(None, dealer, (player,), ui, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         g.end()
-        actual = [ui.mock_calls[-1],]
+        actual = mock_loses.mock_calls[-1]
         
         self.assertEqual(expected, actual)
     
-    def test_end_split_with_tie_ui(self):
+    @patch('blackjack.game.BaseUI.ties_split')
+    def test_end_split_with_tie_ui(self, mock_ties_split):
         """Once the payout is determined, end() should send the event 
         to the UI. If the hand is split, that event should be 
         'splitlost' if the hand loses.
@@ -991,27 +922,27 @@ class EngineTestCase(ut.TestCase):
         # hand is sent. Since objects are mutable, the hand has three 
         # cards in it when assertEqual() runs, so the expected hand 
         # needs to have all three cards, too.
-        expected = [call.ties_split(player, 20),]
+        expected = call(player, 20)
         
         dhand = cards.Hand([
             cards.Card(7, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        ui = Mock()
-        g = game.Engine(None, dealer, (player,), ui, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         g.end()
-        actual = [ui.mock_calls[-1],]
+        actual = mock_ties_split.mock_calls[-1]
         
         self.assertEqual(expected, actual)
     
-    def test_end_split_blackjack_with_ui(self):
+    @patch('blackjack.game.BaseUI.wins_split')
+    def test_end_split_with_ui(self, mock_split):
         """Once the payout is determined, end() should send the event 
-        to the UI. If the hand is split and it's a blackjack, the 
-        event should be 'splitpayout'.
+        to the UI. If the hand is split, that event should be 
+        'splitpayout' if the hand wins.
         """
         hand2 = cards.Hand([
-            cards.Card(1, 1),
+            cards.Card(10, 1),
             cards.Card(10, 0),
         ])
         hand1 = cards.Hand([
@@ -1030,17 +961,67 @@ class EngineTestCase(ut.TestCase):
         # hand is sent. Since objects are mutable, the hand has three 
         # cards in it when assertEqual() runs, so the expected hand 
         # needs to have all three cards, too.
-        expected = [call.wins_split(player, 40),]
+        expected = call(player, 40)
         
         dhand = cards.Hand([
             cards.Card(7, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        ui = Mock()
-        g = game.Engine(None, dealer, (player,), ui, 20)
+        g = game.Engine(None, dealer, (player,), None, 20)
         g.end()
-        actual = [ui.mock_calls[-1],]
+        actual = mock_split.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.game.BaseUI.tie')
+    def test_end_tie_with_ui(self, mock_tie):
+        """If the player ties, the player gets back their initial 
+        bet.
+        """
+        phand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(10, 0),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
+        expected = 20
+        expected_call = call(player, 20)
+        
+        dhand = cards.Hand([
+            cards.Card(10, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Engine(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
+        actual_call = mock_tie.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
+        self.assertEqual(expected_call, actual_call)
+    
+    @patch('blackjack.game.BaseUI.insurepay')
+    def test_end_with_insured(self, mock_insurepay):
+        """If the player was insured and the dealer had a blackjack, 
+        the insurance pay out should double the insurance amount.
+        """
+        phand = cards.Hand([
+            cards.Card(4, 1),
+            cards.Card(6, 2),
+            cards.Card(10, 0),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
+        expected = call(player, 20)
+        
+        player.insured = 10
+        dhand = cards.Hand([
+            cards.Card(1, 3),
+            cards.Card(11, 0),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Engine(None, dealer, (player,), None, 20)
+        g.end()
+        actual = mock_insurepay.mock_calls[-1]
         
         self.assertEqual(expected, actual)
     
@@ -1068,51 +1049,73 @@ class EngineTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_end_with_insured(self):
-        """If the player was insured and the dealer had a blackjack, 
-        the insurance pay out should double the insurance amount.
+    @patch('blackjack.game.BaseUI.loses')
+    def test_end_with_ui_loses(self, mock_loses):
+        """Once the loss is determined, end() should send the event 
+        to the UI.
         """
-        phand = cards.Hand([
-            cards.Card(4, 1),
-            cards.Card(6, 2),
-            cards.Card(10, 0),
-        ])
-        player = players.AutoPlayer((phand,), 'John', 0)
-        expected = [call.insurepay(player, 20),]
+        cardlist = [
+            cards.Card(7, 0, cards.UP),
+            cards.Card(6, 0, cards.UP),
+            cards.Card(10, 0, cards.UP),
+        ]
+        phand = cards.Hand(cardlist)
+        player = players.AutoPlayer((phand,), 'Michael', 180)
         
-        player.insured = 10
+        # This looks a little weird. Shouldn't the hand be different 
+        # between the first two call.updates() since the cards in the 
+        # hand will be different at those points?
+        # 
+        # No. game.play() is sending the dealer's hand object to 
+        # ui.update(), and we are testing to make sure the same 
+        # hand is sent. Since objects are mutable, the hand has three 
+        # cards in it when assertEqual() runs, so the expected hand 
+        # needs to have all three cards, too.
+        expected = call(player)
+        
         dhand = cards.Hand([
-            cards.Card(1, 3),
-            cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer', None)
-        ui = Mock()
-        g = game.Engine(None, dealer, (player,), ui, 20)
-        g.end()
-        actual = [ui.mock_calls[-2],]
-        
-        self.assertEqual(expected, actual)
-    
-    def test_end_dealer_blackjack_player_21(self):
-        """Given a dealer hand that is a blackjack, all players who 
-        don't have blackjack lose.
-        """
-        expected = 0
-        
-        phand = cards.Hand([
-            cards.Card(2, 1),
-            cards.Card(10, 0),
-            cards.Card(9, 1),
-        ])
-        player = players.AutoPlayer((phand,), 'John', 0)
-        dhand = cards.Hand([
-            cards.Card(1, 3),
-            cards.Card(11, 0),
+            cards.Card(7, 0, cards.UP),
+            cards.Card(10, 0, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
         g = game.Engine(None, dealer, (player,), None, 20)
         g.end()
-        actual = player.chips
+        actual = mock_loses.mock_calls[-1]
+        
+        self.assertEqual(expected, actual)
+    
+    @patch('blackjack.game.BaseUI.wins')
+    def test_end_with_ui_won(self, mock_wins):
+        """Once the payout is determined, end() should send the event 
+        to the UI.
+        """
+        cardlist = [
+            cards.Card(7, 0, cards.UP),
+            cards.Card(6, 0, cards.UP),
+            cards.Card(5, 0, cards.UP),
+        ]
+        phand = cards.Hand(cardlist)
+        player = players.AutoPlayer((phand,), 'Michael', 180)
+        
+        # This looks a little weird. Shouldn't the hand be different 
+        # between the first two call.updates() since the cards in the 
+        # hand will be different at those points?
+        # 
+        # No. game.play() is sending the dealer's hand object to 
+        # ui.update(), and we are testing to make sure the same 
+        # hand is sent. Since objects are mutable, the hand has three 
+        # cards in it when assertEqual() runs, so the expected hand 
+        # needs to have all three cards, too.
+        expected = call(player, 40)
+        
+        dhand = cards.Hand([
+            cards.Card(7, 0, cards.UP),
+            cards.Card(10, 0, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Engine(None, dealer, (player,), None, 20)
+        g.end()
+        actual = mock_wins.mock_calls[-1]
         
         self.assertEqual(expected, actual)
     
@@ -1211,7 +1214,8 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(expected_dhand, actual_dhand)
         self.assertEqual(expected_phand, actual_phand)
     
-    def test_play_with_ui(self):
+    @patch('blackjack.game.ValidUI.validate', return_value=Mock())
+    def test_play_with_ui(self, mock_valid):
         """Given a deck, dealer, and UI, play() should deal cards to 
         the dealer until the dealer stands on a score of 17 or more 
         and update the UI.
@@ -1247,11 +1251,10 @@ class EngineTestCase(ut.TestCase):
             cards.Card(5, 0, cards.DOWN),
         ])
         dealer.hands = ((h,))
-        ui = Mock()
-        g = game.Engine(dealer=dealer, ui=ui)
+        g = game.Engine(dealer=dealer)
         g.deck = deck
         g.play()
-        actual = ui.mock_calls
+        actual = g.ui.mock_calls
         
         self.assertListEqual(expected, actual)
     
@@ -1429,7 +1432,8 @@ class EngineTestCase(ut.TestCase):
         self.assertTrue(isinstance(actual, expected))
         self.assertNotEqual(expected, actual)
     
-    def test_start_buyin_ui(self):
+    @patch('blackjack.game.BaseUI.bet')
+    def test_start_buyin_ui(self, mock_bet):
         """When a player buys into the round, start() should send that 
         event to the UI.
         """
@@ -1438,20 +1442,21 @@ class EngineTestCase(ut.TestCase):
         p1 = players.AutoPlayer([], 'John', chips)
         p2 = players.AutoPlayer([], 'Michael', chips)
         expected = [
-            call.bet(p1, buyin),
-            call.bet(p2, buyin),
+            call(p1, buyin),
+            call(p2, buyin),
         ]
         
         playerlist = [p1, p2]
-        ui = Mock()
-        g = game.Engine(None, None, playerlist, ui, buyin)
+        g = game.Engine(None, None, playerlist, None, buyin)
         g.start()
-        actual = ui.mock_calls
+        actual = g.ui.bet.mock_calls
         
         self.assertEqual(expected, actual)        
     
+    @patch('blackjack.game.BaseUI.joins')    
+    @patch('blackjack.game.BaseUI.leaves')
     @patch('blackjack.game.make_player')
-    def test_start_remove_ui(self, mock_make_player):
+    def test_start_remove_ui(self, mock_make_player, mock_leaves, mock_joins):
         """When a player is removed, start() should send that event to 
         the UI and then send an event for the addition of the new 
         player.
@@ -1459,18 +1464,40 @@ class EngineTestCase(ut.TestCase):
         unexp_player = players.AutoPlayer([], 'Eric', 1)
         exp_player = players.AutoPlayer([], 'Spam', 1)
         exp_calls = [
-            call.leaves(unexp_player),
-            call.joins(exp_player),
+            call(unexp_player),
+            call(exp_player),
         ]
         
-        ui = Mock()
+        ui = game.BaseUI()
         mock_make_player.return_value = exp_player
         g = game.Engine(playerlist=(unexp_player,), ui=ui, buyin=20)
         g.start()
         act_player = g.playerlist[0]
-        act_calls = ui.mock_calls
+        act_calls = [
+            ui.leaves.mock_calls[0],
+            ui.joins.mock_calls[0],
+        ]
         
         self.assertEqual(exp_player, act_player)
         self.assertEqual(exp_calls, act_calls)
+
+
+class validate_uiTestCase(ut.TestCase):
+    def test_valid(self):
+        """Given a valid value, validate_ui() should return it."""
+        exp = game.BaseUI()
+        act = game.validate_ui(None, exp)
+        self.assertEqual(exp, act)
     
-    
+    def test_invalid(self):
+        """Given an invalid value, validate_ui() should raise a 
+        ValueError exception.
+        """
+        exp = ValueError
+        
+        class Eggs:
+            msg = '{}'
+        test = 'spam'
+        
+        with self.assertRaises(exp):
+            _ = game.validate_ui(Eggs(), test)

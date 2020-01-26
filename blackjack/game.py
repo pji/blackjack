@@ -11,8 +11,9 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from blackjack.cards import Deck, DeckObj, DOWN, Hand
-from blackjack.model import IsYes
-from blackjack.players import Dealer, Player, make_player, ValidPlayers
+from blackjack.model import IsYes, valfactory
+from blackjack.players import (Dealer, Player, make_player, ValidPlayers, 
+                               ValidPlayer)
 
 
 # Internal utility functions.
@@ -23,7 +24,7 @@ def _build_hand(deck):
     return Hand([card,])
     
 
-# classes.
+# UI classes.
 class EngineUI(ABC):
     # General operation methods.
     @abstractmethod
@@ -247,10 +248,26 @@ class BaseUI(EngineUI):
         pass
 
 
+# Game validator functions.
+def validate_ui(self, value):
+    """Validate EngineUI objects."""
+    if not isinstance(value, EngineUI):
+        reason = 'not an EngineUI object'
+        raise ValueError(self.msg.format(reason))
+    return value
+
+
+# Game validating descriptors.
+ValidUI = valfactory('ValidUI', validate_ui, 'Invalid EngineUI ({}).')
+
+
+# Game engine class.
 class Engine:
     """A game engine for blackjack."""
     deck = DeckObj('deck')
     playerlist = ValidPlayers('playerlist')
+    dealer = ValidPlayer('dealer')
+    ui = ValidUI('ui')
     
     def __init__(self, deck: Deck = None, dealer: Player = None, 
                  playerlist: tuple = None, ui: EngineUI = None, 
@@ -303,6 +320,50 @@ class Engine:
         hand.append(card)
         self.ui.hit(player, hand)
         self.ui.stand(player, hand)
+    
+    def _add_player(self, player):
+        """Add a new player to the first empty seat in the game.
+        
+        :param player: The player to add to the game.
+        :return: None.
+        :rtype: None
+        """
+        playerlist = list(self.playerlist)
+        index = playerlist.index(None)
+        playerlist[index] = player
+        self.playerlist = playerlist
+    
+    def _build_hand(self):
+        """create the initial hand and deal a card into it."""
+        card = self._draw()
+        card.flip()
+        return Hand([card,])
+
+    def _compare_score(self, d_hand: Hand, p_hand: Hand) -> Union[None, bool]:
+        """Determine if the player's hand won.
+        
+        :param d_hand: The dealer's hand.
+        :param p_hand: The player's hand.
+        :return: True if the player wins, False if the dealer wins, 
+            and None if it's a tie.
+        :rtype: None, bool
+        """
+        def filter_scores(hand):
+            return [score for score in hand.score() if score <= 21]
+        
+        try:
+            p_score = filter_scores(p_hand)[-1]
+        except IndexError:
+            return False
+        try:
+            d_score = filter_scores(d_hand)[-1]
+        except IndexError:
+            return True
+        if p_score > d_score:
+            return True
+        if p_score < d_score:
+            return False
+        return None
     
     def _double_down(self, player: Player, hand: Hand) -> None:
         """Handle the double down decision on a hand.
@@ -504,49 +565,3 @@ class Engine:
                 player = make_player(bet=self.buyin)
                 self._add_player(player)
                 self.ui.joins(player)
-    
-    
-    # Still to update.
-    def _add_player(self, player):
-        """Add a new player to the first empty seat in the game.
-        
-        :param player: The player to add to the game.
-        :return: None.
-        :rtype: None
-        """
-        playerlist = list(self.playerlist)
-        index = playerlist.index(None)
-        playerlist[index] = player
-        self.playerlist = playerlist
-    
-    def _build_hand(self):
-        """create the initial hand and deal a card into it."""
-        card = self._draw()
-        card.flip()
-        return Hand([card,])
-
-    def _compare_score(self, d_hand: Hand, p_hand: Hand) -> Union[None, bool]:
-        """Determine if the player's hand won.
-        
-        :param d_hand: The dealer's hand.
-        :param p_hand: The player's hand.
-        :return: True if the player wins, False if the dealer wins, 
-            and None if it's a tie.
-        :rtype: None, bool
-        """
-        def filter_scores(hand):
-            return [score for score in hand.score() if score <= 21]
-        
-        try:
-            p_score = filter_scores(p_hand)[-1]
-        except IndexError:
-            return False
-        try:
-            d_score = filter_scores(d_hand)[-1]
-        except IndexError:
-            return True
-        if p_score > d_score:
-            return True
-        if p_score < d_score:
-            return False
-        return None
