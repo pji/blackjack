@@ -138,6 +138,8 @@ def validate_bool(self, value):
 
 def validate_integer(self, value):
     """Normalize and validate integers."""
+    if value == None:
+        return 0
     try:
         return int(value)
     except ValueError:

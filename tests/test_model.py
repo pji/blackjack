@@ -471,6 +471,15 @@ class validate_integerTestCase(unittest.TestCase):
         
         with self.assertRaises(exp):
             _ = model.validate_integer(Spam(), test)
+    
+    def test_normalize_none(self):
+        """If given None, validate_integer should normalize it to 0 
+        before validating it.
+        """
+        exp = 0
+        test = None
+        act = model.validate_integer(None, test)
+        self.assertEqual(exp, act)
 
 
 class validate__positive_intTestCase(unittest.TestCase):

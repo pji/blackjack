@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from blackjack.cards import Deck, DeckObj, DOWN, Hand
-from blackjack.model import IsYes, valfactory
+from blackjack.model import Integer_, IsYes, valfactory
 from blackjack.players import (Dealer, Player, make_player, ValidPlayers, 
                                ValidPlayer)
 
@@ -268,6 +268,7 @@ class Engine:
     playerlist = ValidPlayers('playerlist')
     dealer = ValidPlayer('dealer')
     ui = ValidUI('ui')
+    buyin = Integer_('buyin')
     
     def __init__(self, deck: Deck = None, dealer: Player = None, 
                  playerlist: tuple = None, ui: EngineUI = None, 
