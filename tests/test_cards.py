@@ -659,29 +659,17 @@ class HandTestCase(unittest.TestCase):
         )
 
     # Tests.
-    def test_exists(self):
-        """A class named Hand should exist."""
-        names = [item[0] for item in inspect.getmembers(cards)]
-        self.assertTrue('Hand' in names)
-    
-    def test_can_instantiate(self):
-        """An instance of Hand should be able to be instantiated."""
-        expected = cards.Hand
-        actual = cards.Hand()
-        self.assertTrue(isinstance(actual, expected))
-    
     def test_Pile_subclass(self):
         """Hand should be a subclass of Pile."""
         expected = cards.Pile
         actual = cards.Hand
         self.assertTrue(issubclass(actual, expected))
     
-    def test_doubled_down_initialized(self):
-        """Hand objects should have a doubled_down attribute that 
-        is initialized to False.
-        """
-        hand = cards.Hand()
-        self.assertFalse(hand.doubled_down)
+    def test_can_instantiate(self):
+        """An instance of Hand should be able to be instantiated."""
+        expected = cards.Hand
+        actual = cards.Hand()
+        self.assertTrue(isinstance(actual, expected))
     
     def test_append(self):
         """Given a Card object, append() should append that card to 
@@ -695,20 +683,36 @@ class HandTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_score_simple(self):
-        """score() should add together the values of the cards in the 
-        hand and return the score.
-        """
-        expected = [18,]
-        
+    def test_can_split_true(self):
+        """can_split() should return true if the hand can be split."""
         cardlist = [
-            cards.Card(11, 3),
-            cards.Card(8, 2),
+            cards.Card(10, 0),
+            cards.Card(10, 2),
         ]
         h = cards.Hand(cardlist)
-        actual = h.score()
+        actual = h.can_split()
         
-        self.assertEqual(expected, actual)
+        self.assertTrue(actual)
+    
+    def test_can_split_false(self):
+        """can_split() should return false if the hand cannot be 
+        split.
+        """
+        cardlist = [
+            cards.Card(10, 0),
+            cards.Card(11, 2),
+        ]
+        h = cards.Hand(cardlist)
+        actual = h.can_split()
+        
+        self.assertFalse(actual)
+    
+    def test_doubled_down_initialized(self):
+        """Hand objects should have a doubled_down attribute that 
+        is initialized to False.
+        """
+        hand = cards.Hand()
+        self.assertFalse(hand.doubled_down)
     
     def test_is_blackjack_true(self):
         """is_blackjack() should return true if the hand is a natural 
@@ -750,6 +754,51 @@ class HandTestCase(unittest.TestCase):
         
         self.assertFalse(actual)        
     
+    def test_is_bust(self):
+        """When called, is_bust() should return true if the score of 
+        the hand is over 21.
+        """
+        exp = True
+        
+        hand = cards.Hand((
+            cards.Card(11, 0),
+            cards.Card(11, 0),
+            cards.Card(11, 0),
+        ))
+        act = hand.is_bust()
+        
+        self.assertEqual(exp, act)
+    
+    def test_is_bust_false(self):
+        """When called, is_bust() should return true if their are 
+        possible scores under 21.
+        """
+        exp = False
+        
+        hand = cards.Hand((
+            cards.Card(1, 0),
+            cards.Card(1, 0),
+            cards.Card(1, 0),
+        ))
+        act = hand.is_bust()
+        
+        self.assertEqual(exp, act)
+    
+    def test_score(self):
+        """score() should add together the values of the cards in the 
+        hand and return the score.
+        """
+        expected = [18,]
+        
+        cardlist = [
+            cards.Card(11, 3),
+            cards.Card(8, 2),
+        ]
+        h = cards.Hand(cardlist)
+        actual = h.score()
+        
+        self.assertEqual(expected, actual)
+    
     def test_score_ace(self):
         """score() should return all unique scores if there is an 
         ace in the hand.
@@ -769,30 +818,6 @@ class HandTestCase(unittest.TestCase):
         actual = h.score()
         
         self.assertEqual(expected, actual)
-    
-    def test_can_split_true(self):
-        """can_split() should return true if the hand can be split."""
-        cardlist = [
-            cards.Card(10, 0),
-            cards.Card(10, 2),
-        ]
-        h = cards.Hand(cardlist)
-        actual = h.can_split()
-        
-        self.assertTrue(actual)
-    
-    def test_can_split_false(self):
-        """can_split() should return false if the hand cannot be 
-        split.
-        """
-        cardlist = [
-            cards.Card(10, 0),
-            cards.Card(11, 2),
-        ]
-        h = cards.Hand(cardlist)
-        actual = h.can_split()
-        
-        self.assertFalse(actual)
     
     def test_split_valid(self):
         """If the hand can be split, split() should return two Hand 

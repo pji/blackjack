@@ -344,6 +344,27 @@ class Hand(Pile):
         cards.append(item)
         self.cards = tuple(cards)
     
+    def can_split(self):
+        """Determine whether the hand can be split."""
+        if len(self) == 2 and self[0].rank == self[1].rank:
+            return True
+        return False
+    
+    def is_blackjack(self):
+        """Determine whether the hand is a natural blackjack."""
+        if len(self.cards) == 2:
+            ranks = sorted([card.rank for card in self.cards])
+            if ranks[0] == 1 and ranks[1] >= 10:
+                return True
+        return False
+    
+    def is_bust(self):
+        """Return whether the hand is bust."""
+        scores = [score for score in self.score() if score <= 21]
+        if not scores:
+            return True
+        return False
+    
     def score(self):
         scores = set()
         
@@ -383,20 +404,6 @@ class Hand(Pile):
         # Return results.
         scores = list(scores)
         return sorted(scores)
-    
-    def can_split(self):
-        """Determine whether the hand can be split."""
-        if len(self) == 2 and self[0].rank == self[1].rank:
-            return True
-        return False
-    
-    def is_blackjack(self):
-        """Determine whether the hand is a natural blackjack."""
-        if len(self.cards) == 2:
-            ranks = sorted([card.rank for card in self.cards])
-            if ranks[0] == 1 and ranks[1] >= 10:
-                return True
-        return False
     
     def split(self):
         """Split the hand."""
