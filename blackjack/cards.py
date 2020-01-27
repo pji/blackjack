@@ -177,7 +177,10 @@ class Card:
             if suits.index(self.suit) < suits.index(other.suit):
                 return True
         return False
-            
+    
+    def astuple(self) -> tuple:
+        """Return the card's attributes for serialization."""
+        return (self.rank, self.suit, self.facing)
     
     def flip(self):
         """Flip the facing of the card."""
@@ -270,6 +273,10 @@ class Pile(MutableSequence):
 class Deck(Pile):
     """A deck of playing cards for blackjack."""
     size = PosInt('size')
+    
+    def __init__(self, cards: list = None, size: int = 1) -> None:
+        super().__init__(cards)
+        self.size = size
     
     @classmethod
     def build(cls, num_decks: int = 1):

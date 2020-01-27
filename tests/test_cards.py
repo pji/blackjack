@@ -202,6 +202,24 @@ class CardTestCase(unittest.TestCase):
         actual = c.__str__()
         
         self.assertEqual(expected, actual)
+    
+    def test_astuple(self):
+        """When called, astuple() should return the card's attributes 
+        as a tuple for serialization.
+        """
+        exp = (11, 'clubs', True)
+        card = cards.Card(*exp)
+        act = card.astuple()
+        self.assertEqual(exp, act)
+    
+    def test_astuple_deserialize(self):
+        """The result of astuple() should be able to be used to create 
+        a new instance of cards.Card with the same attributes.
+        """
+        exp = cards.Card(11, 3, True)
+        serialized = exp.astuple()
+        act = cards.Card(*serialized)
+        self.assertEqual(exp, act)
 
 
 class PileTestCase(unittest.TestCase):
