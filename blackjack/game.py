@@ -304,8 +304,8 @@ class Engine:
     
     def __repr__(self):
         cls = self.__class__
-        return (f'{cls.__name__}[{self.deck!r}, {self.dealer}, {self.playlist},'
-                f'{ui}, {buyin}')
+        return (f'{cls.__name__}[{self.deck!r}, {self.dealer}, '
+                f'{self.playerlist}, {self.ui}, {self.buyin}')
     
     def _ace_split_hit(self, player: Player, hand: Hand) -> None:
         """Handle a hand made by splitting a pair of aces. It also 
@@ -375,9 +375,9 @@ class Engine:
         :rtype: None.
         """
         scores = [score for score in hand.score() if score < 12 and score > 8]
-        if (scores and player.will_double_down(hand, self) 
+        if (scores and not hand.is_blackjack()
                    and player.chips >= self.buyin
-                   and not hand.is_blackjack()):
+                   and player.will_double_down(hand, self)):
             hand.doubled_down = True
             player.chips -= self.buyin
             self.ui.doubledown(player, self.buyin)

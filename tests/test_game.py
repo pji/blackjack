@@ -384,12 +384,14 @@ class EngineTestCase(ut.TestCase):
         
         mock_dd.assert_called_with(*expected)
     
-    def test__double_down_not_on_blackjack(self):
+    @patch('blackjack.players.AutoPlayer.will_double_down', return_value=True)
+    def test__double_down_not_on_blackjack(self, mock_willdd):
         """If player has a blackjack, _double_down() should not allow 
         the hand to be doubled down.
         """
         expected_dd = False
         expected_chips = 20
+        exp_calls = []
         
         hand = cards.Hand([
             cards.Card(1, 2),
@@ -400,9 +402,11 @@ class EngineTestCase(ut.TestCase):
         g._double_down(player, hand)
         actual_dd = hand.doubled_down
         actual_chips = player.chips
+        act_calls = mock_willdd.mock_calls
         
         self.assertEqual(expected_dd, actual_dd)
         self.assertEqual(expected_chips, actual_chips)
+        self.assertListEqual(exp_calls, act_calls)
     
     
     # Test Engine._draw().

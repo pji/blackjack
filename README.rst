@@ -43,7 +43,9 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
-* Fix double down on blackjack.
+* Fix chips or bet missing sometimes in EngineUI (may be related to 
+  collapse of split hand rows).
+* Fix tie when player has blackjack and dealer has 21.
 * Allow for serialization/deserialization of game.Engine objects.
 * Save game state.
 * Restore game state.
