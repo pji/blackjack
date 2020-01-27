@@ -46,6 +46,8 @@ The following features are on the nice-to-have list:
 * Fix chips or bet missing sometimes in EngineUI (may be related to 
   collapse of split hand rows).
 * Fix tie when player has blackjack and dealer has 21.
+* Fix tie on split when dealer has blackjack and player has 21.
+* Confirm and fix loss on dueling blackjacks.
 * Allow for serialization/deserialization of game.Engine objects.
 * Save game state.
 * Restore game state.

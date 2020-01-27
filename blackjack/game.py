@@ -489,6 +489,10 @@ class Engine:
                 elif index == 1 and result == False:
                     event = self.ui.loses_split
                 elif result == None:
+                    if phand.is_blackjack() and not dhand.is_blackjack():
+                        event = self.ui.wins
+                    if not phand.is_blackjack() and dhand.is_blackjack():
+                        event = self.ui.loses
                     event = self.ui.tie
                 elif result == True:
                     event = self.ui.wins
@@ -500,6 +504,8 @@ class Engine:
                     pass
                 elif result == None and phand.doubled_down:
                     mod = 2
+                elif result == None and phand.is_blackjack():
+                    mod = 2.5
                 elif result == None:
                     mod = 1
                 elif result == False:

@@ -790,6 +790,30 @@ class EngineTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    def test_end_player_blackjack_dealer_21(self):
+        """If the player wins with a blackjack, they get two and a 
+        half times their initial bet back, even if the dealer has 21 
+        on more than 2 cards.
+        """
+        expected = 50
+        
+        phand = cards.Hand([
+            cards.Card(1, 3),
+            cards.Card(12, 1),
+        ])
+        player = players.AutoPlayer((phand,), 'John', 0)
+        dhand = cards.Hand([
+            cards.Card(1, 0),
+            cards.Card(6, 3),
+            cards.Card(4, 3),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer', None)
+        g = game.Engine(None, dealer, (player,), None, 20)
+        g.end()
+        actual = player.chips
+        
+        self.assertEqual(expected, actual)
+    
     def test_end_player_loses(self):
         """If the player loses, the player loses their initial bet."""
         expected = 0
