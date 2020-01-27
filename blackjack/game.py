@@ -487,6 +487,8 @@ class Engine:
                         event = self.ui.tie
                     elif dhand.is_blackjack():
                         event = self.ui.loses
+                    elif phand.is_blackjack():
+                        event = self.ui.wins
                     elif result == None:
                         event = self.ui.tie
                     elif result == True:
@@ -516,22 +518,18 @@ class Engine:
                             event = self.ui.loses
                 
                 # Payout modifiers.
-                if result == None and dhand.is_blackjack():
-                    pass
-                elif result == None and phand.doubled_down:
-                    mod = 2
-                elif result == None and phand.is_blackjack():
-                    mod = 2.5
-                elif result == None:
-                    mod = 1
-                elif result == False:
-                    mod = 0
-                elif phand.is_blackjack() and len(player.hands) == 1:
-                    mod = 2.5
-                elif phand.doubled_down:
-                    mod = 4
-                else:
-                    mod = 2
+                if event == self.ui.wins or event == self.ui.wins_split:
+                    if phand.is_blackjack() and len(player.hands) == 1:
+                        mod = 2.5
+                    elif phand.doubled_down:
+                        mod = 4
+                    else:
+                        mod = 2
+                elif event == self.ui.tie or event == self.ui.ties_split:
+                    if phand.doubled_down:
+                        mod = 2
+                    else:
+                        mod = 1
                 
                 payout = mod * self.buyin
                 player.chips += payout
