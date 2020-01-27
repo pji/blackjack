@@ -482,22 +482,38 @@ class Engine:
                 mod = 0
                 
                 # Event modifiers.
-                if index == 1 and result == True:
-                    event = self.ui.wins_split
-                elif index == 1 and result == None:
-                    event = self.ui.ties_split
-                elif index == 1 and result == False:
-                    event = self.ui.loses_split
-                elif result == None:
-                    if phand.is_blackjack() and not dhand.is_blackjack():
-                        event = self.ui.wins
-                    if not phand.is_blackjack() and dhand.is_blackjack():
+                if len(player.hands) == 1:
+                    if dhand.is_blackjack() and phand.is_blackjack():
+                        event = self.ui.tie
+                    elif dhand.is_blackjack():
                         event = self.ui.loses
-                    event = self.ui.tie
-                elif result == True:
-                    event = self.ui.wins
+                    elif result == None:
+                        event = self.ui.tie
+                    elif result == True:
+                        event = self.ui.wins
+                    else:
+                        event = self.ui.loses
                 else:
-                    event = self.ui.loses
+                    if dhand.is_blackjack():
+                        if index == 1:
+                            event = self.ui.loses_split
+                        else:
+                            event = self.ui.loses
+                    elif result == None:
+                        if index == 1:
+                            event = self.ui.ties_split
+                        else:
+                            event = self.ui.ties
+                    elif result == True:
+                        if index == 1:
+                            event = self.ui.wins_split
+                        else:
+                            event = self.ui.wins
+                    else:
+                        if index == 1:
+                            event = self.ui.loses_split
+                        else:
+                            event = self.ui.loses
                 
                 # Payout modifiers.
                 if result == None and dhand.is_blackjack():
