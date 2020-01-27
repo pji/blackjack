@@ -448,7 +448,24 @@ class EngineTestCase(ut.TestCase):
         mock_shuffles.assert_called()
     
     
-    # Test Engine.hit().
+    # Test Engine._hit().
+    @patch('blackjack.players.AutoPlayer.will_hit', return_value=True)
+    @patch('blackjack.game.BaseUI.hit')
+    def test__hit_no_hit_on_blackjack(self, mock_hit, _):
+        """Given a natural blackjack hand, hit should stand."""
+        exp = []
+        
+        hand = cards.Hand((
+            cards.Card(11, 3),
+            cards.Card(1, 3),
+        ))
+        player = players.AutoPlayer((hand,), name='spam')
+        g = game.Engine()
+        g._hit(player, hand)
+        act = mock_hit.mock_calls
+        
+        self.assertListEqual(exp, act)
+    
     @patch('blackjack.players.AutoPlayer.will_hit', return_value=True)
     @patch('blackjack.game.BaseUI.hit')
     def test__hit_no_hit_on_bust(self, mock_hit, _):

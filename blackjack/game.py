@@ -395,7 +395,8 @@ class Engine:
     
     def _hit(self, player, hand=None):
         """Handle the player's hitting and standing."""
-        while not hand.is_bust() and player.will_hit(hand, self):
+        while (not hand.is_bust() and not hand.is_blackjack() 
+                                  and player.will_hit(hand, self)):
             card = self._draw()
             card.flip()
             hand.append(card)
