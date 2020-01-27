@@ -43,8 +43,6 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
-* Fix chips or bet missing sometimes in EngineUI (may be related to 
-  collapse of split hand rows).
 * Allow for serialization/deserialization of game.Engine objects.
 * Save game state.
 * Restore game state.

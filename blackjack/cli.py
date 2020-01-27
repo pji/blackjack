@@ -391,10 +391,11 @@ class TableUI(game.EngineUI):
     def cleanup(self):
         """Clean up information from the previous round."""
         data = [row[:] for row in self.ctlr.data]
-        affected = ['Player', 'Bet', 'Hand', 'Event']
-        i_play, i_bet, i_hand, i_event = self._get_field_index(affected)
+        affected = ['Player', 'Chips', 'Bet', 'Hand', 'Event']
+        i_play, i_chp, i_bet, i_hand, i_event = self._get_field_index(affected)
         data = [row for row in data if isinstance(row[i_play], players.Player)]
         for row in data:
+            row[i_chp] = row[i_play].chips
             row[i_bet] = ''
             row[i_hand] = ''
             row[i_event] = ''
