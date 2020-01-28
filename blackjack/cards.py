@@ -324,10 +324,6 @@ class Deck(Pile):
     """A deck of playing cards for blackjack."""
     size = PosInt('size')
     
-    def __init__(self, cards: list = None, size: int = 1) -> None:
-        super().__init__(cards)
-        self.size = size
-    
     @classmethod
     def build(cls, num_decks: int = 1):
         """(Class method.) Create a Deck object that is populated 
@@ -346,6 +342,16 @@ class Deck(Pile):
         for i in range(d.size):
             d.extend(deepcopy(std_deck))
         return d
+    
+    def __init__(self, cards: list = None, size: int = 1) -> None:
+        super().__init__(cards)
+        self.size = size
+    
+    def _asdict(self):
+        """Return the object as a dictionary."""
+        serial = super()._asdict()
+        serial['size'] = self.size
+        return serial
     
     def draw(self):
         """Draw the top card from the deck.
@@ -372,6 +378,10 @@ class Deck(Pile):
         """
         num = randrange(60, 76)
         self.cards = self.cards[num:]
+    
+#     def serialized(self):
+#         """Return the object serialized as a JSON string."""
+#         return dumps(self._asdict())
 
 
 class Hand(Pile):
@@ -384,10 +394,10 @@ class Hand(Pile):
     """
     doubled_down = Boolean('doubled_down')
     
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, doubled_down: bool = False, **kwargs) -> None:
         """Initialize an instance of the class."""
         super().__init__(*args, **kwargs)
-        self.doubled_down = False
+        self.doubled_down = doubled_down
     
     def __format__(self, format_spec):
         value = self.__str__()
@@ -395,6 +405,12 @@ class Hand(Pile):
     
     def __str__(self):
         return ' '.join(str(card) for card in self.cards)
+    
+    def _asdict(self):
+        """Return the object serialized as a dictionary."""
+        serial = super()._asdict()
+        serial['doubled_down'] = self.doubled_down
+        return serial
     
     def append(self, item):
         cards = list(self.cards)

@@ -278,7 +278,6 @@ class PileTestCase(unittest.TestCase):
         act = cards.Pile.deserialize(s)
         
         self.assertEqual(exp, act)
-
    
     def test_cards(self):
         """An instance of Pile should be able to hold cards in its 
@@ -624,6 +623,22 @@ class DeckTestCase(unittest.TestCase):
         for card in d.cards:
             self.assertTrue(isinstance(card, expected_class))
     
+    def test_deserialize(self):
+        """When given a Deck serialized as a JSON string, deserialize() 
+        should return the deserialized Deck object.
+        """
+        cardlist = [
+            cards.Card(11, 0, True),
+            cards.Card(12, 0, True),
+            cards.Card(13, 0, True),
+        ]
+        exp = cards.Pile(cardlist)
+        
+        s = exp.serialize()
+        act = cards.Pile.deserialize(s)
+        
+        self.assertEqual(exp, act)
+    
     def test_build_cards_face_down(self):
         """Card objects should be face down in the deck."""
         expected = cards.DOWN
@@ -726,6 +741,31 @@ class DeckTestCase(unittest.TestCase):
         length = lengths.pop()
         comp_lengths = [length == n for n in lengths]
         self.assertFalse(all(comp_lengths))
+    
+    def test_serialize(self):
+        """When called, serialize() should return the Deck object 
+        serialized as a JSON string.
+        """
+        exp = json.dumps({
+            'class': 'Deck',
+            '_iter_index': 0,
+            'cards': [
+                '["Card", 11, "clubs", true]',
+                '["Card", 12, "clubs", true]',
+                '["Card", 13, "clubs", true]',
+            ],
+            'size': 1
+        })
+        
+        cardlist = [
+            cards.Card(11, 0, True),
+            cards.Card(12, 0, True),
+            cards.Card(13, 0, True),
+        ]
+        deck = cards.Deck(cardlist)
+        act = deck.serialize()
+        
+        self.assertEqual(exp, act)
 
 
 class HandTestCase(unittest.TestCase):
@@ -785,6 +825,22 @@ class HandTestCase(unittest.TestCase):
         actual = h.can_split()
         
         self.assertFalse(actual)
+    
+    def test_deserialize(self):
+        """When given a Hand object serialized as a JSON string, 
+        deserialize() should return the deserialized object.
+        """
+        cardlist = [
+            cards.Card(11, 0, True),
+            cards.Card(12, 0, True),
+            cards.Card(13, 0, True),
+        ]
+        exp = cards.Hand(cardlist)
+        
+        s = exp.serialize()
+        act = cards.Hand.deserialize(s)
+        
+        self.assertEqual(exp, act)
     
     def test_doubled_down_initialized(self):
         """Hand objects should have a doubled_down attribute that 
@@ -897,6 +953,31 @@ class HandTestCase(unittest.TestCase):
         actual = h.score()
         
         self.assertEqual(expected, actual)
+    
+    def test_serialize(self):
+        """When called, serialize() should return the object 
+        serialized as a JSON string.
+        """
+        exp = json.dumps({
+            'class': 'Hand',
+            '_iter_index': 0,
+            'cards': [
+                '["Card", 11, "clubs", true]',
+                '["Card", 12, "clubs", true]',
+                '["Card", 13, "clubs", true]',
+            ],
+            'doubled_down': False,
+        })
+        
+        cardlist = [
+            cards.Card(11, 0, True),
+            cards.Card(12, 0, True),
+            cards.Card(13, 0, True),
+        ]
+        hand = cards.Hand(cardlist)
+        act = hand.serialize()
+        
+        self.assertEqual(exp, act)
     
     def test_split_valid(self):
         """If the hand can be split, split() should return two Hand 
