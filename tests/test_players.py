@@ -10,6 +10,7 @@ This module contains the unit tests for the blackjack.players module.
 from copy import copy
 from functools import partial
 import inspect
+import json
 from types import MethodType
 import unittest as ut
 from unittest.mock import Mock, patch
@@ -33,100 +34,25 @@ class PlayerTestCase(ut.TestCase):
         
         self.assertTrue(issubclass(actual, expected))
     
-    def test_hands_initiated_with_no_Hand(self):
-        """The hands attribute should be an empty tuple if a Hand 
-        object is not passed during initialization.
-        """
-        expected = ()
-        
-        class Spam(players.Player):
-            pass
-        obj = Spam()
-        actual = obj.hands
-        
-        self.assertEqual(expected, actual)
-    
-    def test_name(self):
-        """If passed a name, the name attribute should be initialized 
-        with that name.
-        """
-        expected = 'Spam'
-        
-        p = players.Player(name=expected)
-        actual = p.name
-        
-        self.assertEqual(expected, actual)
-    
-    def test_chips(self):
-        """If passed a number of chips, that number should be stored 
-        in the chips attribute.
-        """
-        expected = 200
-        
-        p = players.Player(chips=expected)
-        actual = p.chips
-        
-        self.assertEqual(expected, actual)
-    
-    def test_insured(self):
-        """Player objects should initialize the insured attribute to 
-        zero.
-        """
-        expected = 0
-        player = players.Player()
-        actual = player.insured
-        self.assertEqual(expected, actual)
-    
-    def test___str__(self):
-        """__str__() should return the name of the Player object."""
-        expected = 'Spam'
-        
-        p = players.Player(name=expected)
-        actual = p.__str__()
-        
-        self.assertEqual(expected, actual)
-    
-    def test___format__(self):
-        """__format__() should return as though it was called on the 
-        value of the name attribute.
-        """
-        tmp = '{:<6}'
-        expected = tmp.format('spam')
-        
-        p = players.Player(name='spam')
-        actual = tmp.format(p)
-        
-        self.assertEqual(expected, actual)
-    
-    def test_asdict(self):
-        """When called, asdict() should serialize the object to a 
-        dictionary.
+    def test_deserialize(self):
+        """When given a Player serialized as a JSON string, 
+        deserialize() should return the deserialized instance 
+        of Player.
         """
         hands = (cards.Hand((
                 cards.Card(11, 3),
                 cards.Card(2, 1),
             )),)
-        exp = {
-            'class': 'Player',
-            'chips': 200,
-            'hands': hands,
-            'insured': 0,
-            'name': 'spam',
-            'will_buyin': 'will_buyin_always',
-            'will_double_down': 'will_double_down_always',
-            'will_hit': 'will_hit_dealer',
-            'will_insure': 'will_insure_always',
-            'will_split': 'will_split_always',
-        }
+        exp = players.Player(hands, 'spam', 200)
+        exp.will_buyin = MethodType(players.will_buyin_always, exp)
+        exp.will_double_down = MethodType(players.will_double_down_always, 
+                                             exp)
+        exp.will_hit = MethodType(players.will_hit_dealer, exp)
+        exp.will_insure = MethodType(players.will_insure_always, exp)
+        exp.will_split = MethodType(players.will_split_always, exp)
         
-        player = players.Player(hands, 'spam', 200)
-        player.will_buyin = MethodType(players.will_buyin_always, player)
-        player.will_double_down = MethodType(players.will_double_down_always, 
-                                             player)
-        player.will_hit = MethodType(players.will_hit_dealer, player)
-        player.will_insure = MethodType(players.will_insure_always, player)
-        player.will_split = MethodType(players.will_split_always, player)
-        act = player.asdict()
+        serial = exp.serialize()
+        act = players.Player.deserialize(serial)
         
         self.assertEqual(exp, act)
     
@@ -220,6 +146,136 @@ class PlayerTestCase(ut.TestCase):
             
             with self.assertRaises(exp):
                 act = players.Player.fromdict(test_dict)
+    
+    def test_hands_initiated_with_no_Hand(self):
+        """The hands attribute should be an empty tuple if a Hand 
+        object is not passed during initialization.
+        """
+        expected = ()
+        
+        class Spam(players.Player):
+            pass
+        obj = Spam()
+        actual = obj.hands
+        
+        self.assertEqual(expected, actual)
+    
+    def test_name(self):
+        """If passed a name, the name attribute should be initialized 
+        with that name.
+        """
+        expected = 'Spam'
+        
+        p = players.Player(name=expected)
+        actual = p.name
+        
+        self.assertEqual(expected, actual)
+    
+    def test_chips(self):
+        """If passed a number of chips, that number should be stored 
+        in the chips attribute.
+        """
+        expected = 200
+        
+        p = players.Player(chips=expected)
+        actual = p.chips
+        
+        self.assertEqual(expected, actual)
+    
+    def test_insured(self):
+        """Player objects should initialize the insured attribute to 
+        zero.
+        """
+        expected = 0
+        player = players.Player()
+        actual = player.insured
+        self.assertEqual(expected, actual)
+    
+    def test___str__(self):
+        """__str__() should return the name of the Player object."""
+        expected = 'Spam'
+        
+        p = players.Player(name=expected)
+        actual = p.__str__()
+        
+        self.assertEqual(expected, actual)
+    
+    def test___format__(self):
+        """__format__() should return as though it was called on the 
+        value of the name attribute.
+        """
+        tmp = '{:<6}'
+        expected = tmp.format('spam')
+        
+        p = players.Player(name='spam')
+        actual = tmp.format(p)
+        
+        self.assertEqual(expected, actual)
+    
+    def test__asdict(self):
+        """When called, asdict() should serialize the object to a 
+        dictionary.
+        """
+        hands = (cards.Hand((
+                cards.Card(11, 3),
+                cards.Card(2, 1),
+            )),)
+        exp = {
+            'class': 'Player',
+            'chips': 200,
+            'hands': hands,
+            'insured': 0,
+            'name': 'spam',
+            'will_buyin': 'will_buyin_always',
+            'will_double_down': 'will_double_down_always',
+            'will_hit': 'will_hit_dealer',
+            'will_insure': 'will_insure_always',
+            'will_split': 'will_split_always',
+        }
+        
+        player = players.Player(hands, 'spam', 200)
+        player.will_buyin = MethodType(players.will_buyin_always, player)
+        player.will_double_down = MethodType(players.will_double_down_always, 
+                                             player)
+        player.will_hit = MethodType(players.will_hit_dealer, player)
+        player.will_insure = MethodType(players.will_insure_always, player)
+        player.will_split = MethodType(players.will_split_always, player)
+        act = player._asdict()
+        
+        self.assertEqual(exp, act)
+    
+    def test_serialize(self):
+        """When called, serialize() should return the object 
+        serialized as a JSON string.
+        """
+        hands = (cards.Hand((
+                cards.Card(11, 3),
+                cards.Card(2, 1),
+            )),)
+        exp = json.dumps({
+            'class': 'Player',
+            'chips': 200,
+            'hands': (hands[0].serialize(),),
+            'insured': 0,
+            'name': 'spam',
+            'will_buyin': 'will_buyin_always',
+            'will_double_down': 'will_double_down_always',
+            'will_hit': 'will_hit_dealer',
+            'will_insure': 'will_insure_always',
+            'will_split': 'will_split_always',
+        })
+        
+        player = players.Player(hands, 'spam', 200)
+        player.will_buyin = MethodType(players.will_buyin_always, player)
+        player.will_double_down = MethodType(players.will_double_down_always, 
+                                             player)
+        player.will_hit = MethodType(players.will_hit_dealer, player)
+        player.will_insure = MethodType(players.will_insure_always, player)
+        player.will_split = MethodType(players.will_split_always, player)
+        act = player.serialize()
+        
+        self.assertEqual(exp, act)
+
 
 class will_hit_dealerTestCase(ut.TestCase):
     def test_exists(self):

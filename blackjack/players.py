@@ -9,6 +9,7 @@ players, including the dealer.
 :license: MIT, see LICENSE for more details.
 """
 from functools import partial
+from json import dumps, loads
 from random import choice
 from typing import Callable
 from types import MethodType
@@ -349,6 +350,15 @@ class Player:
     insured = PosInt('insured')
     
     @classmethod
+    def deserialize(cls, s):
+        """When called with a Player object serialized as a JSON 
+        string, return the deserialized Player object.
+        """
+        serial = loads(s)
+        serial['hands'] = [Hand.deserialize(hand) for hand in serial['hands']]
+        return cls.fromdict(serial)
+    
+    @classmethod
     def fromdict(cls, dict_:dict) -> 'Player':
         """Deserialize an instance of Player from a dictionary.
         
@@ -423,7 +433,7 @@ class Player:
     def __format__(self, format_spec):
         return self.name.__format__(format_spec)
     
-    def asdict(self):
+    def _asdict(self):
         """Return a dictionary that is a representation of the 
         class.
         """
@@ -439,6 +449,12 @@ class Player:
             'will_insure': self.will_insure.__name__,
             'will_split': self.will_split.__name__,
         }
+    
+    def serialize(self):
+        """Return the object serialized as a JSON string."""
+        serial = self._asdict()
+        serial['hands'] = [hand.serialize() for hand in serial['hands']]
+        return dumps(serial)
     
     def will_hit(self, hand:Hand, the_game) -> bool:
         raise NotImplementedError
