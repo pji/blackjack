@@ -11,6 +11,7 @@ import collections.abc as col
 from copy import deepcopy
 import inspect
 from itertools import zip_longest
+import json
 import unittest
 from unittest.mock import call, Mock
 
@@ -29,7 +30,16 @@ class CardTestCase(unittest.TestCase):
         actual = cards.Card()
         self.assertTrue(isinstance(actual, expected))
     
-    def test_rank(self):
+    def test_deserialize(self):
+        """When given a Card object serialized as a json string, 
+        Card.deserialize() should return the deserialized Card object. 
+        """
+        exp = cards.Card(11, 0, True)
+        s = '["Card", 11, "clubs", true]'
+        act = cards.Card.deserialize(s)
+        self.assertEqual(exp, act)
+    
+    def test___init__rank(self):
         """Card objects can be initialized with a suit value."""
         expected = 1
         
@@ -38,13 +48,13 @@ class CardTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_invalid_rank(self):
+    def test___init__invalid_rank(self):
         """Card ranks must be between 1 and 13."""
         expected = ValueError
         with self.assertRaises(expected):
             _ = cards.Card(0)
     
-    def test_suit(self):
+    def test___init__suit(self):
         """Card objects can be initialized with a suit value."""
         expected = 'spades'
         
@@ -53,13 +63,13 @@ class CardTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_invalid_suit(self):
+    def test___init__invalid_suit(self):
         """Card suits must be clubs, diamonds, hearts, or spades."""
         expected = ValueError
         with self.assertRaises(expected):
             _ = cards.Card(5, 'spam')
     
-    def test_facing(self):
+    def test___init__facing(self):
         """Card objects can be initiated with a facing value."""
         expected = True
         
@@ -68,7 +78,7 @@ class CardTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_invalid_facing(self):
+    def test___init__invalid_facing(self):
         """Card facing must be a bool."""
         expected = ValueError
         with self.assertRaises(expected):
@@ -92,7 +102,18 @@ class CardTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_equality_test(self):
+    def test___str__print_should_hide_info_when_face_down(self):
+        """When facing is down, __str__() should not reveal the suit 
+        or rank of the card.
+        """
+        expected = '\u2500\u2500'
+        
+        c = cards.Card(11, 3, cards.DOWN)
+        actual = c.__str__()
+        
+        self.assertEqual(expected, actual)
+    
+    def test___eq__equality_test(self):
         """Card objects should be compared for equality based on their 
         rank and suit.
         """
@@ -107,7 +128,7 @@ class CardTestCase(unittest.TestCase):
         self.assertFalse(c1 == c4)
         self.assertFalse(c1 == c5)
     
-    def test_equality_test_not_implemented(self):
+    def test___eq__equality_test_not_implemented(self):
         """Card objects should return not implemented when compared to 
         objects that aren't Card objets.
         """
@@ -119,7 +140,7 @@ class CardTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_nonequality_test(self):
+    def test___ne__nonequality_test(self):
         """Card objects should compare for non equality based on their 
         rank and suit.
         """
@@ -134,7 +155,7 @@ class CardTestCase(unittest.TestCase):
         self.assertTrue(c1 != c4)
         self.assertTrue(c1 != c5)
     
-    def test_less_than(self):
+    def test___lt__less_than(self):
         """If given another Card object, __lt__() should return True 
         if the Card object is less than the other Card object, and 
         False is the Card object is not.
@@ -156,7 +177,7 @@ class CardTestCase(unittest.TestCase):
         self.assertFalse(c1 < c7)
         self.assertTrue(c1 < c8)
     
-    def test_less_than_not_implemented(self):
+    def test___lt__less_than_not_implemented(self):
         """If given a value that isn't a Card object, __lt__() should 
         return NotImplemented.
         """
@@ -167,6 +188,24 @@ class CardTestCase(unittest.TestCase):
         actual = c1.__lt__(c2)
         
         self.assertEqual(expected, actual)
+    
+    def test__astuple(self):
+        """When called, astuple() should return the card's attributes 
+        as a tuple for serialization.
+        """
+        exp = ('Card', 11, 'clubs', True)
+        card = cards.Card(*exp[1:])
+        act = card._astuple()
+        self.assertEqual(exp, act)
+    
+    def test__astuple_deserialize(self):
+        """The result of astuple() should be able to be used to create 
+        a new instance of cards.Card with the same attributes.
+        """
+        exp = cards.Card(11, 3, True)
+        serialized = exp._astuple()
+        act = cards.Card(*serialized[1:])
+        self.assertEqual(exp, act)
     
     def test_flip_up(self):
         """When a Card object is face down, flip() should switch it to 
@@ -192,33 +231,13 @@ class CardTestCase(unittest.TestCase):
         
         self.assertEqual(expected, actual)
     
-    def test_print_should_hide_info_when_face_down(self):
-        """When facing is down, __str__() should not reveal the suit 
-        or rank of the card.
+    def test_serialize(self):
+        """When called, serialize() returns a version of the object 
+        serialized to a json string.
         """
-        expected = '\u2500\u2500'
-        
-        c = cards.Card(11, 3, cards.DOWN)
-        actual = c.__str__()
-        
-        self.assertEqual(expected, actual)
-    
-    def test_astuple(self):
-        """When called, astuple() should return the card's attributes 
-        as a tuple for serialization.
-        """
-        exp = (11, 'clubs', True)
-        card = cards.Card(*exp)
-        act = card.astuple()
-        self.assertEqual(exp, act)
-    
-    def test_astuple_deserialize(self):
-        """The result of astuple() should be able to be used to create 
-        a new instance of cards.Card with the same attributes.
-        """
-        exp = cards.Card(11, 3, True)
-        serialized = exp.astuple()
-        act = cards.Card(*serialized)
+        exp = '["Card", 11, "clubs", true]'
+        card = cards.Card(11, 0, True)
+        act = card.serialize()
         self.assertEqual(exp, act)
 
 
@@ -243,6 +262,24 @@ class PileTestCase(unittest.TestCase):
         actual = cards.Pile()
         self.assertTrue(isinstance(actual, expected))
     
+    def test_class_deserialize(self):
+        """When given a Pile object serialized to a json string, 
+        Pile.deserialize() should deserialize that object and 
+        return it.
+        """
+        cardlist = [
+            cards.Card(11, 0, True),
+            cards.Card(12, 0, True),
+            cards.Card(13, 0, True),
+        ]
+        exp = cards.Pile(cardlist)
+        
+        s = exp.serialize()
+        act = cards.Pile.deserialize(s)
+        
+        self.assertEqual(exp, act)
+
+   
     def test_cards(self):
         """An instance of Pile should be able to hold cards in its 
         cards attribute.
@@ -525,6 +562,30 @@ class PileTestCase(unittest.TestCase):
         actual = d.cards[1]
 
         self.assertEqual(expected, actual)
+    
+    def test_serialize(self):
+        """When called, serialize() should return the Pile object 
+        serialized to a JSON string.
+        """
+        exp = json.dumps({
+            'class': 'Pile',
+            '_iter_index': 0,
+            'cards': [
+                '["Card", 11, "clubs", true]',
+                '["Card", 12, "clubs", true]',
+                '["Card", 13, "clubs", true]',
+            ]
+        })
+        
+        cardlist = [
+            cards.Card(11, 0, True),
+            cards.Card(12, 0, True),
+            cards.Card(13, 0, True),
+        ]
+        pile = cards.Pile(cardlist)
+        act = pile.serialize()
+        
+        self.assertEqual(exp, act)
 
 
 class DeckTestCase(unittest.TestCase):

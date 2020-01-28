@@ -12,6 +12,7 @@ from collections import OrderedDict
 from collections.abc import MutableSequence
 from copy import copy, deepcopy
 from itertools import product
+from json import dumps, loads
 from random import randrange, shuffle
 from typing import Sequence
 
@@ -119,6 +120,21 @@ class Card:
     suit = Suit('suit')
     facing = Boolean('facing')
     
+    @classmethod
+    def deserialize(cls, s:str) -> 'Card':
+        """Deserialize an instance of the class.
+        
+        :param s: An object serialized as a json string.
+        :return: An instance of the class.
+        :type: Card
+        """
+        args = loads(s)
+        if args[0] == cls.__name__:
+            return cls(*args[1:])
+        else:
+            msg = 'Serialized object was not a Card object.'
+            raise TypeError(msg)
+    
     def __init__(self, rank: int = 11, suit: str = 'spades',
                  facing: bool = UP) -> None:
         """Initialize an instance of the class.
@@ -178,13 +194,17 @@ class Card:
                 return True
         return False
     
-    def astuple(self) -> tuple:
+    def _astuple(self) -> tuple:
         """Return the card's attributes for serialization."""
-        return (self.rank, self.suit, self.facing)
+        return (self.__class__.__name__, self.rank, self.suit, self.facing)
     
     def flip(self):
         """Flip the facing of the card."""
         self.facing = not self.facing
+    
+    def serialize(self) -> str:
+        """Serialize the object as JSON."""
+        return dumps(self._astuple())
 
 
 class Pile(MutableSequence):
@@ -192,7 +212,25 @@ class Pile(MutableSequence):
     _iter_index = Integer_('_iter_index')
     cards = CardTuple('cards')
     
-    def __init__(self, cards: list = None) -> None:
+    @classmethod
+    def deserialize(cls, s:str) -> 'Pile':
+        """Deserialize an instance of the class.
+        
+        :param s: A Pile object serialized as a json string.
+        :return: The deserialized object.
+        :rtype: Pile
+        """
+        serial = loads(s)
+        if serial['class'] == cls.__name__:
+            kwargs = {key: serial[key] for key in serial if key != 'class'}
+            kwargs['cards'] = [Card.deserialize(card) 
+                               for card in kwargs['cards']]
+            return cls(**kwargs)
+        else:
+            msg = 'Serialized object was not a Pile object.'
+            raise TypeError(msg)
+    
+    def __init__(self, cards: list = None, _iter_index: int = 0) -> None:
         """Initialize and instance of the class.
         
         :param cards: (Optional.) A list containing the cards held by 
@@ -200,7 +238,7 @@ class Pile(MutableSequence):
         :return: None
         :rtype: None
         """
-        self._iter_index = 0
+        self._iter_index = _iter_index
         if not cards:
             cards = ()
         self.cards = cards
@@ -259,6 +297,14 @@ class Pile(MutableSequence):
         self.cards = cards
     
     #Utility methods.
+    def _asdict(self) -> dict:
+        """Return a version of the object serialized as a dictionary."""
+        return {
+            'class': self.__class__.__name__,
+            '_iter_index': self._iter_index,
+            'cards': [card.serialize() for card in self.cards]
+        }
+    
     def copy(self):
         """Return a copy of the Deck object."""
         return copy(self)
@@ -268,6 +314,10 @@ class Pile(MutableSequence):
         cards = list(self.cards)
         cards.extend(iterable)
         self.cards = tuple(cards)
+    
+    def serialize(self) -> str:
+        """Return the object serialized as a JSON string."""
+        return dumps(self._asdict())
 
 
 class Deck(Pile):
