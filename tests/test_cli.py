@@ -77,6 +77,39 @@ class TableUITestCase(ut.TestCase):
         self.assertTrue(isinstance(act, exp))
     
     @patch('blackjack.termui.main')
+    def test_end(self, mock_main):
+        """end() should terminate UI loop gracefully."""
+        exp = call().close()
+        
+        ui = cli.TableUI()
+        ui.start()
+        ui.end()
+        act = mock_main.mock_calls[-1]
+        
+        self.assertEqual(exp, act)
+    
+    @patch('blackjack.termui.main')
+    def test_reset(self, mock_main):
+        """When called, reset() should terminate the existing 
+        controller, create a new one, and prime it.
+        """
+        ui = cli.TableUI()
+        ui.start()
+        ui.reset()
+        reset_ctlr = ui.ctlr
+        exp = [
+            call().close(),
+            call(reset_ctlr, False),
+            call().__next__(),
+            call().send(('draw',)),
+        ]
+        
+        act = mock_main.mock_calls[-4:]
+        ui.end()
+        
+        self.assertListEqual(exp, act)
+    
+    @patch('blackjack.termui.main')
     def test_start(self, mock_main):
         """start() should kick off the main loop of the UI, set it 
         as the loop attribute, and prime it.
@@ -91,18 +124,6 @@ class TableUITestCase(ut.TestCase):
         
         ui.start()
         act = mock_main.mock_calls
-        
-        self.assertEqual(exp, act)
-    
-    @patch('blackjack.termui.main')
-    def test_end(self, mock_main):
-        """end() should terminate UI loop gracefully."""
-        exp = call().close()
-        
-        ui = cli.TableUI()
-        ui.start()
-        ui.end()
-        act = mock_main.mock_calls[-1]
         
         self.assertEqual(exp, act)
     

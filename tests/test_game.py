@@ -11,6 +11,7 @@ from copy import copy, deepcopy
 from functools import partial
 import inspect
 from itertools import zip_longest
+import json
 import unittest as ut
 from unittest.mock import Mock, call, patch
 
@@ -344,6 +345,52 @@ class EngineTestCase(ut.TestCase):
         
         self.assertEqual(expected, actual)
     
+    
+    # Test Engine._deserialize().
+    def test__deserialize(self):
+        """When given a serialized Engine object, _deserialize() 
+        should change the attributes of the current Engine object 
+        to match the serialized object's attributes.
+        """
+        deck2 = cards.Deck([
+            cards.Card(11, 3, True),
+        ])
+        dealer2 = players.Dealer(name='ham')
+        exp_before = json.dumps({
+            'class': 'Engine',
+            'deck': deck2.serialize(),
+            'dealer': dealer2.serialize(),
+            'playerlist': [],
+            'buyin': 0,        
+        })
+        
+        deck = cards.Deck([
+            cards.Card(11, 0, True),
+            cards.Card(11, 1, True),
+            cards.Card(11, 2, True),
+        ])
+        dealer = players.Dealer(name='spam')
+        player1 = players.AutoPlayer(name='eggs')
+        player2 = players.AutoPlayer(name='bacon')
+        exp_after = json.dumps({
+            'class': 'Engine',
+            'deck': deck.serialize(),
+            'dealer': dealer.serialize(),
+            'playerlist': [
+                player1.serialize(),
+                player2.serialize(),
+            ],
+            'buyin': 200,
+        })
+        
+        g = game.Engine(deck2, dealer2, (), None, 0)
+        act_before = g.serialize()
+        g._deserialize(exp_after)
+        act_after = g.serialize()
+        
+        self.assertEqual(exp_before, act_before)
+        self.assertEqual(exp_after, act_after)
+        
     
     # Test Engine._double_down().
     def test__double_down(self):
@@ -1489,6 +1536,36 @@ class EngineTestCase(ut.TestCase):
         
         self.assertEqual(expected_hand, actual_hand)
         self.assertEqual(expected_insured, actual_insured)        
+    
+    
+    # Test Engine.serialize().
+    def test_serialize(self):
+        """When called, serialize should return the object 
+        serialized as a JSON string.
+        """
+        deck = cards.Deck([
+            cards.Card(11, 0, True),
+            cards.Card(11, 1, True),
+            cards.Card(11, 2, True),
+        ])
+        dealer = players.Dealer(name='spam')
+        player1 = players.AutoPlayer(name='eggs')
+        player2 = players.AutoPlayer(name='bacon')
+        exp = json.dumps({
+            'class': 'Engine',
+            'deck': deck.serialize(),
+            'dealer': dealer.serialize(),
+            'playerlist': [
+                player1.serialize(),
+                player2.serialize(),
+            ],
+            'buyin': 200,
+        })
+        
+        g = game.Engine(deck, dealer, (player1, player2,), None, 200)
+        act = g.serialize()
+        
+        self.assertEqual(exp, act)
     
     
     # Test Engine.start().

@@ -8,12 +8,13 @@ The module contains the main game loop for blackjack.
 :license: MIT, see LICENSE for more details.
 """
 from abc import ABC, abstractmethod
+from json import dumps, loads
 from typing import Union
 
 from blackjack.cards import Deck, DeckObj, DOWN, Hand
 from blackjack.model import Integer_, IsYes, valfactory
-from blackjack.players import (Dealer, Player, make_player, ValidPlayers, 
-                               ValidPlayer)
+from blackjack.players import (Dealer, Player, make_player, restore_player, 
+                               ValidPlayers, ValidPlayer)
 
 
 # Internal utility functions.
@@ -30,6 +31,10 @@ class EngineUI(ABC):
     @abstractmethod
     def end(self):
         """End the UI."""
+    
+    @abstractmethod
+    def reset(self):
+        """Restart the UI."""
     
     @abstractmethod
     def start(self):
@@ -143,6 +148,10 @@ class BaseUI(EngineUI):
     # General operation methods.
     def end(self):
         """End the UI."""
+        pass
+    
+    def reset(self):
+        """Reset the UI."""
         pass
     
     def start(self):
@@ -334,6 +343,16 @@ class Engine:
         playerlist[index] = player
         self.playerlist = playerlist
     
+    def _asdict(self):
+        """Return the object serialized as a dictionary."""
+        return {
+            'class': self.__class__.__name__,
+            'deck': self.deck,
+            'dealer': self.dealer,
+            'playerlist': self.playerlist,
+            'buyin': self.buyin,
+        }
+    
     def _build_hand(self):
         """create the initial hand and deal a card into it."""
         card = self._draw()
@@ -365,6 +384,18 @@ class Engine:
         if p_score < d_score:
             return False
         return None
+    
+    def _deserialize(self, s):
+        """Given a serialized Engine object, set this object's 
+        attributes to match the serialized object's.
+        """
+        serial = loads(s)
+        if serial['class'] == self.__class__.__name__:
+            self.deck = Deck.deserialize(serial['deck'])
+            self.dealer = Dealer.deserialize(serial['dealer'])
+            self.playerlist = [restore_player(player) 
+                               for player in serial['playerlist']]
+            self.buyin = serial['buyin']
     
     def _double_down(self, player: Player, hand: Hand) -> None:
         """Handle the double down decision on a hand.
@@ -574,6 +605,15 @@ class Engine:
                 card.flip()
                 self.ui.flip(self.dealer, hand)
         self._hit(self.dealer, self.dealer.hands[0])
+    
+    def serialize(self):
+        """Return the object serialized as a JSON string."""
+        serial = self._asdict()
+        serial['deck'] = serial['deck'].serialize()
+        serial['dealer'] = serial['dealer'].serialize()
+        serial['playerlist'] = [player.serialize() 
+                                for player in serial['playerlist']]
+        return dumps(serial)
     
     def start(self):
         """Start a round of blackjack."""

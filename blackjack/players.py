@@ -485,6 +485,22 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
     return type(name, (Player,), attrs)
 
 
+def restore_player(s: str) -> Player:
+    """Given a serialized player object, restore it as the proper 
+    class.
+    """
+    # There has got to be a better way to do this.
+    classes = {
+        'Player': Player,
+        'Dealer': Dealer,
+        'AutoPlayer': AutoPlayer,
+        'BetterPlayer': BetterPlayer,
+        'UserPlayer': UserPlayer,
+    }
+    serial = loads(s)
+    cls = classes[serial['class']]
+    return cls.deserialize(s)
+
 def make_player(chips=200, bet=None) -> Player:
     """Make a random player for a blackjack game."""
     def make_name() -> str:

@@ -43,7 +43,6 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
-* Allow for serialization/deserialization of game.Engine objects.
 * Save game state.
 * Restore game state.
 * Allow for insurance less than half of initial bet.

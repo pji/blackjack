@@ -343,7 +343,8 @@ class Deck(Pile):
             d.extend(deepcopy(std_deck))
         return d
     
-    def __init__(self, cards: list = None, size: int = 1) -> None:
+    def __init__(self, cards: list = None, size: int = 1, 
+                 _iter_index: int = 0) -> None:
         super().__init__(cards)
         self.size = size
     

@@ -763,3 +763,32 @@ What attributes does the Table object need:
 * terminal
 * prompt
 
+
+Serializing UI
+--------------
+Serializing the game engine to save state raises a question, should 
+the UI be serialized? I think the answer to this boil down to a 
+separate question: what is the UI around game state restoration? 
+
+This is a bit awkward since so far there isn't a concept of having a 
+UI without an Engine object. I have to have a running Engine object to 
+interact with the game at all, so I will need to have an Engine object 
+before I prompt to load the saved game. That means once I have loaded 
+the game state, I would have two Engines: the one that ran the restore 
+dialog and the one that was restored.
+
+I think, then, the solution to this is to not have the restore create 
+a new game Engine. It uses the existing one with the existing UI. 
+Rather than creating a new object, it reconfigures the existing Engine 
+object and resets the UI. This likely has the side effect that I can't 
+restore the game in the middle of a hand. That's probably fine. I 
+wasn't looking to save state at points other than the end of hands 
+anyway.
+
+The upshot of all of this is that I don't need to worry about 
+serializing UI object. I do need to make sure, though, that they 
+can be reset after a game object is restored.
+
+Another side effect of this that that the Engine object probably 
+shouldn't have a deserialize() class method. It should be on the 
+object, and I think I'll call it restore.

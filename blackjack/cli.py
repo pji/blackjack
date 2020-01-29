@@ -236,6 +236,7 @@ class TableUI(game.EngineUI):
         if not ctlr:
             ctlr = self._make_ctlr()
         self.ctlr = ctlr
+        self.is_interactive = False
         self.loop = None
     
     def _make_ctlr(self):
@@ -253,8 +254,15 @@ class TableUI(game.EngineUI):
         """End the UI loop gracefully."""
         self.loop.close()
     
+    def reset(self):
+        """Reset the UI."""
+        self.end()
+        self.ctrl = self._make_ctlr()
+        self.start()
+    
     def start(self, is_interactive=False):
         """Start the UI."""
+        self.is_interactive = is_interactive
         self.loop = termui.main(self.ctlr, is_interactive)
         next(self.loop)
         self.loop.send(('draw',))
