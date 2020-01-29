@@ -1538,6 +1538,93 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(expected_insured, actual_insured)        
     
     
+    # Test Engine,restore().
+    @patch('blackjack.game.ValidUI.validate')
+    @patch('blackjack.game.BaseUI')
+    @patch('blackjack.game.open')
+    def test_restore(self, mock_open, mock_ui, mock_valid):
+        """When called, restore() should load the serialized instance 
+        of Engine from file, set the current object's attributes to 
+        those of the serialized object, and reset the UI.
+        """
+        deck = cards.Deck([
+            cards.Card(11, 0, True),
+            cards.Card(11, 1, True),
+            cards.Card(11, 2, True),
+        ])
+        dealer = players.Dealer(name='spam')
+        player1 = players.AutoPlayer(name='eggs')
+        player2 = players.AutoPlayer(name='bacon')
+        exp_attrs = json.dumps({
+            'class': 'Engine',
+            'deck': deck.serialize(),
+            'dealer': dealer.serialize(),
+            'playerlist': [
+                player1.serialize(),
+                player2.serialize(),
+            ],
+            'buyin': 200,
+        })
+        mock_open().__enter__().read.return_value = exp_attrs
+        
+        exp_open = [
+            call(),
+            call().__enter__(),
+            call('save.json', 'r'),
+            call().__enter__(),
+            call().__enter__().read(),
+            call().__exit__(None, None, None),
+        ]
+        exp_ui = [
+            call(),
+            call(),
+            call().reset(),
+            call().joins(players.Dealer(name='spam')),
+            call().joins(players.AutoPlayer(name='eggs')),
+            call().joins(players.AutoPlayer(name='bacon')),
+        ]
+        
+        mock_valid.return_value = game.BaseUI()
+        g = game.Engine()
+        g.restore()
+        act_open = mock_open.mock_calls
+        act_ui = mock_ui.mock_calls
+        act_attrs = g.serialize()
+        
+        self.assertListEqual(exp_open, act_open)
+        self.assertListEqual(exp_ui, act_ui)
+        self.assertEqual(exp_attrs, act_attrs)
+    
+    
+    # Test Engine.save().
+    @patch('blackjack.game.open')
+    def test_save(self, mock_open):
+        """When called, save() should serialize the Engine object and 
+        write it to a file.
+        """
+        deck = cards.Deck([
+            cards.Card(11, 0, True),
+            cards.Card(11, 1, True),
+            cards.Card(11, 2, True),
+        ])
+        dealer = players.Dealer(name='spam')
+        player1 = players.AutoPlayer(name='eggs')
+        player2 = players.AutoPlayer(name='bacon')
+        g = game.Engine(deck, dealer, (player1, player2,), None, 200)
+        serial = g.serialize()
+        exp = [
+            call('save.json', 'w'),
+            call().__enter__(),
+            call().__enter__().write(serial),
+            call().__exit__(None, None, None),
+        ]        
+        
+        g.save()
+        act = mock_open.mock_calls
+        
+        self.assertListEqual(exp, act)
+    
+    
     # Test Engine.serialize().
     def test_serialize(self):
         """When called, serialize should return the object 

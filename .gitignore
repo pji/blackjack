@@ -1,4 +1,5 @@
 # Ignore compiled files.
+*.json
+*.log
 *.pyc
 *__pycache__*
-*.log

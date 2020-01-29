@@ -606,6 +606,20 @@ class Engine:
                 self.ui.flip(self.dealer, hand)
         self._hit(self.dealer, self.dealer.hands[0])
     
+    def restore(self, fname: str = 'save.json') -> None:
+        """Restore the state of a saved Engine object."""
+        with open(fname, 'r') as f:
+            s = f.read()
+        self._deserialize(s)
+        self.ui.reset()
+        self.new_game()
+    
+    def save(self, fname: str = 'save.json') -> None:
+        """Save the state of the current game."""
+        serial = self.serialize()
+        with open(fname, 'w') as f:
+            f.write(serial)
+    
     def serialize(self):
         """Return the object serialized as a JSON string."""
         serial = self._asdict()

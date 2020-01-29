@@ -257,8 +257,8 @@ class TableUI(game.EngineUI):
     def reset(self):
         """Reset the UI."""
         self.end()
-        self.ctrl = self._make_ctlr()
-        self.start()
+        self.ctlr = self._make_ctlr()
+        self.start(self.is_interactive)
     
     def start(self, is_interactive=False):
         """Start the UI."""
@@ -640,11 +640,13 @@ def dui():
                 play = ui.nextgame_prompt().value
                 if play:
                     ui.cleanup()
+                    g.restore()
     except Exception as ex:
         with open('exception.log', 'w') as fh:
             fh.write(str(ex.args))
             tb_str = ''.join(tb.format_tb(ex.__traceback__))
             fh.write(tb_str)
+        ui.end()
         raise ex
 
 
