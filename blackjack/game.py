@@ -632,7 +632,7 @@ class Engine:
     def start(self):
         """Start a round of blackjack."""
         for player in self.playerlist:
-            if player.chips >= self.buyin:
+            if player.chips >= self.buyin and player.will_buyin(self):
                 player.chips -= self.buyin
                 self.ui.bet(player, self.buyin)
             else:

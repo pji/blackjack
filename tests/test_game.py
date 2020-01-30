@@ -1679,15 +1679,27 @@ class EngineTestCase(ut.TestCase):
         enough chips, start() should remove them from the game and 
         add a new player.
         """
-        expected = players.Player
+        expected = players.AutoPlayer
         
-        p1 = players.Player(name='John', chips = 1)
+        p1 = players.AutoPlayer(name='John', chips = 1)
         g = game.Engine(None, None, [p1,], None, 20)
         g.start()
         actual = g.playerlist[0]
         
-        self.assertTrue(isinstance(actual, expected))
-        self.assertNotEqual(expected, actual)
+        self.assertFalse(isinstance(actual, expected))
+    
+    def test_start_buyin_false(self):
+        """If a player chooses not to buyin, start() should remove 
+        them from the game and add a new player.
+        """
+        p1 = players.NeverPlayer(name='John', chips = 40)
+        exp = (p1,)
+        
+        g = game.Engine(None, None, exp, None, 20)
+        g.start()
+        act = g.playerlist
+        
+        self.assertNotEqual(exp, act)
     
     @patch('blackjack.game.BaseUI.bet')
     def test_start_buyin_ui(self, mock_bet):

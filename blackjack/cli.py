@@ -569,9 +569,8 @@ def two_player():
 def three_player():
     p1 = players.AutoPlayer(name='John', chips=200)
     p2 = players.BetterPlayer(name='Michael', chips=200)
-    p3 = players.UserPlayer(name='You', chips=200)
-    ui = LogUI()
-    play = True
+    p3 = players.NeverPlayer(name='Graham', chips=200)
+    ui = TableUI(seats=4)
     deck = cards.Deck.build(6)
     deck.shuffle()
     deck.random_cut()
@@ -680,7 +679,7 @@ if __name__ == '__main__':
         
         playerlist = []
         for _ in range(int(args.players)):
-            playerlist.append(players.make_player(args.chips))
+            playerlist.append(players.make_player(args.cost))
         if args.user:
             playerlist.append(players.UserPlayer(name='You', chips=args.chips))
         

@@ -352,6 +352,27 @@ class will_hit_dealerTestCase(ut.TestCase):
         self.assertEqual(expected, actual_h1)
 
 
+class will_hit_neverTestCase(ut.TestCase):
+    def test_stand(self):
+        """will_hit_never() should never return True."""
+        expected = False
+        
+        phand = cards.Hand([
+            cards.Card(10, 1),
+            cards.Card(11, 2),
+        ])
+        player = players.Player((phand,), 'John')
+        dhand = cards.Hand([
+            cards.Card(5, 1),
+            cards.Card(2, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Engine(None, dealer, (player,), None, 20)
+        actual = players.will_hit_never(None, phand, g)
+        
+        self.assertEqual(expected, actual)
+
+
 class will_hit_recommendedTestCase(ut.TestCase):
     def test_dealer_card_good_hit_if_not_17(self):
         """If the dealer's up card is 7-11, the player should hit 
@@ -557,6 +578,27 @@ class will_split_alwaysTestCase(ut.TestCase):
         self.assertTrue(actual)
 
 
+class will_split_neverTestCase(ut.TestCase):
+    def test_never_split(self):
+        """will_split_never() should return False."""
+        expected = False
+        
+        hand = cards.Hand([
+            cards.Card(10, 2),
+            cards.Card(10, 1),
+        ])
+        player = players.Player((hand,), 'Graham')
+        dhand = cards.Hand([
+            cards.Card(7, 3),
+            cards.Card(10, 0, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Engine(None, dealer, (player,), None, None)
+        actual = players.will_split_never(player, hand, g)
+        
+        self.assertEqual(expected, actual)
+
+
 class will_split_recommendedTestCase(ut.TestCase):
     def test_split_ace_or_8(self):
         """Always split aces or eights."""
@@ -724,6 +766,13 @@ class will_buyin_always(ut.TestCase):
         self.assertTrue(actual)
 
 
+class will_buyin_never(ut.TestCase):
+    def test_never_buyin(self):
+        exp = False
+        act = players.will_buyin_never(None, None)
+        self.assertEqual(exp, act)
+
+
 class will_double_down_alwaysTestCase(ut.TestCase):
     def test_parameters(self):
         """Functions that follow the will_double_down protocol should 
@@ -747,6 +796,27 @@ class will_double_down_alwaysTestCase(ut.TestCase):
         actual = players.will_double_down_always(p, h, g)
         
         self.assertTrue(actual)
+
+
+class will_double_down_neverTestCase(ut.TestCase):
+    def test_never_double_down(self):
+        """will_double_down_never should always return False."""
+        expected = False
+        
+        phand = cards.Hand([
+            cards.Card(4, 0),
+            cards.Card(6, 0),
+        ])
+        player = players.Player((phand,), 'Terry')
+        dhand = cards.Hand([
+            cards.Card(11, 0),
+            cards.Card(8, 3, cards.DOWN),
+        ])
+        dealer = players.Dealer((dhand,), 'Dealer')
+        g = game.Engine(None, dealer, (player,), None, None)
+        actual = players.will_double_down_never(player, phand, g)
+        
+        self.assertEqual(expected, actual)
 
 
 class will_double_down_recommendedTestCase(ut.TestCase):

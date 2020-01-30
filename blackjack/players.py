@@ -128,6 +128,10 @@ def will_hit_dealer(self, hand:Hand, the_game=None) -> bool:
             return STAND
         return HIT
 
+def will_hit_never(self, hand:Hand, the_game=None) -> bool:
+    """Never hit."""
+    return False
+
 def will_hit_recommended(self, hand:Hand, the_game) -> bool:
     """Make hit decisions as recommended by bicycle.com."""
     dhand = the_game.dealer.hands[0]
@@ -170,6 +174,15 @@ def will_split_always(self, hand:Hand, the_game) -> bool:
     """
     return True
 
+def will_split_dealer(self, *args):
+    """Dealers cannot split."""
+    msg = 'Dealers cannot split.'
+    raise TypeError(msg)
+
+def will_split_never(self, hand:Hand, the_game) -> bool:
+    """Never split."""
+    return False
+
 def will_split_recommended(self, hand:Hand, the_game) -> bool:
     """Make a split decision as recommended by bicycle.com."""
     dhand = the_game.dealer.hands[0]
@@ -194,11 +207,6 @@ def will_split_user(self, hand:Hand, the_game) -> bool:
     is_yes = the_game.ui.split_prompt()
     return is_yes.value
 
-def will_split_dealer(self, *args):
-    """Dealers cannot split."""
-    msg = 'Dealers cannot split.'
-    raise TypeError(msg)
-
 
 # will_buyin functions.
 # will_buyin functions determine whether the player will buy into the 
@@ -222,6 +230,10 @@ def will_buyin_dealer(self, *args):
     msg = 'Dealers cannot buuyin.'
     raise TypeError(msg)
 
+def will_buyin_never(self, the_game) -> bool:
+    """Never buyin."""
+    return False
+
 
 # will_double_down functions.
 # will_double_down functions determine whether the player will double 
@@ -241,6 +253,15 @@ def will_double_down_always(self, hand:Hand, the_game) -> bool:
     :rtype: bool
     """
     return True
+
+def will_double_down_dealer(self, *args):
+    """Dealers cannot double down."""
+    msg = 'Dealers cannot double down.'
+    raise TypeError(msg)
+
+def will_double_down_never(self, hand:Hand, the_game) -> bool:
+    """Never double down."""
+    return False
 
 def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
     """The player will follow the double down recommendation from 
@@ -266,11 +287,6 @@ def will_double_down_user(self, hand:Hand, the_game) -> bool:
 #     is_yes = the_game.ui.input('doubledown')
     is_yes = the_game.ui.doubledown_prompt()
     return is_yes.value
-
-def will_double_down_dealer(self, *args):
-    """Dealers cannot double down."""
-    msg = 'Dealers cannot double down.'
-    raise TypeError(msg)
 
 
 # will_insure functions.
@@ -319,18 +335,32 @@ def will_insure_dealer(self, *args):
 
 
 # Decision methods lists.
-will_hits = [will_hit_user, will_hit_dealer, will_hit_recommended]
+# In order to avoid having random users or dealers generated:
+#   * User functions must be in index 0
+#   * Dealer functions must be in index 1
+will_hits = [
+    will_hit_user, 
+    will_hit_dealer, 
+    will_hit_never, 
+    will_hit_recommended
+]
 will_splits = [
     will_split_user, 
     will_split_dealer, 
     will_split_always, 
+    will_split_never,
     will_split_recommended
 ]
-will_buyins = [will_buyin_dealer, will_buyin_always,]
+will_buyins = [
+    will_buyin_dealer, 
+    will_buyin_always,
+    will_buyin_never,
+]
 will_double_downs = [
     will_double_down_user, 
     will_double_down_dealer,
     will_double_down_always, 
+    will_double_down_never,
     will_double_down_recommended
 ]
 will_insures = [
@@ -518,7 +548,7 @@ def make_player(chips=200, bet=None) -> Player:
         'chips': chips,
         'will_hit': choice(will_hits[2:]).__name__,
         'will_split': choice(will_splits[2:]).__name__,
-        'will_buyin': will_buyin_always.__name__,
+        'will_buyin': choice(will_buyins[1:]).__name__,
         'will_double_down': choice(will_double_downs[2:]).__name__,
         'will_insure': choice(will_insures[2:]).__name__,
     }
@@ -527,22 +557,57 @@ def make_player(chips=200, bet=None) -> Player:
 
 
 # Player subclasses.
-Dealer = playerfactory('Dealer', will_hit_dealer, will_split_dealer, 
-                       will_buyin_dealer, will_double_down_dealer, 
-                       will_insure_dealer)
-AutoPlayer = playerfactory('AutoPlayer', will_hit_dealer, will_split_always,
-                           will_buyin_always, will_double_down_always, 
-                           will_insure_always)
-BetterPlayer = playerfactory('BetterPlayer', will_hit_recommended, 
-                             will_split_recommended, will_buyin_always, 
-                             will_double_down_recommended, will_insure_never)
-UserPlayer = playerfactory('UserPlayer', will_hit_user, will_split_user, 
-                           will_buyin_always, will_double_down_user, 
-                           will_insure_user)
+Dealer = playerfactory(
+    'Dealer', 
+    will_hit_dealer, 
+    will_split_dealer, 
+    will_buyin_dealer, 
+    will_double_down_dealer, 
+    will_insure_dealer
+)
+AutoPlayer = playerfactory(
+    'AutoPlayer', 
+    will_hit_dealer, 
+    will_split_always,
+    will_buyin_always, 
+    will_double_down_always, 
+    will_insure_always
+)
+BetterPlayer = playerfactory(
+    'BetterPlayer', 
+    will_hit_recommended, 
+    will_split_recommended, 
+    will_buyin_always, 
+    will_double_down_recommended, 
+    will_insure_never
+)
+NeverPlayer = playerfactory(
+    'NeverPlayer', 
+    will_hit_never, 
+    will_split_never, 
+    will_buyin_never, 
+    will_double_down_never, 
+    will_insure_never
+)
+UserPlayer = playerfactory(
+    'UserPlayer', 
+    will_hit_user, 
+    will_split_user, 
+    will_buyin_always, 
+    will_double_down_user, 
+    will_insure_user
+)
 
 
 # List of trusted Player subclasses for deserialization:
-trusted_Players = [Player, Dealer, AutoPlayer, BetterPlayer, UserPlayer]
+trusted_Players = [
+    Player, 
+    Dealer, 
+    AutoPlayer, 
+    BetterPlayer, 
+    NeverPlayer,
+    UserPlayer,
+]
 
 
 # Player validation functions.
