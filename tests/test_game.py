@@ -1739,6 +1739,53 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(exp_calls, act_calls)
 
 
+class mainTestCase(ut.TestCase):
+    def test_init_with_params(self):
+        """main() should accept the following parameters: engine, 
+        is_interactive.
+        """
+        g = game.Engine()
+        
+        # This call will fail if the parameters are not accepted.
+        game.main(g, is_interactive=False)
+    
+    @patch('blackjack.game.Engine')
+    def test_call_game_phases(self, mock_engine):
+        """main() should call each phase of a backjack game in the 
+        Engine object.
+        """
+        playerlist = [
+            players.AutoPlayer(name='spam'),
+            players.AutoPlayer(name='eggs'),
+        ]
+        exp = [
+            call(playerlist=playerlist, buyin=2),
+            call().ui.start(is_interactive=True),
+            call().new_game(),
+            call().start(),
+            call().deal(),
+            call().play(),
+            call().end(),
+            call().ui.nextgame_prompt(),
+            call().ui.cleanup(),
+            call().ui.nextgame_prompt().value.__bool__(),
+            call().start(),
+            call().deal(),
+            call().play(),
+            call().end(),
+            call().ui.nextgame_prompt(),
+        ]
+        
+        g = game.Engine(playerlist=playerlist, buyin=2)
+        loop = game.main(g)
+        result = next(loop)
+        result = loop.send(result)
+        _ = loop.send(result)
+        act = mock_engine.mock_calls
+        
+        self.assertListEqual(exp, act)
+
+
 class validate_uiTestCase(ut.TestCase):
     def test_valid(self):
         """Given a valid value, validate_ui() should return it."""

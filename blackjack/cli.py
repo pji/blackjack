@@ -529,11 +529,10 @@ class TableUI(game.EngineUI):
 def dealer_only():
     ui = LogUI()
     g = game.Engine(ui=ui)
-    g.deck.shuffle()
-    ui.start()
-    g.deal()
-    g.play()
-    ui.end()
+    loop = game.main(g)
+    play = next(loop)
+    while play:
+        play = loop.send(play)
 
 
 def one_player():
@@ -545,14 +544,10 @@ def one_player():
     dealer = players.Dealer(name='Dealer')
     player = players.AutoPlayer(name='Player', chips=200)
     g = game.Engine(deck, dealer, (player,), ui=ui, buyin=2)
+    loop = game.main(g)
+    play = next(loop)
     while play:
-        ui.start()
-        g.start()
-        g.deal()
-        g.play()
-        g.end()
-        ui.end()
-        play = ui.nextgame_prompt().value
+        play = loop.send(play)
 
 
 def two_player():
@@ -565,14 +560,10 @@ def two_player():
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
     g = game.Engine(deck, dealer, (p1, p2,), ui=ui, buyin=2)
+    loop = game.main(g)
+    play = next(loop)
     while play:
-        ui.start()
-        g.start()
-        g.deal()
-        g.play()
-        g.end()
-        ui.end()
-        play = ui.nextgame_prompt().value
+        play = loop.send(play)
 
 
 def three_player():
@@ -586,14 +577,10 @@ def three_player():
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
     g = game.Engine(deck, dealer, (p1, p2, p3,), ui=ui, buyin=2)
+    loop = game.main(g)
+    play = next(loop)
     while play:
-        ui.start()
-        g.start()
-        g.deal()
-        g.play()
-        g.end()
-        ui.end()
-        play = ui.nextgame_prompt().value
+        play = loop.send(play)
 
 
 def four_player():
@@ -607,14 +594,10 @@ def four_player():
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
     g = game.Engine(deck, dealer, playerlist, ui=ui, buyin=2)
+    loop = game.main(g)
+    play = next(loop)
     while play:
-        ui.start()
-        g.start()
-        g.deal()
-        g.play()
-        g.end()
-        ui.end()
-        play = ui.nextgame_prompt().value
+        play = loop.send(play)
 
 
 def dui():
@@ -629,18 +612,11 @@ def dui():
             playerlist.append(players.make_player(bet=20))
         playerlist.append(players.UserPlayer(name='You', chips=200))
         g = game.Engine(deck, dealer, playerlist, ui=ui, buyin=20)
-        ui.start(True)
-        g.new_game()
-        play = True
+        loop = game.main(g)
+        play = next(loop)
         while play:
-                g.start()
-                g.deal()
-                g.play()
-                g.end()
-                play = ui.nextgame_prompt().value
-                if play:
-                    ui.cleanup()
-                    g.restore()
+            play = loop.send(play)
+        
     except Exception as ex:
         with open('exception.log', 'w') as fh:
             fh.write(str(ex.args))
@@ -713,23 +689,17 @@ if __name__ == '__main__':
         deck.random_cut()
         ui = TableUI(seats=len(playerlist) + 1)
         g = game.Engine(deck, None, playerlist, ui, args.cost)
-        ui.start(True)
-        g.new_game()
-        
-        play_again = True
-        while play_again:
-            try:
-                g.start()
-                g.deal()
-                g.play()
-                g.end()
-                play_again = ui.nextgame_prompt().value
-                if play_again:
-                    ui.cleanup()
-            except Exception as ex:
-                with open('exception.log', 'w') as fh:
-                    fh.write(str(ex.args))
-                    tb_str = ''.join(tb.format_tb(ex.__traceback__))
-                    fh.write(tb_str)
-                raise ex
+        try:
+            loop = game.main(g)
+            play = next(loop)
+            while play:
+                play = loop.send(play)
+        except Exception as ex:
+            with open('exception.log', 'w') as fh:
+                fh.write(str(ex.args))
+                tb_str = ''.join(tb.format_tb(ex.__traceback__))
+                fh.write(tb_str)
+            ui.end()
+            raise ex
+
         

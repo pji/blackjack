@@ -536,7 +536,7 @@ class Engine:
                         if index == 1:
                             event = self.ui.ties_split
                         else:
-                            event = self.ui.ties
+                            event = self.ui.tie
                     elif result == True:
                         if index == 1:
                             event = self.ui.wins_split
@@ -641,3 +641,24 @@ class Engine:
                 player = make_player(bet=self.buyin)
                 self._add_player(player)
                 self.ui.joins(player)
+
+
+# The main game loop for blackjack.
+def main(engine: Engine, is_interactive: bool = True) -> None:
+    """The main game loop for blackjack.
+    
+    :param engine: An instance of the blackjack Engine.
+    :return: None.
+    :rtype: None.
+    """
+    engine.ui.start(is_interactive=is_interactive)
+    engine.new_game()
+    play = yield True
+    while play:
+        engine.start()
+        engine.deal()
+        engine.play()
+        engine.end()
+        play = yield engine.ui.nextgame_prompt().value
+        engine.ui.cleanup()
+    engine.ui.end()
