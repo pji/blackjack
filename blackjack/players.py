@@ -16,11 +16,11 @@ from types import MethodType
 
 from blackjack.cards import Hand, HandTuple
 from blackjack.model import Integer_, PosInt, Text, valfactory, valtupfactory
+from blackjack.willhit import (HIT, STAND, will_hit_user, will_hit_dealer, 
+                               will_hit_never, will_hit_recommended,
+                               will_hits)
 
 
-# Global values.
-HIT = True
-STAND = False
 
 # Popular baby names from specific years taken from "Official US List" 
 # from babycenter.com.
@@ -101,60 +101,6 @@ def name_builder(start:str, end:str) -> str:
         index_start = get_change_index(start, vowels)
         name = start[0:index_start] + end
     return name[0].upper() + name[1:]
-
-
-# will_hit functions.
-# will_hit functions determine whether the player will hit or stand. 
-# They must accept the following parameters:
-#   * self
-#   * A cards.Hand object
-#   * A game.Game object
-# 
-# And they must return a bool.
-def will_hit_dealer(self, hand:Hand, the_game=None) -> bool:
-    """Determine whether the player will hit or stand on the hand.
-    
-    :param hand: The hand to make the decision on.
-    :return: The hit decision. True to hit. False to stand.
-    :rtype: Bool.
-    """
-    scores = [score for score in sorted(hand.score()) if score <= 21]
-    try:
-        score = scores[-1]
-    except IndexError:
-        return STAND
-    else:
-        if score >= 17:
-            return STAND
-        return HIT
-
-def will_hit_never(self, hand:Hand, the_game=None) -> bool:
-    """Never hit."""
-    return False
-
-def will_hit_recommended(self, hand:Hand, the_game) -> bool:
-    """Make hit decisions as recommended by bicycle.com."""
-    dhand = the_game.dealer.hands[0]
-    scores = [score for score in hand.score() if score <= 21]
-    try:
-        score = scores.pop()
-    except IndexError:
-        return False
-    if scores and score <= 18:
-        return True
-    elif (dhand[0].rank >= 7 or dhand[0].rank == 1) and score < 17:
-        return True
-    elif dhand[0].rank <= 3 and score < 13:
-        return True
-    elif score < 12:
-        return True
-    return False
-
-def will_hit_user(self, hand:Hand, the_game) -> bool:
-    """Get a hit decision from the user."""
-    is_yes = the_game.ui.hit_prompt()
-    
-    return is_yes.value
 
 
 # will_split functions.
@@ -338,12 +284,6 @@ def will_insure_dealer(self, *args):
 # In order to avoid having random users or dealers generated:
 #   * User functions must be in index 0
 #   * Dealer functions must be in index 1
-will_hits = [
-    will_hit_user, 
-    will_hit_dealer, 
-    will_hit_never, 
-    will_hit_recommended
-]
 will_splits = [
     will_split_user, 
     will_split_dealer, 

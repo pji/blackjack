@@ -25,16 +25,15 @@ To see a game that is the dealer and two players::
 
     python3 -m blackjack.cli -2
 
+If you want to play a game with a dealer and four random players::
+
+    python3 -m blackjack.cli -D
+
 To construct a game with four computer players, you as the fifth 
 player, the initial bet set to 100, and all players starting with 
 100 chips::
 
     python3 -m blackjack.cli -p 4 -u -c 100 -C 100
-
-If you want to watch games between a dealer and four random players in 
-the new curses-based UI::
-
-    python3 -m blackjack.cli -D
 
 
 Still To Do
