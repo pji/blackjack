@@ -2,11 +2,19 @@
 willhit
 ~~~~~~~
 
-The module contains the will_hit decision functions for players.
+The module contains the will_hit decision functions for players. These 
+determine whether the player will hit or stand. They must:
+
+* Accept self
+* Accept a cards.Hand object
+* Accept a game.Engine object
+* Return a bool
 
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from random import choice
+
 from blackjack.cards import Hand
 
 
@@ -37,6 +45,10 @@ def will_hit_never(self, hand:Hand, the_game=None) -> bool:
     """Never hit."""
     return False
 
+def will_hit_random(self, hand:Hand, the_game: 'game.Engine' = None) -> bool:
+    """Decide whether to hit at random."""
+    return choice([True, False])
+
 def will_hit_recommended(self, hand:Hand, the_game) -> bool:
     """Make hit decisions as recommended by bicycle.com."""
     dhand = the_game.dealer.hands[0]
@@ -63,9 +75,14 @@ def will_hit_user(self, hand:Hand, the_game) -> bool:
 
 
 # List of valid will_hit functions.
+# The following must be true to avoid unexpected behavior in randomly 
+# generated players:
+#   * The user version must be at index 0.
+#   * The dealer version must be at index 1.
 will_hits = [
     will_hit_user, 
     will_hit_dealer, 
     will_hit_never, 
+    will_hit_random,
     will_hit_recommended
 ]

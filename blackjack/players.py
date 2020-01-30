@@ -16,10 +16,32 @@ from types import MethodType
 
 from blackjack.cards import Hand, HandTuple
 from blackjack.model import Integer_, PosInt, Text, valfactory, valtupfactory
-from blackjack.willhit import (HIT, STAND, will_hit_user, will_hit_dealer, 
-                               will_hit_never, will_hit_recommended,
+from blackjack.willbuyin import (will_buyin_dealer, 
+                                 will_buyin_always, 
+                                 will_buyin_never, 
+                                 will_buyins)
+from blackjack.willdoubledown import (will_double_down_user, 
+                                      will_double_down_dealer, 
+                                      will_double_down_always, 
+                                      will_double_down_never, 
+                                      will_double_down_recommended, 
+                                      will_double_downs)
+from blackjack.willhit import (will_hit_user, 
+                               will_hit_dealer, 
+                               will_hit_never, 
+                               will_hit_recommended,
                                will_hits)
-
+from blackjack.willinsure import (will_insure_user, 
+                                  will_insure_dealer, 
+                                  will_insure_always, 
+                                  will_insure_never,
+                                  will_insures)
+from blackjack.willsplit import (will_split_user, 
+                                 will_split_dealer, 
+                                 will_split_always, 
+                                 will_split_never, 
+                                 will_split_recommended, 
+                                 will_splits)
 
 
 # Popular baby names from specific years taken from "Official US List" 
@@ -101,214 +123,6 @@ def name_builder(start:str, end:str) -> str:
         index_start = get_change_index(start, vowels)
         name = start[0:index_start] + end
     return name[0].upper() + name[1:]
-
-
-# will_split functions.
-# will_split functions determine whether the player will split a hand. 
-# They must accept the following parameters:
-#   * self
-#   * A cards.Hand object
-#   * A game.Game object
-# 
-# And they must return a bool.
-def will_split_always(self, hand:Hand, the_game) -> bool:
-    """The player will always split where possible.
-    
-    :param hand: The hand that may be split.
-    :return: The decision whether to split.
-    :rtype: bool
-    """
-    return True
-
-def will_split_dealer(self, *args):
-    """Dealers cannot split."""
-    msg = 'Dealers cannot split.'
-    raise TypeError(msg)
-
-def will_split_never(self, hand:Hand, the_game) -> bool:
-    """Never split."""
-    return False
-
-def will_split_recommended(self, hand:Hand, the_game) -> bool:
-    """Make a split decision as recommended by bicycle.com."""
-    dhand = the_game.dealer.hands[0]
-    if hand[0].rank == 1 or hand[0].rank == 8:
-        return True
-    elif hand[0].rank == 4 or hand[0].rank == 5 or hand[0].rank >= 10:
-        return False
-    elif hand[0].rank == 2 or hand[0].rank == 3 or hand[0].rank >= 7:
-        if dhand[0].rank < 8 or dhand[0].rank == 1:
-            return True
-        else:
-            return False
-    else:
-        if dhand[0].rank > 1 and dhand[0].rank < 7:
-            return True
-        else:
-            return False
-
-def will_split_user(self, hand:Hand, the_game) -> bool:
-    """Get a split decision from the user."""
-#     is_yes = the_game.ui.input('split')
-    is_yes = the_game.ui.split_prompt()
-    return is_yes.value
-
-
-# will_buyin functions.
-# will_buyin functions determine whether the player will buy into the 
-# next round. They must accept the following parameters:
-#   * self
-#   * A cards.Hand object
-#   * A game.Game object
-# 
-# And they must return a bool.
-def will_buyin_always(self, the_game) -> bool:
-    """The player will always try to buy into a game.
-    
-    :param game: The game to buy into.
-    :return: Whether to buy into the game.
-    :rtype: bool
-    """
-    return True
-
-def will_buyin_dealer(self, *args):
-    """Dealers cannot buyin."""
-    msg = 'Dealers cannot buuyin.'
-    raise TypeError(msg)
-
-def will_buyin_never(self, the_game) -> bool:
-    """Never buyin."""
-    return False
-
-
-# will_double_down functions.
-# will_double_down functions determine whether the player will double 
-# down on a hand. They must accept the following parameters:
-#   * self
-#   * A cards.Hand object
-#   * A game.Game object
-# 
-# And they must return a bool.
-def will_double_down_always(self, hand:Hand, the_game) -> bool:
-    """The player will always double down.
-    
-    :param hand: The hand to make the decision on.
-    :param the_game: The information about the current game to use 
-        to make a decision.
-    :return: A decision whether to double down.
-    :rtype: bool
-    """
-    return True
-
-def will_double_down_dealer(self, *args):
-    """Dealers cannot double down."""
-    msg = 'Dealers cannot double down.'
-    raise TypeError(msg)
-
-def will_double_down_never(self, hand:Hand, the_game) -> bool:
-    """Never double down."""
-    return False
-
-def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
-    """The player will follow the double down recommendation from 
-    bicycle.com.
-    :param hand: The hand to make the decision on.
-    :param the_game: The information about the current game to use 
-        to make a decision.
-    :return: A decision whether to double down.
-    :rtype: bool
-    """
-    scores = [score for score in hand.score() if score <= 21]
-    dcard = the_game.dealer.hands[0][0]
-    if 11 in scores:
-        return True
-    elif 10 in scores and dcard.rank < 10 and dcard.rank > 1:
-        return True
-    elif 9 in scores and dcard.rank >= 2 and dcard.rank <= 6:
-        return True
-    return False
-
-def will_double_down_user(self, hand:Hand, the_game) -> bool:
-    """Get a double down decision from the user."""
-#     is_yes = the_game.ui.input('doubledown')
-    is_yes = the_game.ui.doubledown_prompt()
-    return is_yes.value
-
-
-# will_insure functions.
-# will_insure functions determine whether the player will buy 
-# insurance for a hand. They must accept the following parameters:
-#   * self
-#   * A cards.Hand object
-#   * A game.Game object
-# 
-# And they must return a bool or a float.
-def will_insure_always(self, the_game) -> bool:
-    """The player will always buy the most insurance.
-    
-    :param hand: The hand to make the decision on.
-    :param the_game: The information about the current game to use 
-        to make a decision.
-    :return: A decision whether to double down.
-    :rtype: bool
-    """
-    return the_game.buyin / 2
-
-def will_insure_never(self, the_game) -> bool:
-    """The player will never buy insurance.
-    
-    :param hand: The hand to make the decision on.
-    :param the_game: The information about the current game to use 
-        to make a decision.
-    :return: A decision whether to double down.
-    :rtype: bool
-    """
-    return 0
-
-def will_insure_user(self, the_game) -> bool:
-    """Get a insurance decision from the user."""
-#     is_yes = the_game.ui.input('insure')
-    is_yes = the_game.ui.insure_prompt()
-    insurance = 0
-    if is_yes.value:
-        insurance = the_game.buyin // 2
-    return insurance
-
-def will_insure_dealer(self, *args):
-    """Dealers cannot insure."""
-    msg = 'Dealers cannot insure.'
-    raise TypeError(msg)
-
-
-# Decision methods lists.
-# In order to avoid having random users or dealers generated:
-#   * User functions must be in index 0
-#   * Dealer functions must be in index 1
-will_splits = [
-    will_split_user, 
-    will_split_dealer, 
-    will_split_always, 
-    will_split_never,
-    will_split_recommended
-]
-will_buyins = [
-    will_buyin_dealer, 
-    will_buyin_always,
-    will_buyin_never,
-]
-will_double_downs = [
-    will_double_down_user, 
-    will_double_down_dealer,
-    will_double_down_always, 
-    will_double_down_never,
-    will_double_down_recommended
-]
-will_insures = [
-    will_insure_user, 
-    will_insure_dealer,
-    will_insure_always, 
-    will_insure_never
-]
 
 
 # Base class.
@@ -442,6 +256,7 @@ class Player:
         raise NotImplementedError
 
 
+# Factory functions.
 def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn, 
                   will_double_down, will_insure) -> type:
     """A factory function for Player subclasses."""
@@ -470,6 +285,7 @@ def restore_player(s: str) -> Player:
     serial = loads(s)
     cls = classes[serial['class']]
     return cls.deserialize(s)
+
 
 def make_player(chips=200, bet=None) -> Player:
     """Make a random player for a blackjack game."""
