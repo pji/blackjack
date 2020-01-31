@@ -641,6 +641,7 @@ class Engine:
                 player = make_player(bet=self.buyin)
                 self._add_player(player)
                 self.ui.joins(player)
+                self.ui.bet(player, self.buyin)
 
 
 # The main game loop for blackjack.

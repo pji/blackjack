@@ -390,13 +390,13 @@ class make_playerTestCase(ut.TestCase):
             cards.Card(1, 2),
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Engine(None, dealer, None, None, 0)
+        g = game.Engine(None, dealer, None, None, 2)
         player = players.make_player()
         
         methods = [
             player.will_hit,
             player.will_split,
-#             player.will_double_down,
+            player.will_double_down,
         ]
         for method in methods:
             _ = method(phand, g)
