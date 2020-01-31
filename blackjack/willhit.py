@@ -84,5 +84,5 @@ will_hits = [
     will_hit_dealer, 
     will_hit_never, 
     will_hit_random,
-    will_hit_recommended
+    will_hit_recommended,
 ]

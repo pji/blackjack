@@ -19,27 +19,32 @@ from blackjack.model import Integer_, PosInt, Text, valfactory, valtupfactory
 from blackjack.willbuyin import (will_buyin_dealer, 
                                  will_buyin_always, 
                                  will_buyin_never, 
+                                 will_buyin_random, 
                                  will_buyins)
 from blackjack.willdoubledown import (will_double_down_user, 
                                       will_double_down_dealer, 
                                       will_double_down_always, 
                                       will_double_down_never, 
+                                      will_double_down_random, 
                                       will_double_down_recommended, 
                                       will_double_downs)
 from blackjack.willhit import (will_hit_user, 
                                will_hit_dealer, 
                                will_hit_never, 
+                               will_hit_random, 
                                will_hit_recommended,
                                will_hits)
 from blackjack.willinsure import (will_insure_user, 
                                   will_insure_dealer, 
                                   will_insure_always, 
-                                  will_insure_never,
+                                  will_insure_never, 
+                                  will_insure_random, 
                                   will_insures)
 from blackjack.willsplit import (will_split_user, 
                                  will_split_dealer, 
                                  will_split_always, 
                                  will_split_never, 
+                                 will_split_random, 
                                  will_split_recommended, 
                                  will_splits)
 
@@ -344,6 +349,14 @@ NeverPlayer = playerfactory(
     will_buyin_never, 
     will_double_down_never, 
     will_insure_never
+)
+RandomPlayer = playerfactory(
+    'RandomPlayer',
+    will_hit_random,
+    will_split_random,
+    will_buyin_random,
+    will_double_down_random,
+    will_insure_random
 )
 UserPlayer = playerfactory(
     'UserPlayer', 

@@ -9,7 +9,7 @@ This module contains the unit tests for the blackjack.willinsure module.
 """
 import inspect
 import unittest as ut
-from unittest.mock import Mock, patch
+from unittest.mock import call, Mock, patch
 
 from blackjack import cards, cli, players, game, model, willinsure
 
@@ -68,6 +68,23 @@ class will_insure_neverTestCase(ut.TestCase):
         actual = willinsure.will_insure_always(p, g)
         
         self.assertEqual(expected, actual)
+
+
+class will_insure_randomTestCase(ut.TestCase):
+    @patch('blackjack.willinsure.choice', return_value=1)
+    def test_random_insure(self, mock_choice):
+        """When called, will_insure_random() should call 
+        random.choice() and return the result.
+        """
+        exp_result = 1
+        exp_call = call(range(0, 1))
+        
+        g = game.Engine(buyin=2)
+        act_result = willinsure.will_insure_random(None, g)
+        act_call = mock_choice.mock_calls[-1]
+        
+        self.assertEqual(exp_result, act_result)
+        self.assertEqual(exp_call, act_call)
 
 
 class will_insure_userTestCase(ut.TestCase):

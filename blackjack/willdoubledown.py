@@ -14,6 +14,8 @@ must:
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from random import choice
+
 from blackjack.cards import Hand
 
 
@@ -29,18 +31,27 @@ def will_double_down_always(self, hand:Hand, the_game) -> bool:
     """
     return True
 
+
 def will_double_down_dealer(self, *args):
     """Dealers cannot double down."""
     msg = 'Dealers cannot double down.'
     raise TypeError(msg)
 
+
 def will_double_down_never(self, hand:Hand, the_game) -> bool:
     """Never double down."""
     return False
 
+
+def will_double_down_random(self, hand:Hand, the_game: 'game.Engine') -> bool:
+    """Randomly double down."""
+    return choice([True, False])
+
+
 def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
     """The player will follow the double down recommendation from 
     bicycle.com.
+    
     :param hand: The hand to make the decision on.
     :param the_game: The information about the current game to use 
         to make a decision.
@@ -57,9 +68,9 @@ def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
         return True
     return False
 
+
 def will_double_down_user(self, hand:Hand, the_game) -> bool:
     """Get a double down decision from the user."""
-#     is_yes = the_game.ui.input('doubledown')
     is_yes = the_game.ui.doubledown_prompt()
     return is_yes.value
 
@@ -74,5 +85,6 @@ will_double_downs = [
     will_double_down_dealer,
     will_double_down_always, 
     will_double_down_never,
-    will_double_down_recommended
+    will_double_down_random,
+    will_double_down_recommended,
 ]

@@ -11,7 +11,7 @@ from functools import partial
 import inspect
 from types import MethodType
 import unittest as ut
-from unittest.mock import Mock, patch
+from unittest.mock import call, Mock, patch
 
 from blackjack import cards, cli, players, game, model, willsplit
 
@@ -62,6 +62,22 @@ class will_split_neverTestCase(ut.TestCase):
         actual = willsplit.will_split_never(player, hand, g)
         
         self.assertEqual(expected, actual)
+
+
+class will_split_randomTestCase(ut.TestCase):
+    @patch('blackjack.willsplit.choice', return_value=True)
+    def test_random_hit(self, mock_choice):
+        """When called, will_split_random() should call random.choice() 
+        and return the result.
+        """
+        exp_result = True
+        exp_call = call([True, False])
+        
+        act_result = willsplit.will_split_random(None, None, None)
+        act_call = mock_choice.mock_calls[-1]
+        
+        self.assertEqual(exp_result, act_result)
+        self.assertEqual(exp_call, act_call)
 
 
 class will_split_recommendedTestCase(ut.TestCase):

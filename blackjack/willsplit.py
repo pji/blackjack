@@ -14,6 +14,8 @@ must:
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from random import choice
+
 from blackjack.cards import Hand
 
 
@@ -27,14 +29,22 @@ def will_split_always(self, hand:Hand, the_game) -> bool:
     """
     return True
 
+
 def will_split_dealer(self, *args):
     """Dealers cannot split."""
     msg = 'Dealers cannot split.'
     raise TypeError(msg)
 
+
 def will_split_never(self, hand:Hand, the_game) -> bool:
     """Never split."""
     return False
+
+
+def will_split_random(self, hand:Hand, the_game: 'game.Engine') -> bool:
+    """Split randomly."""
+    return choice([True, False])
+
 
 def will_split_recommended(self, hand:Hand, the_game) -> bool:
     """Make a split decision as recommended by bicycle.com."""
@@ -54,6 +64,7 @@ def will_split_recommended(self, hand:Hand, the_game) -> bool:
         else:
             return False
 
+
 def will_split_user(self, hand:Hand, the_game) -> bool:
     """Get a split decision from the user."""
 #     is_yes = the_game.ui.input('split')
@@ -71,5 +82,6 @@ will_splits = [
     will_split_dealer, 
     will_split_always, 
     will_split_never,
-    will_split_recommended
+    will_split_random,
+    will_split_recommended,
 ]

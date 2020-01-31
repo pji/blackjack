@@ -583,16 +583,17 @@ def three_player():
 
 
 def four_player():
-    playerlist = []
-    for index in range(4):
-        playerlist.append(players.make_player())
-    ui = LogUI()
+    p1 = players.AutoPlayer(name='John', chips=200)
+    p2 = players.BetterPlayer(name='Michael', chips=200)
+    p3 = players.NeverPlayer(name='Graham', chips=200)
+    p4 = players.RandomPlayer(name='Terry', chips=200)
+    ui = TableUI(seats=5)
     play = True
     deck = cards.Deck.build(6)
     deck.shuffle()
     deck.random_cut()
     dealer = players.Dealer(name='Dealer')
-    g = game.Engine(deck, dealer, playerlist, ui=ui, buyin=2)
+    g = game.Engine(deck, dealer, (p1, p2, p3, p4), ui=ui, buyin=2)
     loop = game.main(g)
     play = next(loop)
     while play:
@@ -628,6 +629,7 @@ def dui():
 def test():
     player = players.make_player()
     print(player.asdict())
+
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Blackjack')

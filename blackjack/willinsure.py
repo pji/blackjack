@@ -13,6 +13,8 @@ These determine whether the player will insure the hand. They must:
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from random import choice
+
 from blackjack.cards import Hand
 
 
@@ -26,7 +28,8 @@ def will_insure_always(self, the_game) -> bool:
     :return: A decision whether to double down.
     :rtype: bool
     """
-    return the_game.buyin / 2
+    return the_game.buyin // 2
+
 
 def will_insure_never(self, the_game) -> bool:
     """The player will never buy insurance.
@@ -39,14 +42,20 @@ def will_insure_never(self, the_game) -> bool:
     """
     return 0
 
+
+def will_insure_random(self, the_game: 'game.Engine') -> bool:
+    """Buy insurance randomly."""
+    return choice(range(the_game.buyin // 2))
+
+
 def will_insure_user(self, the_game) -> bool:
     """Get a insurance decision from the user."""
-#     is_yes = the_game.ui.input('insure')
     is_yes = the_game.ui.insure_prompt()
     insurance = 0
     if is_yes.value:
         insurance = the_game.buyin // 2
     return insurance
+
 
 def will_insure_dealer(self, *args):
     """Dealers cannot insure."""
@@ -63,5 +72,6 @@ will_insures = [
     will_insure_user, 
     will_insure_dealer,
     will_insure_always, 
-    will_insure_never
+    will_insure_never,
+    will_insure_random,
 ]

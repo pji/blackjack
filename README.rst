@@ -42,10 +42,10 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
+* Fix players joining without a visible bet.
 * Build UI for saving and restoring game state.
 * Allow for insurance less than half of initial bet.
 * Add optional card count to display.
-* Add will_*_random functions.
 * Allow players to notice other players.
 * Allow players to react to other players.
 * Allow players to notice actions of other players.

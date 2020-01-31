@@ -125,6 +125,7 @@ class will_hit_randomTestCase(ut.TestCase):
         self.assertEqual(exp_result, act_result)
         self.assertEqual(exp_call, act_call)
 
+
 class will_hit_recommendedTestCase(ut.TestCase):
     def test_dealer_card_good_hit_if_not_17(self):
         """If the dealer's up card is 7-11, the player should hit 

@@ -11,7 +11,7 @@ module.
 from functools import partial
 import inspect
 import unittest as ut
-from unittest.mock import Mock, patch
+from unittest.mock import call, Mock, patch
 
 from blackjack import cards, cli, players, game, model, willdoubledown
 
@@ -60,6 +60,22 @@ class will_double_down_neverTestCase(ut.TestCase):
         actual = willdoubledown.will_double_down_never(player, phand, g)
         
         self.assertEqual(expected, actual)
+
+
+class will_double_down_randomTestCase(ut.TestCase):
+    @patch('blackjack.willdoubledown.choice', return_value=True)
+    def test_random_double_down(self, mock_choice):
+        """When called, will_double_down_random() should call 
+        random.choice() and return the result.
+        """
+        exp_result = True
+        exp_call = call([True, False])
+        
+        act_result = willdoubledown.will_double_down_random(None, None, None)
+        act_call = mock_choice.mock_calls[-1]
+        
+        self.assertEqual(exp_result, act_result)
+        self.assertEqual(exp_call, act_call)
 
 
 class will_double_down_recommendedTestCase(ut.TestCase):

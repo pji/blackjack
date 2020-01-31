@@ -10,7 +10,7 @@ This module contains the unit tests for the blackjack.willbuyin module.
 from functools import partial
 import inspect
 import unittest as ut
-from unittest.mock import Mock, patch
+from unittest.mock import call, Mock, patch
 
 from blackjack import cards, cli, players, game, model, willbuyin
 
@@ -47,3 +47,17 @@ class will_buyin_never(ut.TestCase):
         self.assertEqual(exp, act)
 
 
+class will_buyin_random(ut.TestCase):
+    @patch('blackjack.willbuyin.choice', return_value=True)
+    def test_random_buyin(self, mock_choice):
+        """will_buyin_random() should randomly return True or False 
+        when called.
+        """
+        exp_result = True
+        exp_call = call([True, False])
+        
+        act_result = willbuyin.will_buyin_random(None, None)
+        act_call = mock_choice.mock_calls[-1]
+        
+        self.assertEqual(exp_result, act_result)
+        self.assertEqual(exp_call, act_call)
