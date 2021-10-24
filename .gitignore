@@ -3,3 +3,6 @@
 *.log
 *.pyc
 *__pycache__*
+
+# Ignore the virtual environment.
+.venv
