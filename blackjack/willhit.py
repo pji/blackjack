@@ -2,7 +2,7 @@
 willhit
 ~~~~~~~
 
-The module contains the will_hit decision functions for players. These 
+The module contains the will_hit decision functions for players. These
 determine whether the player will hit or stand. They must:
 
 * Accept self
@@ -26,7 +26,7 @@ STAND = False
 # Functions.
 def will_hit_dealer(self, hand:Hand, the_game=None) -> bool:
     """Determine whether the player will hit or stand on the hand.
-    
+
     :param hand: The hand to make the decision on.
     :return: The hit decision. True to hit. False to stand.
     :rtype: Bool.
@@ -41,13 +41,16 @@ def will_hit_dealer(self, hand:Hand, the_game=None) -> bool:
             return STAND
         return HIT
 
+
 def will_hit_never(self, hand:Hand, the_game=None) -> bool:
     """Never hit."""
     return False
 
-def will_hit_random(self, hand:Hand, the_game: 'game.Engine' = None) -> bool:
+
+def will_hit_random(self, hand:Hand, the_game=None) -> bool:
     """Decide whether to hit at random."""
     return choice([True, False])
+
 
 def will_hit_recommended(self, hand:Hand, the_game) -> bool:
     """Make hit decisions as recommended by bicycle.com."""
@@ -67,22 +70,23 @@ def will_hit_recommended(self, hand:Hand, the_game) -> bool:
         return True
     return False
 
+
 def will_hit_user(self, hand:Hand, the_game) -> bool:
     """Get a hit decision from the user."""
     is_yes = the_game.ui.hit_prompt()
-    
+
     return is_yes.value
 
 
 # List of valid will_hit functions.
-# The following must be true to avoid unexpected behavior in randomly 
+# The following must be true to avoid unexpected behavior in randomly
 # generated players:
 #   * The user version must be at index 0.
 #   * The dealer version must be at index 1.
 will_hits = [
-    will_hit_user, 
-    will_hit_dealer, 
-    will_hit_never, 
+    will_hit_user,
+    will_hit_dealer,
+    will_hit_never,
     will_hit_random,
     will_hit_recommended,
 ]

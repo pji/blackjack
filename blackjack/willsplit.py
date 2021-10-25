@@ -2,8 +2,8 @@
 willsplit
 ~~~~~~~~~
 
-The module contains the will_split decision functions for players. 
-These functions decide whether a player will split a hand. They 
+The module contains the will_split decision functions for players.
+These functions decide whether a player will split a hand. They
 must:
 
 * Accept self
@@ -22,7 +22,7 @@ from blackjack.cards import Hand
 # Functions.
 def will_split_always(self, hand:Hand, the_game) -> bool:
     """The player will always split where possible.
-    
+
     :param hand: The hand that may be split.
     :return: The decision whether to split.
     :rtype: bool
@@ -41,7 +41,7 @@ def will_split_never(self, hand:Hand, the_game) -> bool:
     return False
 
 
-def will_split_random(self, hand:Hand, the_game: 'game.Engine') -> bool:
+def will_split_random(self, hand:Hand, the_game) -> bool:
     """Split randomly."""
     return choice([True, False])
 
@@ -73,14 +73,14 @@ def will_split_user(self, hand:Hand, the_game) -> bool:
 
 
 # List of valid will_split functions.
-# The following must be true to avoid unexpected behavior in randomly 
+# The following must be true to avoid unexpected behavior in randomly
 # generated players:
 #   * The user version must be at index 0.
 #   * The dealer version must be at index 1.
 will_splits = [
-    will_split_user, 
-    will_split_dealer, 
-    will_split_always, 
+    will_split_user,
+    will_split_dealer,
+    will_split_always,
     will_split_never,
     will_split_random,
     will_split_recommended,

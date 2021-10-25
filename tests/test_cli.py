@@ -43,10 +43,10 @@ class TableUITestCase(ut.TestCase):
         exp = game.EngineUI
         act = cli.TableUI
         self.assertTrue(issubclass(act, exp))
-    
+
     # General operations methods.
     def test_init_optional_attrs(self):
-        """On initialization, TableUI should accept optional 
+        """On initialization, TableUI should accept optional
         attributes.
         """
         fields = [
@@ -58,39 +58,39 @@ class TableUITestCase(ut.TestCase):
             'ctlr': ctlr,
             'seats': 6,
         }
-        
+
         ui = cli.TableUI(**exp)
         for attr in exp:
             act = getattr(ui, attr)
-            
+
             self.assertEqual(exp[attr], act)
-    
+
     def test_init_no_optional_attrs(self):
-        """On initialization, TableUI should not require optional 
+        """On initialization, TableUI should not require optional
         attributes.
         """
         exp = termui.Table
-        
+
         ui = cli.TableUI()
         act = ui.ctlr
-        
+
         self.assertTrue(isinstance(act, exp))
-    
+
     @patch('blackjack.termui.main')
     def test_end(self, mock_main):
         """end() should terminate UI loop gracefully."""
         exp = call().close()
-        
+
         ui = cli.TableUI()
         ui.start()
         ui.end()
         act = mock_main.mock_calls[-1]
-        
+
         self.assertEqual(exp, act)
-    
+
     @patch('blackjack.termui.main')
     def test_reset(self, mock_main):
-        """When called, reset() should terminate the existing 
+        """When called, reset() should terminate the existing
         controller, create a new one, and prime it.
         """
         ui = cli.TableUI()
@@ -103,15 +103,15 @@ class TableUITestCase(ut.TestCase):
             call().__next__(),
             call().send(('draw',)),
         ]
-        
+
         act = mock_main.mock_calls[-4:]
         ui.end()
-        
+
         self.assertListEqual(exp, act)
-    
+
     @patch('blackjack.termui.main')
     def test_start(self, mock_main):
-        """start() should kick off the main loop of the UI, set it 
+        """start() should kick off the main loop of the UI, set it
         as the loop attribute, and prime it.
         """
         ui = cli.TableUI()
@@ -121,26 +121,25 @@ class TableUITestCase(ut.TestCase):
             call().__next__(),
             call().send(('draw',))
         ]
-        
+
         ui.start()
         act = mock_main.mock_calls
-        
+
         self.assertEqual(exp, act)
-    
-    
+
     # Update method tests.
     @patch('blackjack.termui.main')
     def test__update_bet(self, mock_main):
-        """_update_bet should send an event to the UI loop that a 
-        player's bet has changed and needs to be updated. The data 
-        sent in that event should be a copy of the table in the 
-        termui.Table object. 
+        """_update_bet should send an event to the UI loop that a
+        player's bet has changed and needs to be updated. The data
+        sent in that event should be a copy of the table in the
+        termui.Table object.
         """
         player = players.Player(name='spam', chips=80)
         msg = 'Bets.'
         new_data = [[player, 80, 20, '', msg],]
         exp = call().send(('update', new_data))
-        
+
         unexp_data = [[player, 100, '', '', ''],]
         ui = cli.TableUI()
         ui.ctlr.data = unexp_data
@@ -148,30 +147,30 @@ class TableUITestCase(ut.TestCase):
         ui._update_bet(player, 20, msg)
         act = mock_main.mock_calls[-1]
         ui.end()
-        
+
         self.assertEqual(exp, act)
-        
-        # Since termui.Table determines what fields to update based 
-        # on differences between it's data table and the data table 
-        # it's sent, it's very important that the changes made to 
-        # the data table output by _update_bet() are not yet seen in 
+
+        # Since termui.Table determines what fields to update based
+        # on differences between it's data table and the data table
+        # it's sent, it's very important that the changes made to
+        # the data table output by _update_bet() are not yet seen in
         # the data table held by termui.Table.
         #
-        # If this test fails, it's likely because you aren't copying 
+        # If this test fails, it's likely because you aren't copying
         # the rows of self.ctrl.data. You are referencing them.
         self.assertNotEqual(unexp_data[0][1], 80)
-    
+
     @patch('blackjack.termui.main')
     def test__update_event(self, mock_main):
-        """_update_event should send an event to the UI loop that a 
-        player has had an event occur. The data sent in that event 
-        should be a copy of the table in the termui.Table object. 
+        """_update_event should send an event to the UI loop that a
+        player has had an event occur. The data sent in that event
+        should be a copy of the table in the termui.Table object.
         """
         player = players.Player(name='spam', chips=80)
         msg = 'Walks away.'
         new_data = [[player, 80, '', '', msg],]
         exp = call().send(('update', new_data))
-        
+
         unexp_data = [[player, 80, '', '', ''],]
         ui = cli.TableUI()
         ui.ctlr.data = unexp_data
@@ -179,25 +178,25 @@ class TableUITestCase(ut.TestCase):
         ui._update_event(player, msg)
         act = mock_main.mock_calls[-1]
         ui.end()
-        
+
         self.assertEqual(exp, act)
-        
-        # Since termui.Table determines what fields to update based 
-        # on differences between it's data table and the data table 
-        # it's sent, it's very important that the changes made to 
-        # the data table output by _update_bet() are not yet seen in 
+
+        # Since termui.Table determines what fields to update based
+        # on differences between it's data table and the data table
+        # it's sent, it's very important that the changes made to
+        # the data table output by _update_bet() are not yet seen in
         # the data table held by termui.Table.
         #
-        # If this test fails, it's likely because you aren't copying 
+        # If this test fails, it's likely because you aren't copying
         # the rows of self.ctrl.data. You are referencing them.
         self.assertNotEqual(unexp_data[0][4], 'Takes hand.')
-    
+
     @patch('blackjack.termui.main')
     def test__update_hand(self, mock_main):
-        """_update_bet should send an event to the UI loop that a 
-        player's hand has changed and needs to be updated. The data 
-        sent in that event should be a copy of the table in the 
-        termui.Table object. 
+        """_update_bet should send an event to the UI loop that a
+        player's hand has changed and needs to be updated. The data
+        sent in that event should be a copy of the table in the
+        termui.Table object.
         """
         hand = cards.Hand((
             cards.Card(11, 0),
@@ -207,7 +206,7 @@ class TableUITestCase(ut.TestCase):
         msg = 'Takes hand.'
         new_data = [[player, 80, 20, str(hand), msg],]
         exp = call().send(('update', new_data))
-        
+
         unexp_data = [[player, 80, 20, '', 'Bets.'],]
         ui = cli.TableUI()
         ui.ctlr.data = unexp_data
@@ -215,23 +214,23 @@ class TableUITestCase(ut.TestCase):
         ui._update_hand(player, hand, msg)
         act = mock_main.mock_calls[-1]
         ui.end()
-        
+
         self.assertEqual(exp, act)
-        
-        # Since termui.Table determines what fields to update based 
-        # on differences between it's data table and the data table 
-        # it's sent, it's very important that the changes made to 
-        # the data table output by _update_bet() are not yet seen in 
+
+        # Since termui.Table determines what fields to update based
+        # on differences between it's data table and the data table
+        # it's sent, it's very important that the changes made to
+        # the data table output by _update_bet() are not yet seen in
         # the data table held by termui.Table.
         #
-        # If this test fails, it's likely because you aren't copying 
+        # If this test fails, it's likely because you aren't copying
         # the rows of self.ctrl.data. You are referencing them.
         self.assertNotEqual(unexp_data[0][4], 'Takes hand.')
-        
+
     @patch('blackjack.termui.print')
     @patch('blackjack.cli.TableUI._update_bet')
     def test_bet_updates(self, mock_update_bet, _):
-        """The tested methods should call the _update_bet() method 
+        """The tested methods should call the _update_bet() method
         with the player, bet, and event text.
         """
         player = players.Player(name='spam', chips=100)
@@ -248,7 +247,7 @@ class TableUITestCase(ut.TestCase):
             call(player, '', f'Ties {bet}.', True),
             call(player, '', f'Wins {bet}.', True),
         ]
-        
+
         data = [[player, 80, 20, '', ''],]
         ui = cli.TableUI()
         ui.ctlr.data = data
@@ -265,20 +264,20 @@ class TableUITestCase(ut.TestCase):
         ui.wins_split(player, bet)
         act = mock_update_bet.mock_calls[-10:]
         ui.end()
-        
+
         self.assertEqual(exp, act)
-    
+
     @patch('blackjack.termui.print')
     @patch('blackjack.cli.TableUI._update_event')
     def test_event_updates(self, mock_update_event, _):
-        """The tested methods should call the _update_event() method 
+        """The tested methods should call the _update_event() method
         with the player and event text.
         """
         player = players.Player(name='spam', chips=100)
         exp = [
             call(player, 'Shuffles the deck.'),
         ]
-        
+
         data = [[player, 80, 20, '', ''],]
         ui = cli.TableUI()
         ui.ctlr.data = data
@@ -286,13 +285,13 @@ class TableUITestCase(ut.TestCase):
         ui.shuffles(player)
         act = mock_update_event.mock_calls[-1:]
         ui.end()
-        
+
         self.assertEqual(exp, act)
-    
+
     @patch('blackjack.termui.print')
     @patch('blackjack.cli.TableUI._update_hand')
     def test_hand_updates(self, mock_update_hand, _):
-        """The tested methods should call the _update_hand() method 
+        """The tested methods should call the _update_hand() method
         with the player, hand, and event text.
         """
         player = players.Player(name='spam', chips=100)
@@ -307,7 +306,7 @@ class TableUITestCase(ut.TestCase):
             call(player, hand, 'Hits.'),
             call(player, hand, 'Stands.'),
         ]
-        
+
         data = [[player, 80, 20, '', ''],]
         ui = cli.TableUI()
         ui.ctlr.data = data
@@ -318,13 +317,13 @@ class TableUITestCase(ut.TestCase):
         ui.stand(player, hand)
         act = mock_update_hand.mock_calls[-4:]
         ui.end()
-        
+
         self.assertEqual(exp, act)
-    
+
     @patch('blackjack.termui.main')
     def test_splits(self, mock_main):
-        """When given a player and a bet, splits() should add a row 
-        to the data table for the split hand, update it with the 
+        """When given a player and a bet, splits() should add a row
+        to the data table for the split hand, update it with the
         relevant information, and send it to the UI.
         """
         hands = [
@@ -334,16 +333,16 @@ class TableUITestCase(ut.TestCase):
         player = players.Player(hands, name='spam', chips=100)
         player2 = players.Player(hands, name='eggs', chips=100)
         new_data = [
-            [player, 100, 20, 'J♣', 'Splits hand.'], 
+            [player, 100, 20, 'J♣', 'Splits hand.'],
             ['  \u2514\u2500', '', 20, 'J♠', ''],
-            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'],
         ]
         exp_call = call().send(('update', new_data))
         unexp_len = len(new_data)
-        
+
         data = [
-            [player, 100, 20, 'J♣ J♠', 'Takes hand.'], 
-            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+            [player, 100, 20, 'J♣ J♠', 'Takes hand.'],
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'],
         ]
         ui = cli.TableUI()
         ui.ctlr.data = data
@@ -352,67 +351,69 @@ class TableUITestCase(ut.TestCase):
         act_call = mock_main.mock_calls[-1]
         act_len = len(data)
         ui.end()
-        
+
         self.assertEqual(exp_call, act_call)
         self.assertNotEqual(unexp_len, act_len)
-    
+
     @patch('blackjack.termui.main')
     def test_leaves(self, mock_main):
-        """When given a player, leaves() should announce the player is 
-        leaving and remove the player from the data table. In order to 
-        avoid the row in the UI just going blank, this call will edit 
+        """When given a player, leaves() should announce the player is
+        leaving and remove the player from the data table. In order to
+        avoid the row in the UI just going blank, this call will edit
         self.ctlr.data directly.
         """
         player = players.Player(name='spam', chips=100)
         player2 = players.Player(name='eggs', chips=100)
         new_data = [
             [player, '', '', '', 'Walks away.'],
-            [player2, 100, '', '', 'Sits down.'], 
+            [player2, 100, '', '', 'Sits down.'],
         ]
         exp_call = call().send(('update', new_data))
         exp_data = [
             ['', '', '', '', 'Walks away.'],
-            [player2, 100, '', '', 'Sits down.'], 
+            [player2, 100, '', '', 'Sits down.'],
         ]
-        
+
         data = [
             [player, 100, '', '', 'Sits down.'],
-            [player2, 100, '', '', 'Sits down.'], 
+            [player2, 100, '', '', 'Sits down.'],
         ]
         ui = cli.TableUI()
         ui.ctlr.data = data
+
         def update_data(ctlr, data):
             ctlr.data = data
-        mock_main.side_effect= update_data(ui.ctlr, [r[:] for r in new_data])
+
+        mock_main.side_effect = update_data(ui.ctlr, [r[:] for r in new_data])
         ui.start()
         ui.leaves(player)
         act_call = mock_main.mock_calls[-1]
         act_data = ui.ctlr.data
         ui.end()
-        
+
         self.assertEqual(exp_call, act_call)
         self.assertEqual(exp_data, act_data)
-    
+
     @patch('blackjack.termui.main')
     def test_joins(self, mock_main):
-        """When given a player, joins() should add the player to the 
+        """When given a player, joins() should add the player to the
         data table in the first empty row.
         """
         player = players.Player(name='spam', chips=100)
         player2 = players.Player(name='eggs', chips=100)
         new_data1 = [
-            [player, 100, '', '', 'Sits down.'], 
+            [player, 100, '', '', 'Sits down.'],
             ['', '', '', '', ''],
         ]
         new_data2 = [
-            [player, 100, '', '', 'Sits down.'], 
-            [player2, 100, '', '', 'Sits down.'], 
+            [player, 100, '', '', 'Sits down.'],
+            [player2, 100, '', '', 'Sits down.'],
         ]
         exp_call = [
             call().send(('update', new_data1)),
             call().send(('update', new_data2)),
         ]
-        
+
         data = [
             ['', '', '', '', ''],
             ['', '', '', '', ''],
@@ -425,13 +426,13 @@ class TableUITestCase(ut.TestCase):
         ui.joins(player2)
         act_call = mock_main.mock_calls[-2:]
         ui.end()
-        
+
         self.assertEqual(exp_call, act_call)
         self.assertNotEqual(new_data2, new_data1)
-    
+
     @patch('blackjack.termui.main')
     def test__update_bet_split(self, mock_main):
-        """When is_split is True, _update_bet should update the split 
+        """When is_split is True, _update_bet should update the split
         row of the data table for the player.
         """
         hands = [
@@ -441,16 +442,16 @@ class TableUITestCase(ut.TestCase):
         player = players.Player(hands, name='spam', chips=100)
         player2 = players.Player(name='eggs', chips=100)
         new_data = [
-            [player, 100, 20, 'J♣', 'Splits hand.'], 
+            [player, 100, 20, 'J♣', 'Splits hand.'],
             ['  \u2514\u2500', '', 20, 'J♠', 'Loses.'],
-            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'],
         ]
         exp = call().send(('update', new_data))
-        
+
         data = [
-            [player, 100, 20, 'J♣', 'Splits hand.'], 
+            [player, 100, 20, 'J♣', 'Splits hand.'],
             ['  \u2514\u2500', '', '', 'J♠', ''],
-            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'],
         ]
         ui = cli.TableUI()
         ui.ctlr.data = data
@@ -458,12 +459,12 @@ class TableUITestCase(ut.TestCase):
         ui._update_bet(player, 20, 'Loses.', split=True)
         act = mock_main.mock_calls[-1]
         ui.end()
-        
+
         self.assertEqual(exp, act)
-    
+
     @patch('blackjack.termui.main')
     def test__update_hand_split(self, mock_main):
-        """If sent a split hand, _update_hand() should update the 
+        """If sent a split hand, _update_hand() should update the
         split row of the table.
         """
         hands = [
@@ -473,16 +474,16 @@ class TableUITestCase(ut.TestCase):
         player = players.Player(hands, name='spam', chips=100)
         player2 = players.Player(name='eggs', chips=100)
         new_data = [
-            [player, 100, 20, 'J♣', 'Splits hand.'], 
+            [player, 100, 20, 'J♣', 'Splits hand.'],
             ['  \u2514\u2500', '', 20, 'J♠ 5♣', 'Hits.'],
-            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'],
         ]
         exp = call().send(('update', new_data))
-        
+
         data = [
-            [player, 100, 20, 'J♣', 'Splits hand.'], 
+            [player, 100, 20, 'J♣', 'Splits hand.'],
             ['  \u2514\u2500', '', 20, 'J♠', 'Splits hand.'],
-            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'],
         ]
         ui = cli.TableUI()
         ui.ctlr.data = data
@@ -491,13 +492,13 @@ class TableUITestCase(ut.TestCase):
         ui._update_hand(player, hands[1], 'Hits.')
         act = mock_main.mock_calls[-1]
         ui.end()
-        
+
         self.assertEqual(exp, act)
-    
+
     @patch('blackjack.termui.main')
     def test_cleanup(self, mock_main):
-        """When called, cleanup() should clear the bet, hand, and 
-        event field of every row in the data table, then send it to 
+        """When called, cleanup() should clear the bet, hand, and
+        event field of every row in the data table, then send it to
         the UI.
         """
         hands = [
@@ -511,76 +512,75 @@ class TableUITestCase(ut.TestCase):
             [player2, 100, '', '', ''],
         ]
         exp = call().send(('update', new_data))
-        
+
         data = [
-            [player, 100, 20, 'J♣', 'Splits hand.'], 
+            [player, 100, 20, 'J♣', 'Splits hand.'],
             ['  \u2514\u2500', '', 20, 'J♠', 'Splits hand.'],
-            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'], 
+            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'],
         ]
         ui = cli.TableUI()
         ui.ctlr.data = data
         ui.start()
         ui.cleanup()
         act = mock_main.mock_calls[-1]
-        
+
         self.assertEqual(exp, act)
-    
-    
+
     # Input method tests.
     @patch('blackjack.termui.main')
     def test___prompt_calls(self, mock_main):
-        """When called, _prompt() should send the UI a prompt for user 
+        """When called, _prompt() should send the UI a prompt for user
         input and return the result.
         """
         exp_call = call().send(('input', 'spam', 'y'))
-        
+
         ui = cli.TableUI()
         ui.start()
         act_resp = ui._prompt('spam', 'y')
         act_call = mock_main.mock_calls[-1]
         ui.end()
-        
+
         self.assertEqual(exp_call, act_call)
-    
+
     @patch('blackjack.termui.main')
     @patch('blackjack.cli.TableUI._prompt')
     def test__yesno_prompt(self, mock_prompt, _):
-        """When called, _yesno_prompt() should prompt the user 
+        """When called, _yesno_prompt() should prompt the user
         for a yes/no answer. The response should be returned.
         """
         exp_resp = model.IsYes('y')
         exp_call = call('Play another round? [yn] > ', 'y')
-        
+
         ui = cli.TableUI()
         mock_prompt.return_value = 'y'
         ui.start()
         act_resp = ui._yesno_prompt('Play another round?', 'y')
         ui.end()
         act_call = mock_prompt.mock_calls[-1]
-        
+
         self.assertEqual(exp_resp.value, act_resp.value)
         self.assertEqual(exp_call, act_call)
-    
+
     @patch('blackjack.termui.main')
     def test__yesno_prompt_unit_valid(self, mock_main):
-        """If the user responds with an invalid value, the prompt 
+        """If the user responds with an invalid value, the prompt
         should be repeated.
         """
         exp_resp = model.IsYes('n')
-        
+
         ui = cli.TableUI()
         mock_main.return_value = (item for item in [None, None, 'z', ' ', 'n'])
         ui.start()
         act_resp = ui._yesno_prompt('spam', 'y')
         ui.end()
-        
+
         self.assertEqual(exp_resp.value, act_resp.value)
-    
+
     @patch('blackjack.termui.main')
     @patch('blackjack.cli.TableUI._yesno_prompt')
     def test__yesnos(self, mock_yesno, _):
-        """The individual yes/no prompts should sent their prompt and 
-        a default response value to _yesno_prompt and return the 
+        """The individual yes/no prompts should sent their prompt and
+        a default response value to _yesno_prompt and return the
         response.
         """
         exp_resp = model.IsYes('y')
@@ -591,7 +591,7 @@ class TableUITestCase(ut.TestCase):
             call('Play another round?', 'y'),
             call('Split your hand?', 'y'),
         ]
-        
+
         mock_yesno.return_value = exp_resp
         ui = cli.TableUI()
         ui.start()
@@ -603,7 +603,7 @@ class TableUITestCase(ut.TestCase):
         act_resps.append(ui.split_prompt())
         act_calls = mock_yesno.mock_calls[-5:]
         ui.end()
-        
+
         for act_resp in act_resps:
             self.assertEqual(exp_resp, act_resp)
         for exp, act in zip(exp_calls, act_calls):
@@ -612,7 +612,7 @@ class TableUITestCase(ut.TestCase):
 
 class LogUITestCase(ut.TestCase):
     tmp = '{:<15} {:<15} {:<}\n'
-    
+
     # Test start().
     def test_start(self):
         """start() should print the headers for the game output."""
@@ -624,15 +624,14 @@ class LogUITestCase(ut.TestCase):
             '\u2500' * 50 + '\n',
         ]
         exp = ''.join(lines)
-        
+
         with capture() as (out, err):
             ui = cli.LogUI(True)
             ui.start()
         act = out.getvalue()
-        
+
         self.assertEqual(exp, act)
-    
-    
+
     # Test end(),
     def test_end(self):
         """end() should print the footers for the game output."""
@@ -641,18 +640,17 @@ class LogUITestCase(ut.TestCase):
             '\n',
         ]
         exp = ''.join(lines)
-        
+
         with capture() as (out, err):
             ui = cli.LogUI(False)
             ui.end(True)
         act = out.getvalue()
-        
+
         self.assertEqual(exp, act)
-    
-    
+
     # Test _update_bet().
     def test__update_bet(self):
-        """Given a player, a bet, and an event, _update_bet() should 
+        """Given a player, a bet, and an event, _update_bet() should
         inform the player of the event.
         """
         player = players.Player(name='spam', chips=200)
@@ -660,17 +658,17 @@ class LogUITestCase(ut.TestCase):
         event = 'Bet.'
         fmt = f'{bet} ({player.chips})'
         exp = self.tmp.format(player, event, fmt)
-        
+
         ui = cli.LogUI()
         with capture() as (out, err):
             ui._update_bet(player, bet, event)
         act = out.getvalue()
-        
+
         self.assertEqual(exp, act)
-    
+
     @patch('blackjack.cli.LogUI._update_bet')
     def test_bet_updates(self, mock_update):
-        """The methods tested should send _update_bet a player, 
+        """The methods tested should send _update_bet a player,
         a bet, and event text for display to the user.
         """
         player = players.Player(name='spam')
@@ -689,7 +687,7 @@ class LogUITestCase(ut.TestCase):
         exp = [call(player, bet, event) for event in events]
         exp.append(call(player, '', 'Loses.'))
         exp.append(call(player, '', 'Loses.'))
-        
+
         ui = cli.LogUI()
         ui.bet(player, bet)
         ui.doubledown(player, bet)
@@ -703,29 +701,28 @@ class LogUITestCase(ut.TestCase):
         ui.loses(player)
         ui.loses_split(player)
         act = mock_update.mock_calls
-        
+
         self.assertListEqual(exp, act)
-        
-    
+
     # Test _update_event().
     def test__update_event(self):
-        """Given a player and an event, _update_event() should 
+        """Given a player and an event, _update_event() should
         report that event to the user.
         """
         player = players.Player(name='spam')
         event = 'Joins.'
         exp = self.tmp.format(player, event, '')
-        
+
         ui = cli.LogUI()
         with capture() as (out, err):
             ui._update_event(player, event)
         act = out.getvalue()
-        
-        self.assertEqual(exp, act)            
-    
+
+        self.assertEqual(exp, act)
+
     @patch('blackjack.cli.LogUI._update_event')
     def test_hand_event(self, mock_update):
-        """The methods tested should send _update_event a player, 
+        """The methods tested should send _update_event a player,
         an event, and optional details to display to the user.
         """
         player = players.Player(name='spam')
@@ -739,18 +736,18 @@ class LogUITestCase(ut.TestCase):
             'Shuffles.',
         ]
         exp = [call(player, event) for event in events]
-        
+
         ui = cli.LogUI()
         ui.joins(player)
         ui.leaves(player)
         ui.shuffles(player)
         act = mock_update.mock_calls
-        
+
         self.assertListEqual(exp, act)
-    
+
     # Test _update_hand().
     def test__update_hand(self):
-        """Given a player, hand, and an event, _update_hand should 
+        """Given a player, hand, and an event, _update_hand should
         report that update to the user.
         """
         player = players.Player(name='spam')
@@ -760,18 +757,17 @@ class LogUITestCase(ut.TestCase):
         ])
         event = 'Hand dealt.'
         exp = self.tmp.format(player, event, hand)
-        
+
         ui = cli.LogUI()
         with capture() as (out, err):
             ui._update_hand(player, hand, event)
         act = out.getvalue()
-        
-        self.assertEqual(exp, act)            
-    
-    
+
+        self.assertEqual(exp, act)
+
     @patch('blackjack.cli.LogUI._update_hand')
     def test_hand_updates(self, mock_update):
-        """The methods tested should send _update_hand a player, 
+        """The methods tested should send _update_hand a player,
         hand, and event text for display to the user.
         """
         player = players.Player(name='spam')
@@ -786,20 +782,19 @@ class LogUITestCase(ut.TestCase):
             'Stand.',
         ]
         exp = [call(player, hand, event) for event in events]
-        
+
         ui = cli.LogUI()
         ui.deal(player, hand)
         ui.flip(player, hand)
         ui.hit(player, hand)
         ui.stand(player, hand)
         act = mock_update.mock_calls
-        
+
         self.assertListEqual(exp, act)
-    
-    
+
     # Test cleanup()
     def test_cleanup(self):
-        """When called, cleanup() should print the footer and the 
+        """When called, cleanup() should print the footer and the
         header to the UI.
         """
         lines = [
@@ -812,36 +807,35 @@ class LogUITestCase(ut.TestCase):
             '\u2500' * 50 + '\n',
         ]
         exp = ''.join(lines)
-        
+
         with capture() as (out, err):
             ui = cli.LogUI(True)
             ui.cleanup()
         act = out.getvalue()
-        
+
         self.assertEqual(exp, act)
-    
-    
+
     # Test _yesno_prompt().
     @patch('blackjack.cli.input')
     def test_yesno_prompt(self, mock_input):
-        """Given a prompt and a default value, prompt the use for a 
+        """Given a prompt and a default value, prompt the use for a
         yes/no answer and return the result.
         """
         exp_resp = model.IsYes('y')
         exp_call = call('spam [yn] > ')
-        
+
         mock_input.return_value = 'y'
         ui = cli.LogUI()
         act_resp = ui._yesno_prompt('spam', 'y')
         act_call = mock_input.mock_calls[-1]
-        
+
         self.assertEqual(exp_resp.value, act_resp.value)
         self.assertEqual(exp_call, act_call)
-    
+
     @patch('blackjack.cli.LogUI._yesno_prompt')
     def test_prompt_yesnos(self, mock_input):
-        """The input methods that ask yes/no questions should call 
-        _yesno_prompt() with a prompt and a default, and they should 
+        """The input methods that ask yes/no questions should call
+        _yesno_prompt() with a prompt and a default, and they should
         return the response from _yesno_prompt().
         """
         prompts = [
@@ -853,7 +847,7 @@ class LogUITestCase(ut.TestCase):
         ]
         exp_resp = [model.IsYes('n') for _ in range(len(prompts))]
         exp_calls = [call(prompt, 'y') for prompt in prompts]
-        
+
         mock_input.return_value = model.IsYes('n')
         ui = cli.LogUI()
         act_resp = []
@@ -863,6 +857,6 @@ class LogUITestCase(ut.TestCase):
         act_resp.append(ui.nextgame_prompt())
         act_resp.append(ui.split_prompt())
         act_calls = mock_input.mock_calls
-        
+
         self.assertListEqual(exp_calls, act_calls)
         self.assertListEqual(exp_resp, act_resp)

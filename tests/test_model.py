@@ -14,76 +14,82 @@ from unittest.mock import call, Mock
 
 from blackjack import model
 
+
 class BaseDescriptorTests(unittest.TestCase):
     """Unit tests for model.BaseDescriptor."""
     def test_exists(self):
         """A class named _BaseDescriptor exists."""
         names = [item[0] for item in inspect.getmembers(model)]
         self.assertTrue('_BaseDescriptor' in names)
-    
+
     def test_can_instantiate(self):
         """_BaseDescriptor can be instantiated."""
         descr = model._BaseDescriptor()
         self.assertTrue(isinstance(descr, model._BaseDescriptor))
-    
+
     def test_is_descriptor(self):
         """_BaseDescriptor follows the descriptor protocol."""
         descr = model._BaseDescriptor()
         self.assertTrue(inspect.isdatadescriptor(descr))
-    
+
     def test_creates_storage_name(self):
-        """_BaseDescriptor objects use their hash to construct a 
+        """_BaseDescriptor objects use their hash to construct a
         temporary storage name.
         """
         descr = model._BaseDescriptor()
         value = hash(descr)
         expected = f'__BaseDescriptor#{value}'
-        
+
         actual = descr.storage_name
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_set_data(self):
-        """_BaseDescriptor objects should set the value of the 
+        """_BaseDescriptor objects should set the value of the
         protected attribute to the given value.
         """
         expected = 'spam'
-        
+
         descr = model._BaseDescriptor()
+
         class Eggs:
             attr = descr
+
         obj = Eggs()
         obj.attr = expected
         actual = obj.__dict__[descr.storage_name]
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_get_data(self):
-        """_BaseDescriptor objects should return the value of the 
+        """_BaseDescriptor objects should return the value of the
         protected attribute.
         """
         expected = 'spam'
-        
+
         descr = model._BaseDescriptor()
+
         class Eggs:
             attr = descr
+
         obj = Eggs()
         obj.__dict__[descr.storage_name] = expected
         actual = obj.attr
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_get_from_class(self):
-        """_BaseDescriptor objects should return themselves when 
-        the protected attribute is called on the protected attribute's 
+        """_BaseDescriptor objects should return themselves when
+        the protected attribute is called on the protected attribute's
         class.
         """
         expected = model._BaseDescriptor()
-        
+
         class Eggs():
             attr = expected
+
         actual = Eggs.attr
-        
+
         self.assertEqual(expected, actual)
 
 
@@ -92,102 +98,109 @@ class ValidatedTestCase(unittest.TestCase):
         """A class named Validated should exist."""
         names = [item[0] for item in inspect.getmembers(model)]
         self.assertTrue('Validated' in names)
-    
+
     def test_ABC(self):
         """Validated should be an abstract base class."""
         self.assertTrue(issubclass(model.Validated, abc.ABC))
-    
+
     def test_subclass_of__BaseDescriptor(self):
         """Validated should be a subclass of _BaseDescriptor."""
         self.assertTrue(issubclass(model.Validated, model._BaseDescriptor))
-    
+
     def test_validator_required(self):
-        """Subclasses of Validated should be required to define a 
+        """Subclasses of Validated should be required to define a
         validate() method.
         """
         expected = TypeError
-        
+
         class Spam(model.Validated):
             pass
-        
+
         with self.assertRaises(expected):
             obj = Spam()
-    
+
     def test_send_to_validator(self):
-        """Validated subclasses should send data to their validator 
-        method before setting it as the value of the protected 
+        """Validated subclasses should send data to their validator
+        method before setting it as the value of the protected
         attribute.
         """
         s = 'spam'
         expected = call(s)
-        
+
         class Descr(model.Validated):
             validate = Mock(return_value=expected)
+
         class Eggs:
             attr = Descr()
+
         obj = Eggs()
         obj.attr = s
         actual = Descr.validate.call_args
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_set_value(self):
-        """Validated subclasses should set the value returned from 
-        their validator method as the value of their protected 
+        """Validated subclasses should set the value returned from
+        their validator method as the value of their protected
         attribute.
         """
         expected = 'spam'
-        
+
         class Descr(model.Validated):
             validate = Mock(return_value=expected)
+
         class Eggs:
             attr = Descr()
+
         obj = Eggs()
         obj.attr = expected
         actual = obj.attr
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_storage_name_initialization(self):
-        """If passed the name of the protected attribute, instances of 
-        subclasses of Validated should change their storage_name 
+        """If passed the name of the protected attribute, instances of
+        subclasses of Validated should change their storage_name
         attribute to be correctly mangled.
         """
         expected = '_Descr__attr'
-        
+
         class Descr(model.Validated):
             validate = Mock()
+
         class Eggs:
             attr = Descr('attr')
+
         actual = Eggs.attr.storage_name
-        
+
         self.assertEqual(expected, actual)
-    
+
 
 class ValidatedTupleTestCase(unittest.TestCase):
     def test_ABC(self):
         """Validated should be an abstract base class."""
         self.assertTrue(issubclass(model.ValidatedTuple, abc.ABC))
-    
+
     def test_subclass_of__BaseDescriptor(self):
         """Validated should be a subclass of _BaseDescriptor."""
-        self.assertTrue(issubclass(model.ValidatedTuple, model._BaseDescriptor))
-    
+        answer = issubclass(model.ValidatedTuple, model._BaseDescriptor)
+        self.assertTrue(answer)
+
     def test_validator_required(self):
-        """Subclasses of Validated should be required to define a 
+        """Subclasses of Validated should be required to define a
         validate() method.
         """
         expected = TypeError
-        
+
         class Spam(model.ValidatedTuple):
             pass
-        
+
         with self.assertRaises(expected):
             obj = Spam()
-    
+
     def test_send_to_validator(self):
-        """ValidatedTuple subclasses should send data to their 
-        validate() method before setting it as the value of the 
+        """ValidatedTuple subclasses should send data to their
+        validate() method before setting it as the value of the
         protected attribute.
         """
         values = ('spam', 'spam')
@@ -195,64 +208,73 @@ class ValidatedTupleTestCase(unittest.TestCase):
             call(values[0]),
             call(values[1]),
         ]
-        
+
         class Descr(model.ValidatedTuple):
             validate = Mock()
+
         class Eggs:
             attr = Descr()
+
         obj = Eggs()
         obj.attr = values
         actual = Descr.validate.mock_calls
-        
+
         self.assertListEqual(expected, actual)
-    
+
     def test_set_value(self):
-        """ValidatedTuple subclasses should set the value returned 
-        from their validate_tuple method as the value of their 
+        """ValidatedTuple subclasses should set the value returned
+        from their validate_tuple method as the value of their
         protected attribute.
         """
         expected = ('spam', 'spam')
-        
+
         class Descr(model.ValidatedTuple):
             def validate(self, value):
                 return value
+
         class Eggs:
             attr = Descr()
+
         obj = Eggs()
         obj.attr = expected
         actual = obj.attr
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_storage_name_initialization(self):
-        """If passed the name of the protected attribute, instances of 
-        subclasses of ValidatedTuple should change their storage_name 
+        """If passed the name of the protected attribute, instances of
+        subclasses of ValidatedTuple should change their storage_name
         attribute to be correctly mangled.
         """
         expected = '_Descr__attr'
-        
+
         class Descr(model.ValidatedTuple):
             validate = Mock()
+
         class Eggs:
             attr = Descr('attr')
+
         actual = Eggs.attr.storage_name
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_invalid(self):
-        """If passed a non-iterator, subclasses of ValidatedTuple 
+        """If passed a non-iterator, subclasses of ValidatedTuple
         should raise a TypeError.
         """
         exp = TypeError
-        
+
         value = None
+
         class Descr(model.ValidatedTuple):
             def validate(self, value):
                 return value
+
         class Spam:
             attr = Descr('attr')
+
         obj = Spam()
-        
+
         with self.assertRaises(exp):
             obj.attr = value
 
@@ -262,166 +284,172 @@ class valfactoryTestCase(unittest.TestCase):
         """A function named valfactory should exist."""
         names = [item[0] for item in inspect.getmembers(model)]
         self.assertTrue('valfactory' in names)
-    
+
     def test_return_Validator_subclasses(self):
-        """valfactory(), when given a name, a validator function, and 
+        """valfactory(), when given a name, a validator function, and
         a message, should return subclasses of Validated.
         """
         expected = model.Validated
-        
+
         name = 'Eggs'
+
         def validate(self, value):
             return value
+
         msg = 'Bad.'
         actual = model.valfactory(name, validate, msg)
-        
+
         self.assertTrue(issubclass(actual, expected))
-    
+
     def test_class_name(self):
-        """The name of classes created by valfactory() should be the 
+        """The name of classes created by valfactory() should be the
         name passed to valfactory.
         """
         expected = 'Spam'
-        
+
         cls = model.valfactory(expected, Mock(), None)
         actual = cls.__name__
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_class_validator(self):
-        """The validator for the class created by valfactory() should 
+        """The validator for the class created by valfactory() should
         be the validator passed to valfactory.
         """
         expected = Mock()
-        
+
         cls = model.valfactory('Spam', expected, None)
         actual = cls.validate
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_class_message(self):
-        """The value of the msg attribute for the class created by 
-        valfactory should be the value of message passed to 
+        """The value of the msg attribute for the class created by
+        valfactory should be the value of message passed to
         valfactory().
         """
         expected = 'Bad.'
-        
+
         cls = model.valfactory('Spam', Mock(), expected)
         actual = cls.msg
-        
+
         self.assertEqual(expected, actual)
 
 
 class valtupfactoryTestCase(unittest.TestCase):
     def test_return_ValidatedTuple_subclasses(self):
-        """valtupfactory(), when given a name, a validator function, 
+        """valtupfactory(), when given a name, a validator function,
         and a message, should return subclasses of ValidatedTuple.
         """
         expected = model.ValidatedTuple
-        
+
         name = 'Eggs'
+
         def validate(self, value):
             return value
+
         msg = 'Bad.'
         actual = model.valtupfactory(name, validate, msg)
-        
+
         self.assertTrue(issubclass(actual, expected))
-    
+
     def test_class_name(self):
-        """The name of classes created by valtupfactory() should be 
+        """The name of classes created by valtupfactory() should be
         the name passed to valtupfactory.
         """
         expected = 'Spam'
-        
+
         cls = model.valtupfactory(expected, Mock(), None)
         actual = cls.__name__
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_class_validator(self):
-        """The validator for the class created by valtupefactory() 
+        """The validator for the class created by valtupefactory()
         should be the validator passed to valtupfactory.
         """
         expected = Mock()
-        
+
         cls = model.valtupfactory('Spam', expected, None)
         actual = cls.validate
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_class_message(self):
-        """The value of the msg attribute for the class created by 
-        valtupfactory should be the value of message passed to 
+        """The value of the msg attribute for the class created by
+        valtupfactory should be the value of message passed to
         valtupfactory().
         """
         expected = 'Bad.'
-        
+
         cls = model.valtupfactory('Spam', Mock(), expected)
         actual = cls.msg
-        
+
         self.assertEqual(expected, actual)
-    
+
 
 class wlistfactoryTestCase(unittest.TestCase):
     def test_return_Validator_subclasses(self):
-        """valfactory(), when given a name, a validator function, and 
+        """valfactory(), when given a name, a validator function, and
         a message, should return subclasses of Validated.
         """
         expected = model.Validated
-        
+
         name = 'Eggs'
         whitelist = ['spam', 'eggs']
         msg = 'Bad.'
         actual = model.wlistfactory(name, whitelist, msg)
-        
+
         self.assertTrue(issubclass(actual, expected))
-    
+
     def test_class_name(self):
-        """The name of classes created by valfactory() should be the 
+        """The name of classes created by valfactory() should be the
         name passed to valfactory.
         """
         expected = 'Spam'
-        
+
         cls = model.wlistfactory(expected, Mock(), None)
         actual = cls.__name__
-        
-        self.assertEqual(expected, actual)    
-    
+
+        self.assertEqual(expected, actual)
+
     def test_class_message(self):
-        """The value of the msg attribute for the class created by 
-        valfactory should be the value of message passed to 
+        """The value of the msg attribute for the class created by
+        valfactory should be the value of message passed to
         valfactory().
         """
         expected = 'Bad.'
-        
+
         cls = model.wlistfactory('Spam', Mock(), expected)
         actual = cls.msg
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_class_whitelist(self):
-        """The value of the msg attribute for the class created by 
-        valfactory should be the value of message passed to 
+        """The value of the msg attribute for the class created by
+        valfactory should be the value of message passed to
         valfactory().
         """
         expected = ['spam', 'eggs']
-        
+
         cls = model.wlistfactory('Spam', expected, expected)
         actual = cls.whitelist
-        
+
         self.assertEqual(expected, actual)
-    
+
     def test_validate(self):
         """The class returned should reject invalid values."""
         exp = ValueError
-        
+
         value = 1
         wl = ['spam', 'eggs']
         cls = model.wlistfactory('cls', wl, '({})')
+
         class Bacon:
             item = cls('item')
+
         obj = Bacon()
-        
+
         with self.assertRaises(exp):
             obj.item = value
 
@@ -431,22 +459,22 @@ class validate_boolTestCase(unittest.TestCase):
         """A function named validate_bool should exist."""
         names = [item[0] for item in inspect.getmembers(model)]
         self.assertTrue('validate_bool' in names)
-    
+
     def test_valid(self):
         """If passed a valid value, validate_bool should return it."""
         expected = True
         actual = model.validate_bool(None, expected)
         self.assertEqual(expected, actual)
-    
+
     def test_invalid_type(self):
-        """If passed a non-bool, validate_bool should reject it by 
+        """If passed a non-bool, validate_bool should reject it by
         raising a ValueError.
         """
         expected = ValueError
-        
+
         class Spam:
             msg = '{}'
-        
+
         with self.assertRaises(expected):
             _ = model.validate_bool(Spam(), 'eggs')
 
@@ -458,22 +486,23 @@ class validate_integerTestCase(unittest.TestCase):
         values = [4, 3.0]
         act = [model.validate_integer(None, item) for item in exp]
         self.assertListEqual(exp, act)
-    
+
     def test_invalid(self):
-        """If passed an invalid value, validate_integer() should raise 
+        """If passed an invalid value, validate_integer() should raise
         a ValueError.
         """
         exp = ValueError
-        
+
         class Spam:
             msg = '{}'
+
         test = 'eggs'
-        
+
         with self.assertRaises(exp):
             _ = model.validate_integer(Spam(), test)
-    
+
     def test_normalize_none(self):
-        """If given None, validate_integer should normalize it to 0 
+        """If given None, validate_integer should normalize it to 0
         before validating it.
         """
         exp = 0
@@ -484,25 +513,26 @@ class validate_integerTestCase(unittest.TestCase):
 
 class validate__positive_intTestCase(unittest.TestCase):
     def test_valid(self):
-        """If passed a valid value, validate_positive_ integer should 
+        """If passed a valid value, validate_positive_ integer should
         return it.
         """
         exp = [4, 3]
         values = [4, 3.0]
         act = [model.validate_positive_int(None, item) for item in exp]
         self.assertListEqual(exp, act)
-    
+
     def test_invalid(self):
-        """If passed an invalid value, validate_positive_int() should 
+        """If passed an invalid value, validate_positive_int() should
         raise a ValueError.
         """
         exp = ValueError
-        
+
         class Spam:
             msg = '{}'
+
         test1 = -1
         test2 = 'spam'
-        
+
         with self.assertRaises(exp):
             _ = model.validate_positive_int(Spam(), test1)
 
@@ -517,57 +547,59 @@ class validate_textTestCase(unittest.TestCase):
         values = [b'spam', 1]
         act = [model.validate_text(None, item) for item in exp]
         self.assertListEqual(exp, act)
-    
+
     def test_invalid(self):
-        """If passed an invalid value, validate_integer() should raise 
+        """If passed an invalid value, validate_integer() should raise
         a ValueError.
         """
         exp = ValueError
-        
+
         class Spam:
             msg = '{}'
+
         test = b'Montr\xe9al'
-        
+
         with self.assertRaises(exp):
             _ = model.validate_integer(Spam(), test)
 
 
 class validate_whitelistTestCase(unittest.TestCase):
     def test_valid(self):
-        """Given a valid value, validate_whitelist() should return 
+        """Given a valid value, validate_whitelist() should return
         it.
         """
         exp = 'spam'
-        
+
         class Eggs:
             msg = '({})'
             whitelist = ['spam', 'eggs', 'ham']
+
         act = model.validate_whitelist(Eggs(), exp)
-        
+
         self.assertEqual(exp, act)
-    
+
     def test_invalid(self):
-        """Given an invalid value, validate_whitelist() should raise 
+        """Given an invalid value, validate_whitelist() should raise
         a ValueError exception.
         """
         exp = ValueError
-        
+
         class Eggs:
             msg = '({})'
             whitelist = ['spam', 'eggs', 'ham']
+
         value = 1
-        
+
         with self.assertRaises(exp):
             _ = model.validate_whitelist(Eggs(), value)
 
 
-
 class validate_yesnoTestCase(unittest.TestCase):
     def test_valid_yes(self):
-        """If passed a valid value, validate_yesno should return True 
+        """If passed a valid value, validate_yesno should return True
         for values related to 'yes.'"""
         expected = True
-        
+
         value1 = 'Y'
         value2 = 'y'
         value3 = 'Yes'
@@ -576,17 +608,17 @@ class validate_yesnoTestCase(unittest.TestCase):
         actual2 = model.validate_yesno(None, value2)
         actual3 = model.validate_yesno(None, value3)
         actual4 = model.validate_yesno(None, value4)
-        
+
         self.assertEqual(expected, actual1)
         self.assertEqual(expected, actual2)
         self.assertEqual(expected, actual3)
         self.assertEqual(expected, actual4)
-    
+
     def test_valid_no(self):
-        """If passed a valid value, validate_yesno should return True 
+        """If passed a valid value, validate_yesno should return True
         for values related to 'yes.'"""
         expected = False
-        
+
         value1 = 'n'
         value2 = 'N'
         value3 = 'No'
@@ -595,21 +627,21 @@ class validate_yesnoTestCase(unittest.TestCase):
         actual2 = model.validate_yesno(None, value2)
         actual3 = model.validate_yesno(None, value3)
         actual4 = model.validate_yesno(None, value4)
-        
+
         self.assertEqual(expected, actual1)
         self.assertEqual(expected, actual2)
         self.assertEqual(expected, actual3)
         self.assertEqual(expected, actual4)
-    
+
     def test_invalid_value(self):
-        """If passed an invalid value, validate_yesno should reject it 
+        """If passed an invalid value, validate_yesno should reject it
         by raising a ValueError.
         """
         expected = ValueError
-        
+
         class Spam:
             msg = '{}'
-        
+
         with self.assertRaises(expected):
             _ = model.validate_yesno(Spam(), 'eggs')
 

@@ -10,7 +10,7 @@ This module manages a user interface run through a terminal.
 from collections import namedtuple
 import collections.abc as abc
 from time import sleep
-from typing import Any, Sequence
+from typing import Any, Generator, Sequence
 
 from blessed import Terminal
 
@@ -20,12 +20,12 @@ Field = namedtuple('Field', 'name fmt')
 
 
 class Box:
-    """A class to track the characters used to draw a box in a 
+    """A class to track the characters used to draw a box in a
     terminal.
-    
-    It has fifteen properties that return the character used for 
+
+    It has fifteen properties that return the character used for
     that part of the box:
-    
+
     * top: The top
     * bot: The bottom
     * side: The sides
@@ -43,9 +43,9 @@ class Box:
     """
     def __init__(self, kind: str = 'light', custom: str = None) -> None:
         self._names = [
-            'top', 'bot', 'side', 
-            'mhor', 'mver', 
-            'ltop', 'mtop', 'rtop', 
+            'top', 'bot', 'side',
+            'mhor', 'mver',
+            'ltop', 'mtop', 'rtop',
             'lside', 'mid', 'rside',
             'lbot', 'mbot', 'rbot',
         ]
@@ -64,27 +64,27 @@ class Box:
         if custom:
             self.custom = custom
             self.kind = 'custom'
-    
+
     def __getattr__(self, name):
         try:
             index = self._names.index(name)
         except ValueError:
             return self.__dict__[name]
         return self._chars[index]
-    
+
     @property
     def kind(self):
         return self._kind
-    
+
     @kind.setter
     def kind(self, value):
         self._kind = value
         self._chars = getattr(self, f'_{value}')
-    
+
     @property
     def custom(self):
         return self._custom
-    
+
     @custom.setter
     def custom(self, value):
         strvalue = str(value)
@@ -100,8 +100,8 @@ class Box:
 class TerminalController:
     def __init__(self, term: Terminal = None) -> None:
         """Initialize an instance of the class.
-        
-        :param term: (Optional.) The blessed.Terminal object that 
+
+        :param term: (Optional.) The blessed.Terminal object that
             runs the terminal output.
         :return: None.
         :rtype: NoneType
@@ -109,35 +109,35 @@ class TerminalController:
         if not term:
             term = Terminal()
         self.term = term
-        
+
 
 class Table(TerminalController):
     """Control a table displayed in the terminal."""
-    def __init__(self, title:str, fields: abc.Sequence, 
+    def __init__(self, title:str, fields: abc.Sequence,
                  frame: Box = None, data: abc.Sequence = None,
                  term: Terminal = None, row_sep: bool = False,
                  rows: int = 1) -> None:
         """Initialize an instance of the class.
-        
+
         :param title: The title for the table.
-        :param fields: Information about the fields in the table. This 
-            is a sequence of sequences, one for each column in the 
-            table. The data in the child sequences matches the 
+        :param fields: Information about the fields in the table. This
+            is a sequence of sequences, one for each column in the
+            table. The data in the child sequences matches the
             attributes of the FieldInfo class above.
-        :param frame: (Optional.) A Box object that provides the 
+        :param frame: (Optional.) A Box object that provides the
             characters used to frame the table.
         :param data: (Optional.) Initial values for the data table.
-        :param term: (Optional.) The blessed.Terminal object that 
+        :param term: (Optional.) The blessed.Terminal object that
             runs the terminal output.
-        :param row_sep: (Optional.) Whether the frame elements that 
+        :param row_sep: (Optional.) Whether the frame elements that
             separate the rows are printed.
         :param rows: (Optional.) The number of rows in the data table.
         :return: None.
         :rtype: None.
         """
-        self._data = []
+        self._data: list = []
         self._rows = 0
-        
+
         self.title = title
         self.fields = [Field(*args) for args in fields]
         if not frame:
@@ -148,32 +148,32 @@ class Table(TerminalController):
             self.data = list(data)
         self.row_sep = row_sep
         super().__init__(term)
-    
+
     @property
     def fields(self):
         return self._fields
-    
+
     @fields.setter
     def fields(self, value):
         self._fields = tuple(value)
         cls = self.__class__.__name__
-        
+
         # Set _field_widths.
         w_name = f'__{cls}_field_widths'
         lengths = tuple(len(field.fmt.format(' ')) for field in self.fields)
         setattr(self, w_name, lengths)
-        
+
         # Set _field_locs.
         fl_name = f'__{cls}_field_locs'
         locs = [1,]
         for width in self._field_widths[:-1]:
             locs.append(locs[-1] + width + 1)
         setattr(self, fl_name, tuple(locs))
-    
+
     @property
     def rows(self):
         return self._rows
-    
+
     @rows.setter
     def rows(self, value):
         while value > len(self._data):
@@ -181,16 +181,16 @@ class Table(TerminalController):
         while value < len(self._data):
             self._data.pop()
         self._rows = value
-    
+
     @property
     def data(self):
         return self._data
-    
+
     @data.setter
     def data(self, value):
         self._rows = len(value)
         self._data = value
-    
+
     @property
     def _bot(self):
         """The bottom frame of the data table."""
@@ -203,29 +203,29 @@ class Table(TerminalController):
         """The starting location for each cell in the table."""
         cls = self.__class__.__name__
         return getattr(self, f'__{cls}_field_locs')
-    
+
     @property
     def _field_widths(self):
         """The widths of each cell in the table."""
         cls = self.__class__.__name__
         return getattr(self, f'__{cls}_field_widths')
-    
+
     @property
     def _top(self):
         """The top frame of the data table."""
         fields = [width * self.frame.top for width in self._field_widths]
         middle = self.frame.mtop.join(fields)
         return self.frame.rtop + middle + self.frame.ltop
-    
+
     def _clear_footer(self) -> None:
         """Clear the bottom of the table and the footer."""
         self._clear_row(self.rows + 5)
         self._clear_row(self.rows + 4)
-    
+
     def _clear_row(self, y:int) -> None:
         """Clear a line in the UI."""
         print(self.term.move(y, 0) + ' ' * 80)
-    
+
     def _draw_cell(self, row:int, col:int, value:Any) -> None:
         """Given a row, column, and value, draw that cell in the UI."""
         width = self._field_widths[col]
@@ -237,18 +237,19 @@ class Table(TerminalController):
         x = list(self._field_locs)[col]
         fmt = self.fields[col].fmt
         print(self.term.move(y, x) + fmt.format(text))
-    
+
     def _draw_table_bottom(self):
         """Draw the bottom of the table."""
         y = len(self.data) + 4
         print(self.term.move(y, 0) + self._bot)
-    
+
     def _draw_table_headers(self):
         """Draw the column headers in the UI."""
-        head_fmt = ' ' + ' '.join('{:<' + str(w) + '}' for w in self._field_widths)
+        widths_fmt = ['{:<' + str(w) + '}' for w in self._field_widths]
+        head_fmt = ' ' + ' '.join(widths_fmt)
         headers = [field.name for field in self.fields]
         print(self.term.move(2, 0) + head_fmt.format(*headers))
-    
+
     def _draw_table(self):
         """Draw a row in the table."""
         fields = self.frame.mver.join(field.fmt for field in self.fields)
@@ -256,15 +257,15 @@ class Table(TerminalController):
         for index in range(len(self.data)):
             y = index + 4
             print(self.term.move(y, 0) + row_fmt.format(*self.data[index]))
-    
+
     def _draw_table_top(self):
         """Draw the top of the frame for the data table."""
         print(self.term.move(3, 0) + self._top)
-    
+
     def _draw_title(self):
         """Draw the title in the UI."""
         print(self.term.move(0, 0) + self.term.bold + self.title)
-    
+
     def clear(self):
         """Clear the UI."""
         header_rows = 4
@@ -272,7 +273,7 @@ class Table(TerminalController):
         rows = header_rows + self.rows + footer_rows
         for y in range(rows):
             self._clear_row(y)
-    
+
     def draw(self):
         """Draw the entire UI."""
         self._draw_title()
@@ -280,12 +281,12 @@ class Table(TerminalController):
         self._draw_table_top()
         self._draw_table()
         self._draw_table_bottom()
-    
-    def input(self, prompt:str, default: str = None) -> str:
+
+    def input(self, prompt: str, default: str = None) -> str:
         """Prompt the user for input, and return the input.
-        
+
         :param prompt: The input prompt.
-        :param default: (Optional.) The value to return if the user 
+        :param default: (Optional.) The value to return if the user
             doesn't provide input.
         :return: The user's input.
         :rtype: str
@@ -299,22 +300,22 @@ class Table(TerminalController):
         if not resp or resp == '\n':
             resp = default
         return resp
-    
+
     def update(self, data:Sequence[list]) -> None:
         """Update the entire UI.
-        
+
         :param data: A changed version of the data table.
         """
         while self.rows > len(data):
             self._clear_footer()
             self.rows -= 1
             self._draw_table_bottom()
-        
+
         while self.rows < len(data):
             self._clear_footer()
             self.rows += 1
             self._draw_table_bottom()
-        
+
         for row in range(len(self.data)):
             for col in range(len(self.data[row])):
                 if self.data[row][col] != data[row][col]:
@@ -323,23 +324,23 @@ class Table(TerminalController):
 
 
 # Main UI loop.
-def main(ctlr: TerminalController = None, is_interactive=False) -> None:
+def main(ctlr: TerminalController = None, is_interactive=False) -> Generator:
     """The main UI loop as a generator.
-    
+
     Calling Parameters
     ------------------
-    :param ctlr: (Optional.) A TerminalController object that will 
+    :param ctlr: (Optional.) A TerminalController object that will
         parse messages sent to the UI and update the terminal.
-    
+
     Send Parameters
     ---------------
     TBD
-    
+
     Yield
     -----
     :yield: None.
     :ytype: NoneType.
-    
+
     Return
     ------
     :return: None.
@@ -347,7 +348,7 @@ def main(ctlr: TerminalController = None, is_interactive=False) -> None:
     """
     if not ctlr:
         ctlr = TerminalController()
-    
+
     with ctlr.term.fullscreen(), ctlr.term.hidden_cursor():
         resp = None
         while True:
@@ -355,4 +356,3 @@ def main(ctlr: TerminalController = None, is_interactive=False) -> None:
             resp = getattr(ctlr, event)(*args)
             if is_interactive:
                 sleep(.15)
-

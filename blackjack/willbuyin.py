@@ -2,7 +2,7 @@
 willbuyin
 ~~~~~~~~~
 
-The module contains the will_buyin decision functions for players. These 
+The module contains the will_buyin decision functions for players. These
 determine whether the player will hit or stand. They must:
 
 * Accept self
@@ -18,7 +18,7 @@ from random import choice
 # Function.
 def will_buyin_always(self, the_game) -> bool:
     """The player will always try to buy into a game.
-    
+
     :param game: The game to buy into.
     :return: Whether to buy into the game.
     :rtype: bool
@@ -37,14 +37,14 @@ def will_buyin_never(self, the_game) -> bool:
     return False
 
 
-def will_buyin_random(self, the_game: 'game.Engine') -> bool:
+def will_buyin_random(self, the_game) -> bool:
     """Randomly buyin."""
     return choice([True, False])
 
 
 # List of valid will_buyin functions.
 will_buyins = [
-    will_buyin_dealer, 
+    will_buyin_dealer,
     will_buyin_always,
     will_buyin_never,
     will_buyin_random,
