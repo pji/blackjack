@@ -14,19 +14,17 @@ These determine whether the player will insure the hand. They must:
 :license: MIT, see LICENSE for more details.
 """
 from random import choice
-
-from blackjack.cards import Hand
+from typing import Callable
 
 
 # Functions.
 def will_insure_always(self, the_game) -> int:
     """The player will always buy the most insurance.
 
-    :param hand: The hand to make the decision on.
     :param the_game: The information about the current game to use
         to make a decision.
-    :return: A decision whether to double down.
-    :rtype: bool
+    :return: A decision whether to insure.
+    :rtype: int
     """
     return the_game.buyin // 2
 
@@ -34,11 +32,10 @@ def will_insure_always(self, the_game) -> int:
 def will_insure_never(self, the_game) -> int:
     """The player will never buy insurance.
 
-    :param hand: The hand to make the decision on.
     :param the_game: The information about the current game to use
         to make a decision.
-    :return: A decision whether to double down.
-    :rtype: bool
+    :return: A decision whether to insure.
+    :rtype: int
     """
     return 0
 
@@ -68,7 +65,7 @@ def will_insure_dealer(self, *args):
 # generated players:
 #   * The user version must be at index 0.
 #   * The dealer version must be at index 1.
-will_insures = [
+will_insures: list[Callable] = [
     will_insure_user,
     will_insure_dealer,
     will_insure_always,

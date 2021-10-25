@@ -14,6 +14,7 @@ determine whether the player will hit or stand. They must:
 :license: MIT, see LICENSE for more details.
 """
 from random import choice
+from typing import Callable
 
 from blackjack.cards import Hand
 
@@ -83,7 +84,7 @@ def will_hit_user(self, hand:Hand, the_game) -> bool:
 # generated players:
 #   * The user version must be at index 0.
 #   * The dealer version must be at index 1.
-will_hits = [
+will_hits: list[Callable] = [
     will_hit_user,
     will_hit_dealer,
     will_hit_never,

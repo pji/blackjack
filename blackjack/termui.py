@@ -10,9 +10,10 @@ This module manages a user interface run through a terminal.
 from collections import namedtuple
 import collections.abc as abc
 from time import sleep
-from typing import Any, Generator, Sequence
+from typing import Any, Generator, Optional, Sequence
 
 from blessed import Terminal
+from blessed.keyboard import Keystroke
 
 
 # Utility classes.
@@ -282,7 +283,8 @@ class Table(TerminalController):
         self._draw_table()
         self._draw_table_bottom()
 
-    def input(self, prompt: str, default: str = None) -> str:
+    def input(self, prompt: str,
+              default: Optional[Keystroke] = None) -> Optional[Keystroke]:
         """Prompt the user for input, and return the input.
 
         :param prompt: The input prompt.
@@ -295,7 +297,7 @@ class Table(TerminalController):
         fmt = '{:<' + str(self.term.width) + '}'
         print(self.term.move(y, 1) + fmt.format(prompt))
         with self.term.cbreak():
-            resp = self.term.inkey()
+            resp: Optional[Keystroke] = self.term.inkey()
         print(self.term.move(y, 1) + fmt.format(''))
         if not resp or resp == '\n':
             resp = default

@@ -13,6 +13,7 @@ determine whether the player will hit or stand. They must:
 :license: MIT, see LICENSE for more details.
 """
 from random import choice
+from typing import Callable
 
 
 # Function.
@@ -43,7 +44,7 @@ def will_buyin_random(self, the_game) -> bool:
 
 
 # List of valid will_buyin functions.
-will_buyins = [
+will_buyins: list[Callable] = [
     will_buyin_dealer,
     will_buyin_always,
     will_buyin_never,

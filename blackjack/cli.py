@@ -12,7 +12,7 @@ import argparse
 from collections import namedtuple
 from time import sleep
 import traceback as tb
-from typing import Any, Sequence
+from typing import Any, Sequence, Union
 
 from blessed import Terminal
 
@@ -174,14 +174,15 @@ class LogUI(game.BaseUI):
         self.wins(player, bet)
 
     # Input methods.
-    def _yesno_prompt(self, prompt:str, default: bool = True) -> model.IsYes:
+    def _yesno_prompt(self, prompt:str,
+                      default: Union[str, bool] = True) -> model.IsYes:
         """Prompt the user for a yes/no answer."""
         response = None
         fmt = '{} [yn] > '
 
         # Repeat the prompt until you get a valid response.
         while not response:
-            untrusted = input(fmt.format(prompt))
+            untrusted: Union[str, bool] = input(fmt.format(prompt))
 
             # Allow the response to default to true. Saves typing when
             # playing.

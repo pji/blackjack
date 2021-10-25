@@ -11,7 +11,7 @@ players, including the dealer.
 from functools import partial
 from json import dumps, loads
 from random import choice
-from typing import Callable
+from typing import Callable, TypeVar
 from types import MethodType
 
 from blackjack.cards import Hand, HandTuple
@@ -159,7 +159,7 @@ class Player:
         """
         names = [cls_.__name__ for cls_ in trusted_Players]
         if dict_['class'] not in names:
-            msg('Wrong constructor for serialized class.')
+            msg = 'Wrong constructor for serialized class.'
             raise TypeError(msg)
 
         player = cls(dict_['hands'], dict_['name'], dict_['chips'])

@@ -9,7 +9,7 @@ The module contains the main game loop for blackjack.
 """
 from abc import ABC, abstractmethod
 from json import dumps, loads
-from typing import Union
+from typing import Generator, Optional, Union
 
 from blackjack.cards import Deck, DeckObj, DOWN, Hand
 from blackjack.model import Integer_, IsYes, valfactory
@@ -277,8 +277,10 @@ class Engine:
     ui = ValidUI('ui')
     buyin = Integer_('buyin')
 
-    def __init__(self, deck: Deck = None, dealer: Player = None,
-                 playerlist: tuple = None, ui: EngineUI = None,
+    def __init__(self, deck: Deck = None,
+                 dealer: Optional[Player] = None,
+                 playerlist: Optional[list] = None,
+                 ui: EngineUI = None,
                  buyin: float = 0) -> None:
         """Initialize and instance of the class.
 
@@ -294,7 +296,7 @@ class Engine:
         self.deck = deck
 
         if not playerlist:
-            playerlist = ()
+            playerlist = []
         self.playerlist = playerlist
 
         if not dealer:
@@ -457,7 +459,7 @@ class Engine:
         playerlist[index] = None
         self.playerlist = playerlist
 
-    def _split(self, hand: Hand, player: Player) -> None:
+    def _split(self, hand: Hand, player: Player) -> bool:
         """Handle the splitting decision on a hand.
 
         :param hand: The hand to determine whether to split.
@@ -643,12 +645,12 @@ class Engine:
 
 
 # The main game loop for blackjack.
-def main(engine: Engine, is_interactive: bool = True) -> None:
+def main(engine: Engine, is_interactive: bool = True) -> Generator:
     """The main game loop for blackjack.
 
     :param engine: An instance of the blackjack Engine.
-    :return: None.
-    :rtype: None.
+    :return: The game as a generator.
+    :rtype: Generator.
     """
     engine.ui.start(is_interactive=is_interactive)
     engine.new_game()
