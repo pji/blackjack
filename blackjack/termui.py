@@ -99,6 +99,9 @@ class Box:
 
 # TerminalController classes.
 class TerminalController:
+    data: Any
+    fields: Any
+
     def __init__(self, term: Terminal = None) -> None:
         """Initialize an instance of the class.
 

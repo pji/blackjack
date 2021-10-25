@@ -12,7 +12,7 @@ import argparse
 from collections import namedtuple
 from time import sleep
 import traceback as tb
-from typing import Any, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 
 from blessed import Terminal
 
@@ -224,7 +224,7 @@ class LogUI(game.BaseUI):
 class TableUI(game.EngineUI):
     """A table-based terminal UI for blackjack."""
     # General operation methods.
-    def __init__(self, ctlr: termui.TerminalController = None,
+    def __init__(self, ctlr: Optional[termui.TerminalController] = None,
                  seats: int = 1) -> None:
         """Initialize and instance of the class.
 
@@ -323,6 +323,9 @@ class TableUI(game.EngineUI):
         :return: A list of the indices.
         :rtype: list
         """
+        if self.ctlr is None:
+            msg = 'Controller undefined.'
+            raise RuntimeError(msg)
         fields = [field.name for field in self.ctlr.fields]
         return [fields.index(field) for field in needed]
 
@@ -337,6 +340,9 @@ class TableUI(game.EngineUI):
         # Since termui.Table determines which fields to updata by
         # looking for changes in the data table, it's very important
         # that we create a copy of data here.
+        if self.ctlr is None:
+            msg = 'Control uninitialized.'
+            raise RuntimeError(msg)
         data = [row[:] for row in self.ctlr.data]
         playerlist = [row[0] for row in data]
         row = playerlist.index(player)

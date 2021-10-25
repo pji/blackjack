@@ -257,7 +257,7 @@ class Player:
     def will_double_down(self, hand:Hand, the_game) -> bool:
         raise NotImplementedError
 
-    def will_insure(self, hand:Hand, the_game) -> bool:
+    def will_insure(self, the_game) -> bool:
         raise NotImplementedError
 
 
@@ -288,7 +288,7 @@ def restore_player(s: str) -> Player:
         'UserPlayer': UserPlayer,
     }
     serial = loads(s)
-    cls = classes[serial['class']]
+    cls: Player = classes[serial['class']]
     return cls.deserialize(s)
 
 
