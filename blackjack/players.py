@@ -11,7 +11,7 @@ players, including the dealer.
 from functools import partial
 from json import dumps, loads
 from random import choice
-from typing import Callable, TypeVar
+from typing import Callable, Type
 from types import MethodType
 
 from blackjack.cards import Hand, HandTuple
@@ -288,7 +288,7 @@ def restore_player(s: str) -> Player:
         'UserPlayer': UserPlayer,
     }
     serial = loads(s)
-    cls: Player = classes[serial['class']]
+    cls: Type[Player] = classes[serial['class']]
     return cls.deserialize(s)
 
 
