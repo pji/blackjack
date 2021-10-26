@@ -8,10 +8,6 @@ this is to play around with basic concepts.
 
 To Run
 ------
-If you clone the repository, you can run it. Right now, all that it 
-does is show a game between automated players, but if you want to 
-see that, you can.
-
 To see a game that is only the dealer, run the following from the root 
 of your local copy of the repository::
 
