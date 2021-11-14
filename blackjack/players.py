@@ -14,66 +14,51 @@ from random import choice
 from typing import Callable, Type
 from types import MethodType
 
+import mkname
+
 from blackjack.cards import Hand, HandTuple
 from blackjack.model import Integer_, PosInt, Text, valfactory, valtupfactory
-from blackjack.willbuyin import (will_buyin_dealer,
-                                 will_buyin_always,
-                                 will_buyin_never,
-                                 will_buyin_random,
-                                 will_buyins)
-from blackjack.willdoubledown import (will_double_down_user,
-                                      will_double_down_dealer,
-                                      will_double_down_always,
-                                      will_double_down_never,
-                                      will_double_down_random,
-                                      will_double_down_recommended,
-                                      will_double_downs)
-from blackjack.willhit import (will_hit_user,
-                               will_hit_dealer,
-                               will_hit_never,
-                               will_hit_random,
-                               will_hit_recommended,
-                               will_hits)
-from blackjack.willinsure import (will_insure_user,
-                                  will_insure_dealer,
-                                  will_insure_always,
-                                  will_insure_never,
-                                  will_insure_random,
-                                  will_insures)
-from blackjack.willsplit import (will_split_user,
-                                 will_split_dealer,
-                                 will_split_always,
-                                 will_split_never,
-                                 will_split_random,
-                                 will_split_recommended,
-                                 will_splits)
-
-
-# Popular baby names from specific years taken from "Official US List"
-# from babycenter.com.
-NAMES = [
-    # 2019
-    'Sophia', 'Olivia', 'Emma', 'Ava', 'Aria', 'Isabella', 'Amelia',
-    'Mia', 'Riley', 'Aaliyah', 'Liam', 'Jackson', 'Noah', 'Aiden',
-    'Grayson', 'Caden', 'Lucas', 'Elijah', 'Oliver', 'Mason',
-
-    # 1996
-    'Emily', 'Jessica', 'Ashley', 'Sarah', 'Samantha', 'Taylor', 'Hannah',
-    'Alexis', 'Rachel', 'Elizabeth', 'Michael', 'Matthew', 'Jacob',
-    'Christopher', 'Joshua', 'Nicholas', 'Tyler', 'Brandon', 'Austin',
-    'Andrew',
-
-    # 1976
-    'Jennifer', 'Amy', 'Melissa', 'Heather', 'Angela', 'Michelle',
-    'Kimberly', 'Jessica', 'Lisa', 'Amanda', 'Michael', 'Jason',
-    'Christopher', 'David', 'James', 'John', 'Robert', 'Brian',
-    'Matthew', 'Daniel',
-
-    # 1956
-    'Mary', 'Debra', 'Linda', 'Deborah', 'Susan', 'Patricia', 'Karen',
-    'Cynthia', 'Barbara', 'Donna', 'Michael', 'James', 'Robert',
-    'David', 'John', 'William', 'Richard', 'Mark', 'Thomas', 'Steven',
-]
+from blackjack.willbuyin import (
+    will_buyin_dealer,
+    will_buyin_always,
+    will_buyin_never,
+    will_buyin_random,
+    will_buyins
+)
+from blackjack.willdoubledown import (
+    will_double_down_user,
+    will_double_down_dealer,
+    will_double_down_always,
+    will_double_down_never,
+    will_double_down_random,
+    will_double_down_recommended,
+    will_double_downs
+)
+from blackjack.willhit import (
+    will_hit_user,
+    will_hit_dealer,
+    will_hit_never,
+    will_hit_random,
+    will_hit_recommended,
+    will_hits
+)
+from blackjack.willinsure import (
+    will_insure_user,
+    will_insure_dealer,
+    will_insure_always,
+    will_insure_never,
+    will_insure_random,
+    will_insures
+)
+from blackjack.willsplit import (
+    will_split_user,
+    will_split_dealer,
+    will_split_always,
+    will_split_never,
+    will_split_random,
+    will_split_recommended,
+    will_splits
+)
 
 
 # Utility functions.
@@ -90,7 +75,11 @@ def get_chips(bet):
 
 def get_name():
     """Return a random name."""
-    return choice(NAMES)
+    config = mkname.get_config('')
+    db_loc = mkname.init_db(config['db_path'])
+    names = mkname.get_names_by_kind(db_loc, 'given')
+    return mkname.select_name(names)
+    
 
 
 def name_builder(start:str, end:str) -> str:
@@ -103,33 +92,10 @@ def name_builder(start:str, end:str) -> str:
     :return: The new string.
     :rtype: str
     """
-    vowels = 'aeiouy'
-    consonants = 'bcdfghjklmnpqrstvwxz'
-    start = start.lower()
-    end = end.lower()
-
-    def get_change_index(s:str, letters):
-        index = 1
-        while index < len(s) and s[index] in letters:
-            index += 1
-        return index
-
-    name = ''
-    if end[0] not in vowels and start[0] not in vowels:
-        index_start = get_change_index(start, consonants)
-        index_end = get_change_index(end, consonants)
-        name = start[0:index_start] + end[index_end:]
-    elif end[0] in vowels and start[0] not in vowels:
-        index_start = get_change_index(start, consonants)
-        name = start[0:index_start] + end
-    elif end[0] in vowels and start[0] in vowels:
-        index_start = get_change_index(start, vowels)
-        index_end = get_change_index(end, vowels)
-        name = start[0:index_start] + end[index_end:]
-    else:
-        index_start = get_change_index(start, vowels)
-        name = start[0:index_start] + end
-    return name[0].upper() + name[1:]
+    config = mkname.get_config('')
+    db_loc = mkname.init_db(config['db_path'])
+    names = mkname.get_names_by_kind(db_loc, 'given')
+    return mkname.build_compound_name(names)
 
 
 # Base class.
@@ -182,7 +148,8 @@ class Player:
 
         return player
 
-    def __init__(self, hands: tuple = (), name: str = 'Player',
+    def __init__(self, hands: tuple = (),
+                 name: str = 'Player',
                  chips: int = 0) -> None:
         """Initialize and instance of the class.
 

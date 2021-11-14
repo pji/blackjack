@@ -378,7 +378,7 @@ class make_playerTestCase(ut.TestCase):
         actual = players.make_player()
         self.assertTrue(isinstance(actual, expected))
 
-    @patch('blackjack.players.get_name')
+    @patch('mkname.select_name')
     def test_player_has_name(self, mock_get_name):
         """The players created by make_player() have names."""
         expected = 'Graham'
@@ -436,6 +436,7 @@ class make_playerTestCase(ut.TestCase):
         self.assertTrue(exp_low <= actual)
 
 
+@ut.skip
 class name_builderTestCase(ut.TestCase):
     def test_construct_name(self):
         """Given a beginning, middle, and end, name_builder should
