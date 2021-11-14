@@ -378,8 +378,9 @@ class make_playerTestCase(ut.TestCase):
         actual = players.make_player()
         self.assertTrue(isinstance(actual, expected))
 
+    @patch('mkname.build_compound_name', return_value='Graham')
     @patch('mkname.select_name')
-    def test_player_has_name(self, mock_get_name):
+    def test_player_has_name(self, mock_get_name, _):
         """The players created by make_player() have names."""
         expected = 'Graham'
 

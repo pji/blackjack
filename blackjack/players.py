@@ -14,7 +14,7 @@ from random import choice
 from typing import Callable, Type
 from types import MethodType
 
-import mkname
+import mkname                               # type: ignore
 
 from blackjack.cards import Hand, HandTuple
 from blackjack.model import Integer_, PosInt, Text, valfactory, valtupfactory
@@ -79,7 +79,6 @@ def get_name():
     db_loc = mkname.init_db(config['db_path'])
     names = mkname.get_names_by_kind(db_loc, 'given')
     return mkname.select_name(names)
-    
 
 
 def name_builder(start:str, end:str) -> str:
