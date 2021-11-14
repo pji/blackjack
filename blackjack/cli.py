@@ -636,7 +636,8 @@ def test():
     print(player.asdict())
 
 
-if __name__ == '__main__':
+# Command line mainline.
+def main():
     p = argparse.ArgumentParser(description='Blackjack')
     p.add_argument('-d', '--dealer_only', help='Just a dealer game.',
                    action='store_true')
@@ -707,3 +708,7 @@ if __name__ == '__main__':
                 fh.write(tb_str)
             ui.end()
             raise ex
+
+
+if __name__ == '__main__':
+    main()
