@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 blessed = "*"
-mkname = {path = "./../mkname"}
+mkname = "*"
 
 [dev-packages]
 rstcheck = "*"
