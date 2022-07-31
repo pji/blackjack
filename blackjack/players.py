@@ -14,7 +14,7 @@ from random import choice
 from typing import Callable, Type
 from types import MethodType
 
-import mkname                               # type: ignore
+import mkname
 
 from blackjack.cards import Hand, HandTuple
 from blackjack.model import Integer_, PosInt, Text, valfactory, valtupfactory
