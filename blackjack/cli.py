@@ -637,7 +637,92 @@ def test():
 
 
 # Command line mainline.
-def main():
+def parse_cli() -> argparse.Namespace:
+    """Parse the command line options used to invoke the game."""
+    p = argparse.ArgumentParser(description='Blackjack')
+    p.add_argument(
+        '-b', '--buyin',
+        help='The buyin amount for each hand.',
+        action='store',
+        type=int,
+        default=20
+    )
+    p.add_argument(
+        '-c', '--chips',
+        help='Number of starting chips for the user.',
+        action='store',
+        type=int,
+        default=200
+    )
+    p.add_argument(
+        '-D', '--decks',
+        help='Number of standard decks to build the deck from.',
+        action='store',
+        type=int,
+        default=6
+    )
+    p.add_argument(
+        '-p', '--players',
+        help='Number of computer players.',
+        action='store',
+        type=int,
+        default=4
+    )
+    return p.parse_args()
+
+
+def build_game(args: argparse.Namespace) -> game.Engine:
+    """Build the game from the given arguments."""
+    # Build deck.
+    deck = cards.Deck.build(args.decks)
+    deck.shuffle()
+    deck.random_cut()
+
+    # Create dealer and players.
+    dealer = players.Dealer(name='Dealer')
+    user = players.UserPlayer(name='You', chips=args.chips)
+    playerlist = [
+        players.make_player(bet=args.buyin)
+        for _ in range(args.players)
+    ]
+    playerlist.append(user)
+
+    # Build the UI.
+    seats = 1 + len(playerlist)
+    ui = TableUI(seats=6)
+
+    # Build and return the game.
+    return game.Engine(
+        deck=deck,
+        dealer=dealer,
+        playerlist=playerlist,
+        ui=ui,
+        buyin=args.buyin
+    )
+
+
+def main() -> None:
+    # Build the game.
+    args = parse_cli()
+    engine = build_game(args)
+
+    # Play the game.
+    try:
+        loop = game.main(engine)
+        play = next(loop)
+        while play:
+            play = loop.send(play)
+
+    except Exception as ex:
+        with open('exception.log', 'w') as fh:
+            fh.write(str(ex.args))
+            tb_str = ''.join(tb.format_tb(ex.__traceback__))
+            fh.write(tb_str)
+        engine.ui.end()
+        raise ex
+
+
+def main_old():
     p = argparse.ArgumentParser(description='Blackjack')
     p.add_argument('-d', '--dealer_only', help='Just a dealer game.',
                    action='store_true')

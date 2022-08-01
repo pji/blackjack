@@ -38,7 +38,10 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
-* Save state at end of each hand.
+* Write tests for CLI invocation.
+* Allow CLI to restore game from save.
+* Allow CLI to set name of save file.
+* Allow multiple human players to play in single game over network.
 * Build UI for saving and restoring game state.
 * Allow for insurance less than half of initial bet.
 * Add optional card count to display.

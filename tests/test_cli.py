@@ -37,6 +37,301 @@ def mock_run_terminal_only_yesno():
 
 
 # Tests.
+class LogUITestCase(ut.TestCase):
+    tmp = '{:<15} {:<15} {:<}\n'
+
+    # Test start().
+    def test_start(self):
+        """start() should print the headers for the game output."""
+        lines = [
+            '\n',
+            'BLACKJACK!\n',
+            '\n',
+            self.tmp.format('Player', 'Action', 'Hand'),
+            '\u2500' * 50 + '\n',
+        ]
+        exp = ''.join(lines)
+
+        with capture() as (out, err):
+            ui = cli.LogUI(True)
+            ui.start()
+        act = out.getvalue()
+
+        self.assertEqual(exp, act)
+
+    # Test end(),
+    def test_end(self):
+        """end() should print the footers for the game output."""
+        lines = [
+            '\u2500' * 50 + '\n',
+            '\n',
+        ]
+        exp = ''.join(lines)
+
+        with capture() as (out, err):
+            ui = cli.LogUI(False)
+            ui.end(True)
+        act = out.getvalue()
+
+        self.assertEqual(exp, act)
+
+    # Test _update_bet().
+    def test__update_bet(self):
+        """Given a player, a bet, and an event, _update_bet() should
+        inform the player of the event.
+        """
+        player = players.Player(name='spam', chips=200)
+        bet = 20
+        event = 'Bet.'
+        fmt = f'{bet} ({player.chips})'
+        exp = self.tmp.format(player, event, fmt)
+
+        ui = cli.LogUI()
+        with capture() as (out, err):
+            ui._update_bet(player, bet, event)
+        act = out.getvalue()
+
+        self.assertEqual(exp, act)
+
+    @patch('blackjack.cli.LogUI._update_bet')
+    def test_bet_updates(self, mock_update):
+        """The methods tested should send _update_bet a player,
+        a bet, and event text for display to the user.
+        """
+        player = players.Player(name='spam')
+        bet = 20
+        events = [
+            'Bet.',
+            'Double down.',
+            'Insures.',
+            'Insure pay.',
+            'Tie.',
+            'Tie.',
+            'Wins.',
+            'Wins.',
+            'Splits.',
+        ]
+        exp = [call(player, bet, event) for event in events]
+        exp.append(call(player, '', 'Loses.'))
+        exp.append(call(player, '', 'Loses.'))
+
+        ui = cli.LogUI()
+        ui.bet(player, bet)
+        ui.doubledown(player, bet)
+        ui.insures(player, bet)
+        ui.insurepay(player, bet)
+        ui.tie(player, bet)
+        ui.ties_split(player, bet)
+        ui.wins(player, bet)
+        ui.wins_split(player, bet)
+        ui.splits(player, bet)
+        ui.loses(player)
+        ui.loses_split(player)
+        act = mock_update.mock_calls
+
+        self.assertListEqual(exp, act)
+
+    # Test _update_event().
+    def test__update_event(self):
+        """Given a player and an event, _update_event() should
+        report that event to the user.
+        """
+        player = players.Player(name='spam')
+        event = 'Joins.'
+        exp = self.tmp.format(player, event, '')
+
+        ui = cli.LogUI()
+        with capture() as (out, err):
+            ui._update_event(player, event)
+        act = out.getvalue()
+
+        self.assertEqual(exp, act)
+
+    @patch('blackjack.cli.LogUI._update_event')
+    def test_hand_event(self, mock_update):
+        """The methods tested should send _update_event a player,
+        an event, and optional details to display to the user.
+        """
+        player = players.Player(name='spam')
+        hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(1, 0),
+        ])
+        events = [
+            'Joins.',
+            'Leaves.',
+            'Shuffles.',
+        ]
+        exp = [call(player, event) for event in events]
+
+        ui = cli.LogUI()
+        ui.joins(player)
+        ui.leaves(player)
+        ui.shuffles(player)
+        act = mock_update.mock_calls
+
+        self.assertListEqual(exp, act)
+
+    # Test _update_hand().
+    def test__update_hand(self):
+        """Given a player, hand, and an event, _update_hand should
+        report that update to the user.
+        """
+        player = players.Player(name='spam')
+        hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(1, 0),
+        ])
+        event = 'Hand dealt.'
+        exp = self.tmp.format(player, event, hand)
+
+        ui = cli.LogUI()
+        with capture() as (out, err):
+            ui._update_hand(player, hand, event)
+        act = out.getvalue()
+
+        self.assertEqual(exp, act)
+
+    @patch('blackjack.cli.LogUI._update_hand')
+    def test_hand_updates(self, mock_update):
+        """The methods tested should send _update_hand a player,
+        hand, and event text for display to the user.
+        """
+        player = players.Player(name='spam')
+        hand = cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(1, 0),
+        ])
+        events = [
+            'Dealt hand.',
+            'Flip.',
+            'Hit.',
+            'Stand.',
+        ]
+        exp = [call(player, hand, event) for event in events]
+
+        ui = cli.LogUI()
+        ui.deal(player, hand)
+        ui.flip(player, hand)
+        ui.hit(player, hand)
+        ui.stand(player, hand)
+        act = mock_update.mock_calls
+
+        self.assertListEqual(exp, act)
+
+    # Test cleanup()
+    def test_cleanup(self):
+        """When called, cleanup() should print the footer and the
+        header to the UI.
+        """
+        lines = [
+            '\u2500' * 50 + '\n',
+            '\n',
+            '\n',
+            'BLACKJACK!\n',
+            '\n',
+            self.tmp.format('Player', 'Action', 'Hand'),
+            '\u2500' * 50 + '\n',
+        ]
+        exp = ''.join(lines)
+
+        with capture() as (out, err):
+            ui = cli.LogUI(True)
+            ui.cleanup()
+        act = out.getvalue()
+
+        self.assertEqual(exp, act)
+
+    # Test _yesno_prompt().
+    @patch('blackjack.cli.input')
+    def test_yesno_prompt(self, mock_input):
+        """Given a prompt and a default value, prompt the use for a
+        yes/no answer and return the result.
+        """
+        exp_resp = model.IsYes('y')
+        exp_call = call('spam [yn] > ')
+
+        mock_input.return_value = 'y'
+        ui = cli.LogUI()
+        act_resp = ui._yesno_prompt('spam', 'y')
+        act_call = mock_input.mock_calls[-1]
+
+        self.assertEqual(exp_resp.value, act_resp.value)
+        self.assertEqual(exp_call, act_call)
+
+    @patch('blackjack.cli.LogUI._yesno_prompt')
+    def test_prompt_yesnos(self, mock_input):
+        """The input methods that ask yes/no questions should call
+        _yesno_prompt() with a prompt and a default, and they should
+        return the response from _yesno_prompt().
+        """
+        prompts = [
+            'Double down?',
+            'Hit?',
+            'Insure?',
+            'Next game?',
+            'Split?',
+        ]
+        exp_resp = [model.IsYes('n') for _ in range(len(prompts))]
+        exp_calls = [call(prompt, 'y') for prompt in prompts]
+
+        mock_input.return_value = model.IsYes('n')
+        ui = cli.LogUI()
+        act_resp = []
+        act_resp.append(ui.doubledown_prompt())
+        act_resp.append(ui.hit_prompt())
+        act_resp.append(ui.insure_prompt())
+        act_resp.append(ui.nextgame_prompt())
+        act_resp.append(ui.split_prompt())
+        act_calls = mock_input.mock_calls
+
+        self.assertListEqual(exp_calls, act_calls)
+        self.assertListEqual(exp_resp, act_resp)
+
+
+class ParseCliTestCase(ut.TestCase):
+    def setUp(self):
+        self.original_args = sys.argv
+
+    def tearDown(self):
+        sys.argv = self.original_args
+
+    @patch('blackjack.cards.randrange', return_value=65)
+    def test_default_game(self, _):
+        """When passed no options, blackjack should start a default
+        game with four computer players and a human player.
+        """
+        # Expected values.
+        exp = {
+            'table_seats': 6,
+            'deck_len': 52 * 6 - 65,
+            'dealer': players.Dealer(name='Dealer'),
+            'playerlist_len': 5,
+            'last_player': players.UserPlayer(name='You', chips=200),
+            'buyin': 20,
+        }
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', ]
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act = {
+            'table_seats': engine.ui.seats,
+            'deck_len': len(engine.deck),
+            'dealer': engine.dealer,
+            'playerlist_len': len(engine.playerlist),
+            'last_player': engine.playerlist[-1],
+            'buyin': engine.buyin,
+        }
+
+        # Determine test result.
+        self.assertDictEqual(exp, act)
+
+
 class TableUITestCase(ut.TestCase):
     def test_subclass(self):
         """TableUI is a subclass of game.EngineUI."""
@@ -608,255 +903,3 @@ class TableUITestCase(ut.TestCase):
             self.assertEqual(exp_resp, act_resp)
         for exp, act in zip(exp_calls, act_calls):
             self.assertEqual(exp, act)
-
-
-class LogUITestCase(ut.TestCase):
-    tmp = '{:<15} {:<15} {:<}\n'
-
-    # Test start().
-    def test_start(self):
-        """start() should print the headers for the game output."""
-        lines = [
-            '\n',
-            'BLACKJACK!\n',
-            '\n',
-            self.tmp.format('Player', 'Action', 'Hand'),
-            '\u2500' * 50 + '\n',
-        ]
-        exp = ''.join(lines)
-
-        with capture() as (out, err):
-            ui = cli.LogUI(True)
-            ui.start()
-        act = out.getvalue()
-
-        self.assertEqual(exp, act)
-
-    # Test end(),
-    def test_end(self):
-        """end() should print the footers for the game output."""
-        lines = [
-            '\u2500' * 50 + '\n',
-            '\n',
-        ]
-        exp = ''.join(lines)
-
-        with capture() as (out, err):
-            ui = cli.LogUI(False)
-            ui.end(True)
-        act = out.getvalue()
-
-        self.assertEqual(exp, act)
-
-    # Test _update_bet().
-    def test__update_bet(self):
-        """Given a player, a bet, and an event, _update_bet() should
-        inform the player of the event.
-        """
-        player = players.Player(name='spam', chips=200)
-        bet = 20
-        event = 'Bet.'
-        fmt = f'{bet} ({player.chips})'
-        exp = self.tmp.format(player, event, fmt)
-
-        ui = cli.LogUI()
-        with capture() as (out, err):
-            ui._update_bet(player, bet, event)
-        act = out.getvalue()
-
-        self.assertEqual(exp, act)
-
-    @patch('blackjack.cli.LogUI._update_bet')
-    def test_bet_updates(self, mock_update):
-        """The methods tested should send _update_bet a player,
-        a bet, and event text for display to the user.
-        """
-        player = players.Player(name='spam')
-        bet = 20
-        events = [
-            'Bet.',
-            'Double down.',
-            'Insures.',
-            'Insure pay.',
-            'Tie.',
-            'Tie.',
-            'Wins.',
-            'Wins.',
-            'Splits.',
-        ]
-        exp = [call(player, bet, event) for event in events]
-        exp.append(call(player, '', 'Loses.'))
-        exp.append(call(player, '', 'Loses.'))
-
-        ui = cli.LogUI()
-        ui.bet(player, bet)
-        ui.doubledown(player, bet)
-        ui.insures(player, bet)
-        ui.insurepay(player, bet)
-        ui.tie(player, bet)
-        ui.ties_split(player, bet)
-        ui.wins(player, bet)
-        ui.wins_split(player, bet)
-        ui.splits(player, bet)
-        ui.loses(player)
-        ui.loses_split(player)
-        act = mock_update.mock_calls
-
-        self.assertListEqual(exp, act)
-
-    # Test _update_event().
-    def test__update_event(self):
-        """Given a player and an event, _update_event() should
-        report that event to the user.
-        """
-        player = players.Player(name='spam')
-        event = 'Joins.'
-        exp = self.tmp.format(player, event, '')
-
-        ui = cli.LogUI()
-        with capture() as (out, err):
-            ui._update_event(player, event)
-        act = out.getvalue()
-
-        self.assertEqual(exp, act)
-
-    @patch('blackjack.cli.LogUI._update_event')
-    def test_hand_event(self, mock_update):
-        """The methods tested should send _update_event a player,
-        an event, and optional details to display to the user.
-        """
-        player = players.Player(name='spam')
-        hand = cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(1, 0),
-        ])
-        events = [
-            'Joins.',
-            'Leaves.',
-            'Shuffles.',
-        ]
-        exp = [call(player, event) for event in events]
-
-        ui = cli.LogUI()
-        ui.joins(player)
-        ui.leaves(player)
-        ui.shuffles(player)
-        act = mock_update.mock_calls
-
-        self.assertListEqual(exp, act)
-
-    # Test _update_hand().
-    def test__update_hand(self):
-        """Given a player, hand, and an event, _update_hand should
-        report that update to the user.
-        """
-        player = players.Player(name='spam')
-        hand = cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(1, 0),
-        ])
-        event = 'Hand dealt.'
-        exp = self.tmp.format(player, event, hand)
-
-        ui = cli.LogUI()
-        with capture() as (out, err):
-            ui._update_hand(player, hand, event)
-        act = out.getvalue()
-
-        self.assertEqual(exp, act)
-
-    @patch('blackjack.cli.LogUI._update_hand')
-    def test_hand_updates(self, mock_update):
-        """The methods tested should send _update_hand a player,
-        hand, and event text for display to the user.
-        """
-        player = players.Player(name='spam')
-        hand = cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(1, 0),
-        ])
-        events = [
-            'Dealt hand.',
-            'Flip.',
-            'Hit.',
-            'Stand.',
-        ]
-        exp = [call(player, hand, event) for event in events]
-
-        ui = cli.LogUI()
-        ui.deal(player, hand)
-        ui.flip(player, hand)
-        ui.hit(player, hand)
-        ui.stand(player, hand)
-        act = mock_update.mock_calls
-
-        self.assertListEqual(exp, act)
-
-    # Test cleanup()
-    def test_cleanup(self):
-        """When called, cleanup() should print the footer and the
-        header to the UI.
-        """
-        lines = [
-            '\u2500' * 50 + '\n',
-            '\n',
-            '\n',
-            'BLACKJACK!\n',
-            '\n',
-            self.tmp.format('Player', 'Action', 'Hand'),
-            '\u2500' * 50 + '\n',
-        ]
-        exp = ''.join(lines)
-
-        with capture() as (out, err):
-            ui = cli.LogUI(True)
-            ui.cleanup()
-        act = out.getvalue()
-
-        self.assertEqual(exp, act)
-
-    # Test _yesno_prompt().
-    @patch('blackjack.cli.input')
-    def test_yesno_prompt(self, mock_input):
-        """Given a prompt and a default value, prompt the use for a
-        yes/no answer and return the result.
-        """
-        exp_resp = model.IsYes('y')
-        exp_call = call('spam [yn] > ')
-
-        mock_input.return_value = 'y'
-        ui = cli.LogUI()
-        act_resp = ui._yesno_prompt('spam', 'y')
-        act_call = mock_input.mock_calls[-1]
-
-        self.assertEqual(exp_resp.value, act_resp.value)
-        self.assertEqual(exp_call, act_call)
-
-    @patch('blackjack.cli.LogUI._yesno_prompt')
-    def test_prompt_yesnos(self, mock_input):
-        """The input methods that ask yes/no questions should call
-        _yesno_prompt() with a prompt and a default, and they should
-        return the response from _yesno_prompt().
-        """
-        prompts = [
-            'Double down?',
-            'Hit?',
-            'Insure?',
-            'Next game?',
-            'Split?',
-        ]
-        exp_resp = [model.IsYes('n') for _ in range(len(prompts))]
-        exp_calls = [call(prompt, 'y') for prompt in prompts]
-
-        mock_input.return_value = model.IsYes('n')
-        ui = cli.LogUI()
-        act_resp = []
-        act_resp.append(ui.doubledown_prompt())
-        act_resp.append(ui.hit_prompt())
-        act_resp.append(ui.insure_prompt())
-        act_resp.append(ui.nextgame_prompt())
-        act_resp.append(ui.split_prompt())
-        act_calls = mock_input.mock_calls
-
-        self.assertListEqual(exp_calls, act_calls)
-        self.assertListEqual(exp_resp, act_resp)
