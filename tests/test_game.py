@@ -357,6 +357,7 @@ class EngineTestCase(ut.TestCase):
             'dealer': dealer2.serialize(),
             'playerlist': [],
             'buyin': 0,
+            'save_file': 'baked.beans',
         })
 
         deck = cards.Deck([
@@ -376,9 +377,10 @@ class EngineTestCase(ut.TestCase):
                 player2.serialize(),
             ],
             'buyin': 200,
+            'save_file': 'tomato',
         })
 
-        g = game.Engine(deck2, dealer2, (), None, 0)
+        g = game.Engine(deck2, dealer2, (), None, 0, 'baked.beans')
         act_before = g.serialize()
         g._deserialize(exp_after)
         act_after = g.serialize()
@@ -1548,6 +1550,7 @@ class EngineTestCase(ut.TestCase):
                 player2.serialize(),
             ],
             'buyin': 200,
+            'save_file': 'save.json',
         })
         mock_open().__enter__().read.return_value = exp_attrs
 
@@ -1629,9 +1632,10 @@ class EngineTestCase(ut.TestCase):
                 player2.serialize(),
             ],
             'buyin': 200,
+            'save_file': 'ham',
         })
 
-        g = game.Engine(deck, dealer, (player1, player2,), None, 200)
+        g = game.Engine(deck, dealer, (player1, player2,), None, 200, 'ham')
         act = g.serialize()
 
         self.assertEqual(exp, act)

@@ -38,6 +38,7 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
+* Save state at end of each hand.
 * Build UI for saving and restoring game state.
 * Allow for insurance less than half of initial bet.
 * Add optional card count to display.
@@ -48,6 +49,8 @@ The following features are on the nice-to-have list:
 * Add card counting computer players.
 * Add casino catching and removing card counting players.
 * Allow splitting more than once.
+* Add ability to configure by file.
+* Add ability to configure at launch.
 
 
 Testing

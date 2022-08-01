@@ -281,7 +281,8 @@ class Engine:
                  dealer: Optional[Player] = None,
                  playerlist: Optional[list] = None,
                  ui: EngineUI = None,
-                 buyin: float = 0) -> None:
+                 buyin: float = 0,
+                 save_file: str = 'save.json') -> None:
         """Initialize and instance of the class.
 
         :param casino: Whether the game is using a casino deck.
@@ -308,8 +309,8 @@ class Engine:
         self.ui = ui
 
         self.buyin = buyin
-
         self.seats = len(playerlist)
+        self.save_file = save_file
 
     def __repr__(self):
         cls = self.__class__
@@ -351,6 +352,7 @@ class Engine:
             'dealer': self.dealer,
             'playerlist': self.playerlist,
             'buyin': self.buyin,
+            'save_file': self.save_file,
         }
 
     def _build_hand(self):
@@ -396,6 +398,7 @@ class Engine:
             self.playerlist = [restore_player(player)
                                for player in serial['playerlist']]
             self.buyin = serial['buyin']
+            self.save_file = serial['save_file']
 
     def _double_down(self, player: Player, hand: Hand) -> None:
         """Handle the double down decision on a hand.
