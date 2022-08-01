@@ -8,28 +8,10 @@ this is to play around with basic concepts.
 
 To Run
 ------
-To see a game that is only the dealer, run the following from the root 
-of your local copy of the repository::
+To run a basic game, run the following from the root of your local copy
+of the repository::
 
-    python3 -m blackjack -d
-
-To see a game that is the dealer and one player::
-
-    python3 -m blackjack -1
-
-To see a game that is the dealer and two players::
-
-    python3 -m blackjack -2
-
-If you want to play a game with a dealer and four random players::
-
-    python3 -m blackjack -D
-
-To construct a game with four computer players, you as the fifth 
-player, the initial bet set to 100, and all players starting with 
-100 chips::
-
-    python3 -m blackjack -p 4 -u -c 100 -C 100
+    python3 -m blackjack
 
 
 Still To Do

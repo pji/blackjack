@@ -530,116 +530,15 @@ class TableUI(game.EngineUI):
         self._update_bet(player, '', f'Wins {bet}.', True)
 
 
-# Command scripts.
-def dealer_only():
-    ui = LogUI()
-    g = game.Engine(ui=ui)
-    loop = game.main(g)
-    play = next(loop)
-    while play:
-        play = loop.send(play)
-
-
-def one_player():
-    ui = LogUI()
-    play = True
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    deck.random_cut()
-    dealer = players.Dealer(name='Dealer')
-    player = players.AutoPlayer(name='Player', chips=200)
-    g = game.Engine(deck, dealer, (player,), ui=ui, buyin=2)
-    loop = game.main(g)
-    play = next(loop)
-    while play:
-        play = loop.send(play)
-
-
-def two_player():
-    p1 = players.AutoPlayer(name='John', chips=200)
-    p2 = players.BetterPlayer(name='Michael', chips=200)
-    ui = LogUI()
-    play = True
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    deck.random_cut()
-    dealer = players.Dealer(name='Dealer')
-    g = game.Engine(deck, dealer, (p1, p2,), ui=ui, buyin=2)
-    loop = game.main(g)
-    play = next(loop)
-    while play:
-        play = loop.send(play)
-
-
-def three_player():
-    p1 = players.AutoPlayer(name='John', chips=200)
-    p2 = players.BetterPlayer(name='Michael', chips=200)
-    p3 = players.NeverPlayer(name='Graham', chips=200)
-    ui = TableUI(seats=4)
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    deck.random_cut()
-    dealer = players.Dealer(name='Dealer')
-    g = game.Engine(deck, dealer, (p1, p2, p3,), ui=ui, buyin=2)
-    loop = game.main(g)
-    play = next(loop)
-    while play:
-        play = loop.send(play)
-
-
-def four_player():
-    p1 = players.AutoPlayer(name='John', chips=200)
-    p2 = players.BetterPlayer(name='Michael', chips=200)
-    p3 = players.NeverPlayer(name='Graham', chips=200)
-    p4 = players.RandomPlayer(name='Terry', chips=200)
-    ui = TableUI(seats=5)
-    play = True
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    deck.random_cut()
-    dealer = players.Dealer(name='Dealer')
-    g = game.Engine(deck, dealer, (p1, p2, p3, p4), ui=ui, buyin=2)
-    loop = game.main(g)
-    play = next(loop)
-    while play:
-        play = loop.send(play)
-
-
-def dui():
-    try:
-        ui = TableUI(seats=6)
-        deck = cards.Deck.build(6)
-        deck.shuffle()
-        deck.random_cut()
-        dealer = players.Dealer(name='Dealer')
-        playerlist = []
-        for index in range(4):
-            playerlist.append(players.make_player(bet=20))
-        playerlist.append(players.UserPlayer(name='You', chips=200))
-        g = game.Engine(deck, dealer, playerlist, ui=ui, buyin=20)
-        loop = game.main(g)
-        play = next(loop)
-        while play:
-            play = loop.send(play)
-
-    except Exception as ex:
-        with open('exception.log', 'w') as fh:
-            fh.write(str(ex.args))
-            tb_str = ''.join(tb.format_tb(ex.__traceback__))
-            fh.write(tb_str)
-        ui.end()
-        raise ex
-
-
-def test():
-    player = players.make_player()
-    print(player.asdict())
-
-
 # Command line mainline.
 def parse_cli() -> argparse.Namespace:
     """Parse the command line options used to invoke the game."""
     p = argparse.ArgumentParser(description='Blackjack')
+    p.add_argument(
+        '-a', '--automated_players_only',
+        help='All users will be computer players.',
+        action='store_true',
+    )
     p.add_argument(
         '-b', '--buyin',
         help='The buyin amount for each hand.',
@@ -655,7 +554,7 @@ def parse_cli() -> argparse.Namespace:
         default=200
     )
     p.add_argument(
-        '-D', '--decks',
+        '-d', '--decks',
         help='Number of standard decks to build the deck from.',
         action='store',
         type=int,
@@ -680,16 +579,17 @@ def build_game(args: argparse.Namespace) -> game.Engine:
 
     # Create dealer and players.
     dealer = players.Dealer(name='Dealer')
-    user = players.UserPlayer(name='You', chips=args.chips)
     playerlist = [
         players.make_player(bet=args.buyin)
         for _ in range(args.players)
     ]
-    playerlist.append(user)
+    if not args.automated_players_only:
+        user = players.UserPlayer(name='You', chips=args.chips)
+        playerlist.append(user)
 
     # Build the UI.
     seats = 1 + len(playerlist)
-    ui = TableUI(seats=6)
+    ui = TableUI(seats=seats)
 
     # Build and return the game.
     return game.Engine(
@@ -720,79 +620,6 @@ def main() -> None:
             fh.write(tb_str)
         engine.ui.end()
         raise ex
-
-
-def main_old():
-    p = argparse.ArgumentParser(description='Blackjack')
-    p.add_argument('-d', '--dealer_only', help='Just a dealer game.',
-                   action='store_true')
-    p.add_argument('-1', '--one_player', help='One player game.',
-                   action='store_true')
-    p.add_argument('-2', '--two_player', help='Two player game.',
-                   action='store_true')
-    p.add_argument('-3', '--three_player', help='Three player game.',
-                   action='store_true')
-    p.add_argument('-4', '--four_player', help='Four player game.',
-                   action='store_true')
-    p.add_argument('-D', '--dui', help='Dynamic UI game.',
-                   action='store_true')
-    p.add_argument('-p', '--players', help='Number of random players.',
-                   action='store', type=int)
-    p.add_argument('-u', '--user', help='Add a human player.',
-                   action='store_true')
-    p.add_argument('-c', '--chips', help='Number of starting chips.',
-                   action='store', type=int, default=200)
-    p.add_argument('-C', '--cost', help='Hand bet amount.',
-                   action='store', type=int, default=20)
-    p.add_argument('-t', '--test', help='Run current test.',
-                   action='store_true')
-    args = p.parse_args()
-
-    if args.dealer_only:
-        dealer_only()
-    elif args.one_player:
-        one_player()
-    elif args.two_player:
-        two_player()
-    elif args.three_player:
-        three_player()
-    elif args.four_player:
-        four_player()
-    elif args.dui:
-        dui()
-    elif args.test:
-        test()
-    else:
-        if args.chips > 9999999:
-            reason = 'Cannot start with more than 9999999 chips.'
-            raise ValueError(reason)
-        if args.cost > 99999999:
-            reason = 'Bets cannot be more than 99999999.'
-            raise ValueError(reason)
-
-        playerlist = []
-        for _ in range(int(args.players)):
-            playerlist.append(players.make_player(args.cost))
-        if args.user:
-            playerlist.append(players.UserPlayer(name='You', chips=args.chips))
-
-        deck = cards.Deck.build(6)
-        deck.shuffle()
-        deck.random_cut()
-        ui = TableUI(seats=len(playerlist) + 1)
-        g = game.Engine(deck, None, playerlist, ui, args.cost)
-        try:
-            loop = game.main(g)
-            play = next(loop)
-            while play:
-                play = loop.send(play)
-        except Exception as ex:
-            with open('exception.log', 'w') as fh:
-                fh.write(str(ex.args))
-                tb_str = ''.join(tb.format_tb(ex.__traceback__))
-                fh.write(tb_str)
-            ui.end()
-            raise ex
 
 
 if __name__ == '__main__':

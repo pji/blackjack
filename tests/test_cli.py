@@ -331,6 +331,112 @@ class ParseCliTestCase(ut.TestCase):
         # Determine test result.
         self.assertDictEqual(exp, act)
 
+    def test_change_buyin(self):
+        """When passed the -b option, change amount of chips needed to
+        buy into each hand.
+        """
+        # Expected values.
+        exp = 100
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', f'-b {exp}']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act = engine.buyin
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_change_chips(self):
+        """When passed the -c option, change amount of chips given to
+        the user player.
+        """
+        # Expected values.
+        exp = 100
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', f'-c {exp}']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act = engine.playerlist[-1].chips
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    @patch('blackjack.cards.randrange', return_value=65)
+    def test_change_decks(self, mock_randrange):
+        """When passed the -d option, change the number of standard
+        decks used to build the deck for the game..
+        """
+        # Expected values.
+        decks = 4
+        exp = decks * 52 - mock_randrange()
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', f'-d {decks}']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act = len(engine.deck)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_change_number_of_computer_players(self):
+        """When passed the -p option, change the number of computer
+        players in the game.
+        """
+        # Expected values.
+        num_players = 7
+        exp_seats = num_players + 2
+        exp_playerlist_len = num_players + 1
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', f'-p {num_players}']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act_seats = engine.ui.seats
+        act_playerlist_len = len(engine.playerlist)
+
+        # Determine test result.
+        self.assertEqual(exp_seats, act_seats)
+        self.assertEqual(exp_playerlist_len, act_playerlist_len)
+
+    def test_no_user_player(self):
+        """When passed the -a option, do not add a user player to
+        the game.
+        """
+        # Expected values.
+        not_exp = players.UserPlayer
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', f'-a']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act = type(engine.playerlist[-1])
+
+        # Determine test result.
+        self.assertNotIsInstance(act, not_exp)
+
 
 class TableUITestCase(ut.TestCase):
     def test_subclass(self):
