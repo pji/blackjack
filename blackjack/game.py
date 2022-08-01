@@ -663,6 +663,7 @@ def main(engine: Engine, is_interactive: bool = True) -> Generator:
         engine.deal()
         engine.play()
         engine.end()
+        engine.save(engine.save_file)
         play = yield engine.ui.nextgame_prompt().value
         engine.ui.cleanup()
     engine.ui.end()

@@ -1756,13 +1756,14 @@ class mainTestCase(ut.TestCase):
             players.AutoPlayer(name='eggs'),
         ]
         exp = [
-            call(playerlist=playerlist, buyin=2),
+            call(playerlist=playerlist, buyin=2, save_file='bacon'),
             call().ui.start(is_interactive=True),
             call().new_game(),
             call().start(),
             call().deal(),
             call().play(),
             call().end(),
+            call().save('bacon'),
             call().ui.nextgame_prompt(),
             call().ui.cleanup(),
             call().ui.nextgame_prompt().value.__bool__(),
@@ -1770,10 +1771,12 @@ class mainTestCase(ut.TestCase):
             call().deal(),
             call().play(),
             call().end(),
+            call().save('bacon'),
             call().ui.nextgame_prompt(),
         ]
 
-        g = game.Engine(playerlist=playerlist, buyin=2)
+        g = game.Engine(playerlist=playerlist, buyin=2, save_file='bacon')
+        g.save_file = 'bacon'
         loop = game.main(g)
         result = next(loop)
         result = loop.send(result)
