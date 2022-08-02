@@ -561,6 +561,12 @@ def parse_cli() -> argparse.Namespace:
         default=6
     )
     p.add_argument(
+        '-f', '--file',
+        help='Restore the save from the given file.',
+        action='store',
+        type=str
+    )
+    p.add_argument(
         '-p', '--players',
         help='Number of computer players.',
         action='store',
@@ -572,6 +578,13 @@ def parse_cli() -> argparse.Namespace:
 
 def build_game(args: argparse.Namespace) -> game.Engine:
     """Build the game from the given arguments."""
+    # Restore from save file.
+    if args.file:
+        engine = game.Engine.load(args.file.lstrip())
+        seats = 1 + len(engine.playerlist)
+        engine.ui = TableUI(seats=seats)
+        return engine
+
     # Build deck.
     deck = cards.Deck.build(args.decks)
     deck.shuffle()

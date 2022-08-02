@@ -277,6 +277,15 @@ class Engine:
     ui = ValidUI('ui')
     buyin = Integer_('buyin')
 
+    @classmethod
+    def load(cls, fname: str = 'save.json') -> 'Engine':
+        """Create a new object from a save file."""
+        with open(fname, 'r') as f:
+            s = f.read()
+        engine = cls()
+        engine._deserialize(s)
+        return engine
+
     def __init__(self, deck: Deck = None,
                  dealer: Optional[Player] = None,
                  playerlist: Optional[list] = None,

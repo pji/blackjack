@@ -437,6 +437,40 @@ class ParseCliTestCase(ut.TestCase):
         # Determine test result.
         self.assertNotIsInstance(act, not_exp)
 
+    def test_restore_from_file(self):
+        """When passed a -f option followed by a file path, create a
+        new game from the save information stored in the file.
+        """
+        # Expected values.
+        exp = {
+            'table_seats': 6,
+            'deck_len': 228,
+            'dealer': 'Dealer',
+            'playerlist_len': 5,
+            'last_player': 'You',
+            'buyin': 20,
+        }
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', '-f tests/data/savefile']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act = {
+            'table_seats': engine.ui.seats,
+            'deck_len': len(engine.deck),
+            'dealer': engine.dealer.name,
+            'playerlist_len': len(engine.playerlist),
+            'last_player': engine.playerlist[-1].name,
+            'buyin': engine.buyin,
+        }
+
+        # Determine test result.
+        self.assertDictEqual(exp, act)
+
 
 class TableUITestCase(ut.TestCase):
     def test_subclass(self):
