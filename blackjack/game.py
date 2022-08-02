@@ -291,8 +291,9 @@ class Engine:
                  playerlist: Optional[list] = None,
                  ui: EngineUI = None,
                  buyin: float = 0,
-                 save_file: str = 'save.json') -> None:
-        """Initialize and instance of the class.
+                 save_file: str = 'save.json',
+                 deck_size: int = 6) -> None:
+        """Initialize an instance of the class.
 
         :param casino: Whether the game is using a casino deck.
         :param dealer: The dealer for the game.
@@ -302,7 +303,9 @@ class Engine:
         :rtype: None.
         """
         if not deck:
-            deck = Deck.build(6)
+            deck = Deck.build(deck_size)
+        else:
+            deck_size = deck.size
         self.deck = deck
 
         if not playerlist:
@@ -318,6 +321,7 @@ class Engine:
         self.ui = ui
 
         self.buyin = buyin
+        self.deck_size = deck_size
         self.seats = len(playerlist)
         self.save_file = save_file
 
@@ -358,6 +362,7 @@ class Engine:
         return {
             'class': self.__class__.__name__,
             'deck': self.deck,
+            'deck_size': self.deck_size,
             'dealer': self.dealer,
             'playerlist': self.playerlist,
             'buyin': self.buyin,

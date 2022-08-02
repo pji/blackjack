@@ -37,8 +37,8 @@ class EngineTestCase(ut.TestCase):
         self.assertTrue(expected is actual)
 
     def test_deck_default(self):
-        """If no deck is given, a casino deck should be created and
-        stored in the deck attribute.
+        """If no deck or deck size is given, a casino deck should be
+        created and stored in the deck attribute.
         """
         expected_cls = cards.Deck
         expected_len = 52 * 6
@@ -47,6 +47,28 @@ class EngineTestCase(ut.TestCase):
         actual_cls = g.deck
         actual_len = len(g.deck)
 
+        self.assertTrue(isinstance(actual_cls, expected_cls))
+        self.assertEqual(expected_len, actual_len)
+
+    def test_deck_size_given(self):
+        """Given a deck size and no deck and no random cut, game.Engine
+        should construct a deck of the given size.
+        """
+        # Expected values.
+        expected_cls = cards.Deck
+        expected_len = 52 * 3
+
+        # Test data and state.
+        deck_size = 3
+
+        # Run test.
+        g = game.Engine(deck_size=deck_size)
+
+        # Gather actual data.
+        actual_cls = g.deck
+        actual_len = len(g.deck)
+
+        # Determine test results
         self.assertTrue(isinstance(actual_cls, expected_cls))
         self.assertEqual(expected_len, actual_len)
 
@@ -351,14 +373,15 @@ class EngineTestCase(ut.TestCase):
             cards.Card(11, 3, True),
         ])
         dealer2 = players.Dealer(name='ham')
-        exp_before = json.dumps({
+        exp_before = {
             'class': 'Engine',
             'deck': deck2.serialize(),
+            'deck_size': deck2.size,
             'dealer': dealer2.serialize(),
             'playerlist': [],
             'buyin': 0,
             'save_file': 'baked.beans',
-        })
+        }
 
         deck = cards.Deck([
             cards.Card(11, 0, True),
@@ -368,9 +391,10 @@ class EngineTestCase(ut.TestCase):
         dealer = players.Dealer(name='spam')
         player1 = players.AutoPlayer(name='eggs')
         player2 = players.AutoPlayer(name='bacon')
-        exp_after = json.dumps({
+        exp_after = {
             'class': 'Engine',
             'deck': deck.serialize(),
+            'deck_size': deck.size,
             'dealer': dealer.serialize(),
             'playerlist': [
                 player1.serialize(),
@@ -378,15 +402,17 @@ class EngineTestCase(ut.TestCase):
             ],
             'buyin': 200,
             'save_file': 'tomato',
-        })
+        }
 
         g = game.Engine(deck2, dealer2, (), None, 0, 'baked.beans')
-        act_before = g.serialize()
-        g._deserialize(exp_after)
-        act_after = g.serialize()
+        text_before = g.serialize()
+        act_before = json.loads(text_before)
+        g._deserialize(json.dumps(exp_after))
+        text_after = g.serialize()
+        act_after = json.loads(text_after)
 
-        self.assertEqual(exp_before, act_before)
-        self.assertEqual(exp_after, act_after)
+        self.assertDictEqual(exp_before, act_before)
+        self.assertDictEqual(exp_after, act_after)
 
     # Test Engine._double_down().
     def test__double_down(self):
@@ -1544,6 +1570,7 @@ class EngineTestCase(ut.TestCase):
         exp_attrs = json.dumps({
             'class': 'Engine',
             'deck': deck.serialize(),
+            'deck_size': 6,
             'dealer': dealer.serialize(),
             'playerlist': [
                 player1.serialize(),
@@ -1623,9 +1650,10 @@ class EngineTestCase(ut.TestCase):
         dealer = players.Dealer(name='spam')
         player1 = players.AutoPlayer(name='eggs')
         player2 = players.AutoPlayer(name='bacon')
-        exp = json.dumps({
+        exp = {
             'class': 'Engine',
             'deck': deck.serialize(),
+            'deck_size': deck.size,
             'dealer': dealer.serialize(),
             'playerlist': [
                 player1.serialize(),
@@ -1633,12 +1661,13 @@ class EngineTestCase(ut.TestCase):
             ],
             'buyin': 200,
             'save_file': 'ham',
-        })
+        }
 
         g = game.Engine(deck, dealer, (player1, player2,), None, 200, 'ham')
-        act = g.serialize()
+        text = g.serialize()
+        act = json.loads(text)
 
-        self.assertEqual(exp, act)
+        self.assertDictEqual(exp, act)
 
     # Test Engine.start().
     def test_start_take_payment(self):
