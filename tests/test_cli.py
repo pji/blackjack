@@ -9,6 +9,7 @@ This module contains the unit tests for the blackjack.cli module.
 """
 from contextlib import contextmanager
 from io import StringIO
+from json import load, loads
 import sys
 import unittest as ut
 from unittest.mock import patch, call, MagicMock
@@ -296,20 +297,21 @@ class ParseCliTestCase(ut.TestCase):
     def tearDown(self):
         sys.argv = self.original_args
 
-    @patch('blackjack.cards.randrange', return_value=65)
-    def test_default_game(self, _):
+    def test_default_game(self):
         """When passed no options, blackjack should start a default
         game with four computer players and a human player.
         """
         # Expected values.
         exp = {
             'table_seats': 6,
-            'deck_len': 52 * 6 - 65,
+            'deck_len': 52 * 6,
             'dealer': players.Dealer(name='Dealer'),
             'playerlist_len': 5,
             'last_player': players.UserPlayer(name='You', chips=200),
             'buyin': 20,
             'save_file': 'save.json',
+            'deck_size': 6,
+            'deck_cut': False,
         }
 
         # Test data and state.
@@ -328,6 +330,8 @@ class ParseCliTestCase(ut.TestCase):
             'last_player': engine.playerlist[-1],
             'buyin': engine.buyin,
             'save_file': engine.save_file,
+            'deck_size': engine.deck_size,
+            'deck_cut': engine.deck_cut,
         }
 
         # Determine test result.
@@ -374,13 +378,37 @@ class ParseCliTestCase(ut.TestCase):
         self.assertEqual(exp, act)
 
     @patch('blackjack.cards.randrange', return_value=65)
-    def test_change_decks(self, mock_randrange):
+    def test_cut_deck(self, mock_randrange):
+        """When passed the -C option, cut a random number of cards
+        between 60 and 75 from the bottom of the deck to make card
+        counting harder.
+        """
+        # Expected values.
+        cards_in_deck = 52
+        num_decks = 6
+        cut_cards = mock_randrange()
+        exp = cards_in_deck * num_decks - cut_cards
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', f'-C']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act = len(engine.deck)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_change_decks(self):
         """When passed the -d option, change the number of standard
         decks used to build the deck for the game..
         """
         # Expected values.
         decks = 4
-        exp = decks * 52 - mock_randrange()
+        exp = decks * 52
 
         # Test data and state.
         sys.argv = ['python -m blackjack', f'-d {decks}']
@@ -463,15 +491,22 @@ class ParseCliTestCase(ut.TestCase):
         """When passed a -f option followed by a file path, create a
         new game from the save information stored in the file.
         """
-        # Expected values.
-        exp = {
-            'table_seats': 6,
-            'deck_len': 228,
-            'dealer': 'Dealer',
-            'playerlist_len': 5,
-            'last_player': 'You',
-            'buyin': 20,
-        }
+        # Set up for expected value.
+        path = 'tests/data/savefile'
+        with open(path) as fp:
+
+            # Expected values.
+            exp = load(fp)
+
+#         exp = {
+#             'table_seats': 6,
+#             'deck_len': 228,
+#             'dealer': 'Dealer',
+#             'playerlist_len': 5,
+#             'last_player': 'You',
+#             'buyin': 20,
+#             'card_count': 2,
+#         }
 
         # Test data and state.
         sys.argv = ['python -m blackjack', '-f tests/data/savefile']
@@ -481,16 +516,21 @@ class ParseCliTestCase(ut.TestCase):
         engine = cli.build_game(args)
 
         # Gather actual data.
-        act = {
-            'table_seats': engine.ui.seats,
-            'deck_len': len(engine.deck),
-            'dealer': engine.dealer.name,
-            'playerlist_len': len(engine.playerlist),
-            'last_player': engine.playerlist[-1].name,
-            'buyin': engine.buyin,
-        }
+        serial = engine.serialize()
+        act = loads(serial)
+#         act = {
+#             'table_seats': engine.ui.seats,
+#             'deck_len': len(engine.deck),
+#             'dealer': engine.dealer.name,
+#             'playerlist_len': len(engine.playerlist),
+#             'last_player': engine.playerlist[-1].name,
+#             'buyin': engine.buyin,
+#             'card_count': engine.card_count,
+#         }
 
         # Determine test result.
+        for key in act:
+            self.assertEqual(exp[key], act[key])
         self.assertDictEqual(exp, act)
 
 

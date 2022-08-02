@@ -128,6 +128,8 @@ class Player:
             raise TypeError(msg)
 
         player = cls(dict_['hands'], dict_['name'], dict_['chips'])
+        if 'insured' in dict_:
+            player.insured = dict_['insured']
         methods = {
             'will_hit': will_hits,
             'will_split': will_splits,
@@ -149,7 +151,8 @@ class Player:
 
     def __init__(self, hands: tuple = (),
                  name: str = 'Player',
-                 chips: int = 0) -> None:
+                 chips: int = 0,
+                 insured: int = 0) -> None:
         """Initialize and instance of the class.
 
         :param hands: The player's hands of blackjack.

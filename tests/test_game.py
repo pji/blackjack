@@ -72,6 +72,29 @@ class EngineTestCase(ut.TestCase):
         self.assertTrue(isinstance(actual_cls, expected_cls))
         self.assertEqual(expected_len, actual_len)
 
+    @patch('blackjack.cards.randrange', return_value=65)
+    def test_deck_cut_given(self, _):
+        """If the deck_cut parameter is true, the deck should
+        be cut.
+        """
+        # Expected values.
+        expected_cls = cards.Deck
+        expected_len = 52 * 6 - 65
+
+        # Test data and state.
+        deck_cut = True
+
+        # Run test.
+        g = game.Engine(deck_cut=deck_cut)
+
+        # Get actuals.
+        actual_cls = g.deck
+        actual_len = len(g.deck)
+
+        # Determine test results.
+        self.assertIsInstance(actual_cls, expected_cls)
+        self.assertEqual(expected_len, actual_len)
+
     def test_dealer_default(self):
         """If not passed a dealer, the game should create a dealer."""
         expected = players.Dealer
@@ -375,11 +398,12 @@ class EngineTestCase(ut.TestCase):
         dealer2 = players.Dealer(name='ham')
         exp_before = {
             'class': 'Engine',
+            'buyin': 0,
+            'card_count': 0,
             'deck': deck2.serialize(),
             'deck_size': deck2.size,
             'dealer': dealer2.serialize(),
             'playerlist': [],
-            'buyin': 0,
             'save_file': 'baked.beans',
         }
 
@@ -393,6 +417,8 @@ class EngineTestCase(ut.TestCase):
         player2 = players.AutoPlayer(name='bacon')
         exp_after = {
             'class': 'Engine',
+            'buyin': 200,
+            'card_count': 7,
             'deck': deck.serialize(),
             'deck_size': deck.size,
             'dealer': dealer.serialize(),
@@ -400,7 +426,6 @@ class EngineTestCase(ut.TestCase):
                 player1.serialize(),
                 player2.serialize(),
             ],
-            'buyin': 200,
             'save_file': 'tomato',
         }
 
@@ -492,14 +517,59 @@ class EngineTestCase(ut.TestCase):
         """If the game deck has no card, create, shuffle, and cut a
         new deck, then draw.
         """
+        # Expected values.
+        cards_per_deck = 52
+        num_decks = 6
+        num_drawn = 1
         expected = cards.Card
+        exp_num_cards = cards_per_deck * num_decks - num_drawn
 
-        g = game.Engine()
+        # Test data and state.
+        card_count = 20
+        g = game.Engine(card_count=card_count)
         g.deck = cards.Deck([])
-        g.deck.size = 6
-        actual = g._draw()
+        g.deck.size = num_decks
 
-        self.assertTrue(isinstance(actual, expected))
+        # Run test.
+        actual = g._draw()
+        act_num_cards = len(g.deck)
+        act_count = g.card_count
+
+        # Determine test result.
+        self.assertIsInstance(actual, expected)
+        self.assertEqual(exp_num_cards, act_num_cards)
+        if actual.rank == 1 or actual.rank >= 10:
+            self.assertEqual(act_count, 1)
+        elif actual.rank <= 6:
+            self.assertEqual(act_count, -1)
+        else:
+            self.assertEqual(act_count, 0)
+
+    @patch('blackjack.cards.randrange', return_value=65)
+    def test__draw_deck_with_no_cards_with_deck_cut(self, mock_randrange):
+        """If the game deck has no card, create, shuffle, and cut a
+        new deck, then draw.
+        """
+        # Expected values.
+        cards_per_deck = 52
+        num_decks = 6
+        num_cut = mock_randrange()
+        num_drawn = 1
+        expected = cards.Card
+        exp_num_cards = cards_per_deck * num_decks - num_cut - num_drawn
+
+        # Test data and state.
+        g = game.Engine(deck_cut=True)
+        g.deck = cards.Deck([])
+        g.deck.size = num_decks
+
+        # Run test.
+        actual = g._draw()
+        act_num_cards = len(g.deck)
+
+        # Determine test result.
+        self.assertIsInstance(actual, expected)
+        self.assertEqual(exp_num_cards, act_num_cards)
 
     @patch('blackjack.game.BaseUI.shuffles')
     def test__draw_shuffled_ui(self, mock_shuffles):
@@ -518,6 +588,31 @@ class EngineTestCase(ut.TestCase):
         _ = g._draw()
 
         mock_shuffles.assert_called()
+
+    def test__draw_updates_count(self):
+        """Drawing a card from the deck should update the count."""
+        # Expected value.
+        exp = 2
+
+        # Test data and state.
+        deck = cards.Deck([
+            cards.Card(11, 0),
+            cards.Card(8, 1),
+            cards.Card(12, 3),
+            cards.Card(2, 0),
+            cards.Card(1, 2),
+        ])
+        g = game.Engine(deck)
+
+        # Run test.
+        while g.deck:
+            _ = g._draw()
+
+        # Gather actual data.
+        act = g.card_count
+
+        # Determine test result.
+        self.assertEqual(exp, act)
 
     # Test Engine._hit().
     @patch('blackjack.players.AutoPlayer.will_hit', return_value=True)
@@ -1569,6 +1664,8 @@ class EngineTestCase(ut.TestCase):
         player2 = players.AutoPlayer(name='bacon')
         exp_attrs = json.dumps({
             'class': 'Engine',
+            'buyin': 200,
+            'card_count': 0,
             'deck': deck.serialize(),
             'deck_size': 6,
             'dealer': dealer.serialize(),
@@ -1576,7 +1673,6 @@ class EngineTestCase(ut.TestCase):
                 player1.serialize(),
                 player2.serialize(),
             ],
-            'buyin': 200,
             'save_file': 'save.json',
         })
         mock_open().__enter__().read.return_value = exp_attrs
@@ -1652,6 +1748,8 @@ class EngineTestCase(ut.TestCase):
         player2 = players.AutoPlayer(name='bacon')
         exp = {
             'class': 'Engine',
+            'buyin': 200,
+            'card_count': 0,
             'deck': deck.serialize(),
             'deck_size': deck.size,
             'dealer': dealer.serialize(),
@@ -1659,7 +1757,6 @@ class EngineTestCase(ut.TestCase):
                 player1.serialize(),
                 player2.serialize(),
             ],
-            'buyin': 200,
             'save_file': 'ham',
         }
 

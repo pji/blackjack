@@ -554,6 +554,11 @@ def parse_cli() -> argparse.Namespace:
         default=200
     )
     p.add_argument(
+        '-C', '--cut_deck',
+        help='Cut cards from bottom of the deck to make counting harder.',
+        action='store_true',
+    )
+    p.add_argument(
         '-d', '--decks',
         help='Number of standard decks to build the deck from.',
         action='store',
@@ -592,11 +597,6 @@ def build_game(args: argparse.Namespace) -> game.Engine:
         engine.ui = TableUI(seats=seats)
         return engine
 
-    # Build deck.
-    deck = cards.Deck.build(args.decks)
-    deck.shuffle()
-    deck.random_cut()
-
     # Create dealer and players.
     dealer = players.Dealer(name='Dealer')
     playerlist = [
@@ -613,12 +613,13 @@ def build_game(args: argparse.Namespace) -> game.Engine:
 
     # Build and return the game.
     return game.Engine(
-        deck=deck,
         dealer=dealer,
         playerlist=playerlist,
         ui=ui,
         buyin=args.buyin,
-        save_file=args.save_file.lstrip()
+        save_file=args.save_file.lstrip(),
+        deck_size=args.decks,
+        deck_cut=args.cut_deck
     )
 
 

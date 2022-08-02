@@ -292,7 +292,9 @@ class Engine:
                  ui: EngineUI = None,
                  buyin: float = 0,
                  save_file: str = 'save.json',
-                 deck_size: int = 6) -> None:
+                 deck_size: int = 6,
+                 deck_cut: bool = False,
+                 card_count: int = 0) -> None:
         """Initialize an instance of the class.
 
         :param casino: Whether the game is using a casino deck.
@@ -302,10 +304,12 @@ class Engine:
         :return: None.
         :rtype: None.
         """
+        self.deck_cut = deck_cut
         if not deck:
-            deck = Deck.build(deck_size)
+            self.deck_size = deck_size
+            deck = self._build_deck()
         else:
-            deck_size = deck.size
+            self.deck_size = deck.size
         self.deck = deck
 
         if not playerlist:
@@ -320,8 +324,8 @@ class Engine:
             ui = BaseUI()
         self.ui = ui
 
+        self.card_count = card_count
         self.buyin = buyin
-        self.deck_size = deck_size
         self.seats = len(playerlist)
         self.save_file = save_file
 
@@ -361,13 +365,23 @@ class Engine:
         """Return the object serialized as a dictionary."""
         return {
             'class': self.__class__.__name__,
+            'buyin': self.buyin,
+            'card_count': self.card_count,
             'deck': self.deck,
             'deck_size': self.deck_size,
             'dealer': self.dealer,
             'playerlist': self.playerlist,
-            'buyin': self.buyin,
             'save_file': self.save_file,
         }
+
+    def _build_deck(self):
+        """Build a blackjack deck."""
+        deck = Deck.build(self.deck_size)
+        deck.shuffle()
+        if self.deck_cut:
+            deck.random_cut()
+        self.card_count = 0
+        return deck
 
     def _build_hand(self):
         """create the initial hand and deal a card into it."""
@@ -407,11 +421,12 @@ class Engine:
         """
         serial = loads(s)
         if serial['class'] == self.__class__.__name__:
+            self.buyin = serial['buyin']
+            self.card_count = serial['card_count']
             self.deck = Deck.deserialize(serial['deck'])
             self.dealer = Dealer.deserialize(serial['dealer'])
             self.playerlist = [restore_player(player)
                                for player in serial['playerlist']]
-            self.buyin = serial['buyin']
             self.save_file = serial['save_file']
 
     def _double_down(self, player: Player, hand: Hand) -> None:
@@ -432,14 +447,24 @@ class Engine:
 
     def _draw(self):
         """Draw a card from the game deck."""
+        # If there are no cards left in the shoe, create a new deck.
         if not self.deck:
-            deck = Deck.build(self.deck.size)
-            deck.shuffle()
-            if deck.size > 3:
-                deck.random_cut()
-            self.deck = deck
+            self.deck = self._build_deck()
             self.ui.shuffles(self.dealer)
-        return self.deck.draw()
+
+        # Draw the card.
+        card = self.deck.draw()
+
+        # Maintain card count.
+        if card.rank == 1:
+            self.card_count += 1
+        elif card.rank <= 6:
+            self.card_count -= 1
+        elif card.rank >= 10:
+            self.card_count += 1
+
+        # Return the drawn card.
+        return card
 
     def _hit(self, player, hand=None):
         """Handle the player's hitting and standing."""
