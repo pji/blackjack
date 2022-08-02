@@ -573,6 +573,13 @@ def parse_cli() -> argparse.Namespace:
         type=int,
         default=4
     )
+    p.add_argument(
+        '-s', '--save_file',
+        help='Set the name of the save file.',
+        action='store',
+        type=str,
+        default='save.json'
+    )
     return p.parse_args()
 
 
@@ -610,7 +617,8 @@ def build_game(args: argparse.Namespace) -> game.Engine:
         dealer=dealer,
         playerlist=playerlist,
         ui=ui,
-        buyin=args.buyin
+        buyin=args.buyin,
+        save_file=args.save_file.lstrip()
     )
 
 

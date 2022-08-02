@@ -20,13 +20,12 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
-* Write tests for CLI invocation.
-* Allow CLI to restore game from save.
 * Allow CLI to set name of save file.
-* Allow multiple human players to play in single game over network.
+* Display recent actions in TableUI.
 * Build UI for saving and restoring game state.
 * Allow for insurance less than half of initial bet.
 * Add optional card count to display.
+* Allow variable bets.
 * Allow players to notice other players.
 * Allow players to react to other players.
 * Allow players to notice actions of other players.
@@ -36,6 +35,7 @@ The following features are on the nice-to-have list:
 * Allow splitting more than once.
 * Add ability to configure by file.
 * Add ability to configure at launch.
+* Allow multiple human players to play in single game over network.
 
 
 Testing

@@ -309,6 +309,7 @@ class ParseCliTestCase(ut.TestCase):
             'playerlist_len': 5,
             'last_player': players.UserPlayer(name='You', chips=200),
             'buyin': 20,
+            'save_file': 'save.json',
         }
 
         # Test data and state.
@@ -326,6 +327,7 @@ class ParseCliTestCase(ut.TestCase):
             'playerlist_len': len(engine.playerlist),
             'last_player': engine.playerlist[-1],
             'buyin': engine.buyin,
+            'save_file': engine.save_file,
         }
 
         # Determine test result.
@@ -416,6 +418,26 @@ class ParseCliTestCase(ut.TestCase):
         # Determine test result.
         self.assertEqual(exp_seats, act_seats)
         self.assertEqual(exp_playerlist_len, act_playerlist_len)
+
+    def test_change_save_file(self):
+        """When passed the -b option, change amount of chips needed to
+        buy into each hand.
+        """
+        # Expected values.
+        exp = 'spam'
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', f'-s {exp}']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act = engine.save_file
+
+        # Determine test result.
+        self.assertEqual(exp, act)
 
     def test_no_user_player(self):
         """When passed the -a option, do not add a user player to
