@@ -250,7 +250,7 @@ class BaseUI(EngineUI):
         """Player ties on their split hand."""
         pass
 
-    def update_count(self, count):
+    def update_count(self, value):
         """Update the running card count in the UI."""
         pass
 
@@ -466,10 +466,13 @@ class Engine:
         # Maintain card count.
         if card.rank == 1:
             self.card_count += 1
+            self.ui.update_count(self.card_count)
         elif card.rank <= 6:
             self.card_count -= 1
+            self.ui.update_count(self.card_count)
         elif card.rank >= 10:
             self.card_count += 1
+            self.ui.update_count(self.card_count)
 
         # Return the drawn card.
         return card

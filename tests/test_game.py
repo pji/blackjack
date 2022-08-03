@@ -238,6 +238,7 @@ class EngineTestCase(ut.TestCase):
         ])
         player = players.AutoPlayer([hand,], name='John')
         expected = [
+            call.update_count(1),
             call.hit(player, hand),
             call.stand(player, hand),
         ]
@@ -249,7 +250,7 @@ class EngineTestCase(ut.TestCase):
         g._ace_split_hit(player, hand)
         actual = g.ui.mock_calls
 
-        self.assertEqual(expected, actual)
+        self.assertListEqual(expected, actual)
 
     # Test Engine._add_player().
     def test__add_player(self):
@@ -589,10 +590,17 @@ class EngineTestCase(ut.TestCase):
 
         mock_shuffles.assert_called()
 
-    def test__draw_updates_count(self):
+    @patch('blackjack.game.BaseUI.update_count')
+    def test__draw_updates_count(self, mock_update_count):
         """Drawing a card from the deck should update the count."""
         # Expected value.
         exp = 2
+        exp_ui_calls = [
+            call(1),
+            call(0),
+            call(1),
+            call(2),
+        ]
 
         # Test data and state.
         deck = cards.Deck([
@@ -610,9 +618,11 @@ class EngineTestCase(ut.TestCase):
 
         # Gather actual data.
         act = g.card_count
+        act_ui_calls = mock_update_count.mock_calls
 
         # Determine test result.
         self.assertEqual(exp, act)
+        self.assertListEqual(exp_ui_calls, act_ui_calls)
 
     # Test Engine._hit().
     @patch('blackjack.players.AutoPlayer.will_hit', return_value=True)
@@ -1487,6 +1497,7 @@ class EngineTestCase(ut.TestCase):
         # needs to have all three cards, too.
         expected = [
             call.flip(dealer, expected_hand),
+            call.update_count(-1),
             call.hit(dealer, expected_hand),
             call.stand(dealer, expected_hand),
         ]
