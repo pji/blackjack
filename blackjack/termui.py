@@ -141,6 +141,7 @@ class Table(TerminalController):
         """
         self._data: list = []
         self._rows = 0
+        self._header_rows = 4
 
         self.title = title
         self.fields = [Field(*args) for args in fields]
@@ -223,8 +224,10 @@ class Table(TerminalController):
 
     def _clear_footer(self) -> None:
         """Clear the bottom of the table and the footer."""
-        self._clear_row(self.rows + 5)
-        self._clear_row(self.rows + 4)
+        bottom_table_row = self.rows + self._header_rows
+        input_row = bottom_table_row + 1
+        for row in range(bottom_table_row, input_row + 1)[::-1]:
+            self._clear_row(row)
 
     def _clear_row(self, y:int) -> None:
         """Clear a line in the UI."""
@@ -244,7 +247,7 @@ class Table(TerminalController):
 
     def _draw_table_bottom(self):
         """Draw the bottom of the table."""
-        y = len(self.data) + 4
+        y = len(self.data) + self._header_rows
         print(self.term.move(y, 0) + self._bot)
 
     def _draw_table_headers(self):
@@ -259,12 +262,13 @@ class Table(TerminalController):
         fields = self.frame.mver.join(field.fmt for field in self.fields)
         row_fmt = self.frame.rside + fields + self.frame.lside
         for index in range(len(self.data)):
-            y = index + 4
+            y = index + self._header_rows
             print(self.term.move(y, 0) + row_fmt.format(*self.data[index]))
 
     def _draw_table_top(self):
         """Draw the top of the frame for the data table."""
-        print(self.term.move(3, 0) + self._top)
+        top_row = self._header_rows - 1
+        print(self.term.move(top_row, 0) + self._top)
 
     def _draw_title(self):
         """Draw the title in the UI."""
@@ -272,9 +276,8 @@ class Table(TerminalController):
 
     def clear(self):
         """Clear the UI."""
-        header_rows = 4
         footer_rows = 2
-        rows = header_rows + self.rows + footer_rows
+        rows = self._header_rows + self.rows + footer_rows
         for y in range(rows):
             self._clear_row(y)
 
