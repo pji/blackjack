@@ -96,6 +96,16 @@ class LogUI(game.BaseUI):
         """
         self._update_event(player, event, hand)
 
+    def _update_status(self, label: str, value: str) -> None:
+        """Report that the game status has changed.
+
+        :param label: The status that has changed.
+        :param value: The new value of the status.
+        :return: None.
+        :rtype: NoneType
+        """
+        print(self.tmp.format(label, '', value))
+
     def bet(self, player, bet):
         """Player places initial bet."""
         self._update_bet(player, bet, 'Bet.')
@@ -164,6 +174,10 @@ class LogUI(game.BaseUI):
     def ties_split(self, player, bet):
         """Player ties on their split hand."""
         self.tie(player, bet)
+
+    def update_count(self, value):
+        """Update the running card count in the UI."""
+        self._update_status('Running count:', value)
 
     def wins(self, player, bet):
         """Player wins."""
@@ -520,6 +534,9 @@ class TableUI(game.EngineUI):
     def ties_split(self, player, bet):
         """Player ties."""
         self._update_bet(player, '', f'Ties {bet}.', True)
+
+    def update_count(self, count):
+        """Update the running card count in the UI."""
 
     def wins(self, player, bet):
         """Player wins."""

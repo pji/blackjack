@@ -131,6 +131,10 @@ class EngineUI(ABC):
         """Player ties on their split hand."""
 
     @abstractmethod
+    def update_count(self, count):
+        """Update the running card count in the UI."""
+
+    @abstractmethod
     def wins(self, player, bet):
         """Player wins."""
 
@@ -244,6 +248,10 @@ class BaseUI(EngineUI):
 
     def ties_split(self, player, bet):
         """Player ties on their split hand."""
+        pass
+
+    def update_count(self, count):
+        """Update the running card count in the UI."""
         pass
 
     def wins(self, player, bet):

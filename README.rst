@@ -20,6 +20,7 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
+* Allow the selection of the LogUI by CLI option.
 * Add optional card count to display.
 * Display recent actions in TableUI.
 * Build UI for saving and restoring game state.

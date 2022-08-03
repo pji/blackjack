@@ -243,6 +243,45 @@ class LogUITestCase(ut.TestCase):
 
         self.assertEqual(exp, act)
 
+    # Test _update_status.
+    def test__update_status(self):
+        """Given an event, _update_status() should report that event
+        to the user.
+        """
+        label = 'Card count:'
+        event = '5'
+        exp = self.tmp.format(label, '', event)
+
+        ui = cli.LogUI()
+        with capture() as (out, err):
+            ui._update_status(label, event)
+        act = out.getvalue()
+
+        self.assertEqual(exp, act)
+
+    # Test card counting.
+    @patch('blackjack.cli.LogUI._update_status')
+    def test_update_count(self, mock_update):
+        """When an update_card event is received, a message should be
+        displayed that shows the new card count.
+        """
+        # Expected values.
+        label = 'Running count:'
+        value = '10'
+        exp = [call(label, value)]
+
+        # Test data and state.
+        ui = cli.LogUI()
+
+        # Run test.
+        ui.update_count(value)
+
+        # Gather actual.
+        act = mock_update.mock_calls
+
+        # Determine test result.
+        self.assertListEqual(exp, act)
+
     # Test _yesno_prompt().
     @patch('blackjack.cli.input')
     def test_yesno_prompt(self, mock_input):
@@ -498,16 +537,6 @@ class ParseCliTestCase(ut.TestCase):
             # Expected values.
             exp = load(fp)
 
-#         exp = {
-#             'table_seats': 6,
-#             'deck_len': 228,
-#             'dealer': 'Dealer',
-#             'playerlist_len': 5,
-#             'last_player': 'You',
-#             'buyin': 20,
-#             'card_count': 2,
-#         }
-
         # Test data and state.
         sys.argv = ['python -m blackjack', '-f tests/data/savefile']
 
@@ -518,15 +547,6 @@ class ParseCliTestCase(ut.TestCase):
         # Gather actual data.
         serial = engine.serialize()
         act = loads(serial)
-#         act = {
-#             'table_seats': engine.ui.seats,
-#             'deck_len': len(engine.deck),
-#             'dealer': engine.dealer.name,
-#             'playerlist_len': len(engine.playerlist),
-#             'last_player': engine.playerlist[-1].name,
-#             'buyin': engine.buyin,
-#             'card_count': engine.card_count,
-#         }
 
         # Determine test result.
         for key in act:
