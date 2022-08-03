@@ -589,6 +589,11 @@ def parse_cli() -> argparse.Namespace:
         type=str
     )
     p.add_argument(
+        '-K', '--count_cards',
+        help='Display running count in the UI.',
+        action='store_true'
+    )
+    p.add_argument(
         '-L', '--use_logui',
         help='Use logging interface rather than table.',
         action='store_true'
@@ -644,7 +649,8 @@ def build_game(args: argparse.Namespace) -> game.Engine:
         buyin=args.buyin,
         save_file=args.save_file.lstrip(),
         deck_size=args.decks,
-        deck_cut=args.cut_deck
+        deck_cut=args.cut_deck,
+        running_count=args.count_cards
     )
 
 

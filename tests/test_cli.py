@@ -506,6 +506,26 @@ class ParseCliTestCase(ut.TestCase):
         # Determine test result.
         self.assertEqual(exp, act)
 
+    def test_count_cards(self):
+        """When passed the -K option, display the running count in the
+        UI.
+        """
+        # Expected values.
+        exp = True
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', f'-K']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act = engine.running_count
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
     def test_no_user_player(self):
         """When passed the -a option, do not add a user player to
         the game.
