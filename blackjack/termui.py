@@ -117,10 +117,15 @@ class TerminalController:
 
 class Table(TerminalController):
     """Control a table displayed in the terminal."""
-    def __init__(self, title:str, fields: abc.Sequence,
-                 frame: Box = None, data: abc.Sequence = None,
-                 term: Terminal = None, row_sep: bool = False,
-                 rows: int = 1) -> None:
+    def __init__(self,
+                 title:str,
+                 fields: abc.Sequence,
+                 frame: Box = None,
+                 data: abc.Sequence = None,
+                 term: Terminal = None,
+                 row_sep: bool = False,
+                 rows: int = 1,
+                 show_status: bool = False) -> None:
         """Initialize an instance of the class.
 
         :param title: The title for the table.
@@ -142,6 +147,8 @@ class Table(TerminalController):
         self._data: list = []
         self._rows = 0
         self._header_rows = 4
+        self._table_bottom_rows = 1
+        self._status_rows = 0
 
         self.title = title
         self.fields = [Field(*args) for args in fields]
@@ -152,6 +159,12 @@ class Table(TerminalController):
         if data:
             self.data = list(data)
         self.row_sep = row_sep
+        self.show_status = show_status
+        if self.show_status:
+            self._status_rows = 2
+        self.status = {
+            'Count': '0',
+        }
         super().__init__(term)
 
     @property
@@ -245,6 +258,16 @@ class Table(TerminalController):
         fmt = self.fields[col].fmt
         print(self.term.move(y, x) + fmt.format(text))
 
+    def _draw_status(self):
+        """Draw the status information."""
+        y_start = len(self.data) + self._header_rows + self._table_bottom_rows
+        for line, key in enumerate(self.status):
+            y = y_start + line
+            self._clear_row(y)
+            text = f'{key}: {self.status[key]}'
+            print(self.term.move(y, 0) + text)
+        print(self.term.move(y + 1, 0) + self._bot)
+
     def _draw_table_bottom(self):
         """Draw the bottom of the table."""
         y = len(self.data) + self._header_rows
@@ -288,6 +311,8 @@ class Table(TerminalController):
         self._draw_table_top()
         self._draw_table()
         self._draw_table_bottom()
+        if self.show_status:
+            self._draw_status()
 
     def input(self, prompt: str,
               default: Optional[Keystroke] = None) -> Optional[Keystroke]:
@@ -299,7 +324,12 @@ class Table(TerminalController):
         :return: The user's input.
         :rtype: str
         """
-        y = len(self.data) + 5
+        y = (
+            len(self.data)
+            + self._header_rows
+            + self._table_bottom_rows
+            + self._status_rows
+        )
         fmt = '{:<' + str(self.term.width) + '}'
         print(self.term.move(y, 1) + fmt.format(prompt))
         with self.term.cbreak():
@@ -329,6 +359,12 @@ class Table(TerminalController):
                 if self.data[row][col] != data[row][col]:
                     self._draw_cell(row, col, data[row][col])
         self.data = data
+
+    def update_status(self, status: dict[str, str]) -> None:
+        """Update the status fields."""
+        self.status = status
+        if self.show_status:
+            self._draw_status()
 
 
 # Main UI loop.
