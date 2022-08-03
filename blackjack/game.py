@@ -302,7 +302,8 @@ class Engine:
                  save_file: str = 'save.json',
                  deck_size: int = 6,
                  deck_cut: bool = False,
-                 card_count: int = 0) -> None:
+                 card_count: int = 0,
+                 running_count: bool = False) -> None:
         """Initialize an instance of the class.
 
         :param casino: Whether the game is using a casino deck.
@@ -332,8 +333,9 @@ class Engine:
             ui = BaseUI()
         self.ui = ui
 
-        self.card_count = card_count
         self.buyin = buyin
+        self.card_count = card_count
+        self.running_count = running_count
         self.seats = len(playerlist)
         self.save_file = save_file
 
@@ -464,14 +466,14 @@ class Engine:
         card = self.deck.draw()
 
         # Maintain card count.
+        pre_count = self.card_count
         if card.rank == 1:
             self.card_count += 1
-            self.ui.update_count(self.card_count)
         elif card.rank <= 6:
             self.card_count -= 1
-            self.ui.update_count(self.card_count)
         elif card.rank >= 10:
             self.card_count += 1
+        if self.running_count and self.card_count - pre_count:
             self.ui.update_count(self.card_count)
 
         # Return the drawn card.

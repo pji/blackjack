@@ -203,6 +203,28 @@ class EngineTestCase(ut.TestCase):
 
         self.assertEqual(expected, actual)
 
+    def test_running_count_given(self):
+        """If given a value for running_count, that value should be
+        stored in the running_count attribute.
+        """
+        expected = True
+
+        g = game.Engine(running_count=expected)
+        actual = g.running_count
+
+        self.assertEqual(expected, actual)
+
+    def test_running_count_default(self):
+        """If no value is given for running_count, the value of the
+        running_count attribute should default to False.
+        """
+        expected = False
+
+        g = game.Engine()
+        actual = g.running_count
+
+        self.assertEqual(expected, actual)
+
     # Test Engine._ace_split_hit()
     def test__ace_split_hit(self):
         """Given a hand with an ace that had been split,
@@ -238,7 +260,6 @@ class EngineTestCase(ut.TestCase):
         ])
         player = players.AutoPlayer([hand,], name='John')
         expected = [
-            call.update_count(1),
             call.hit(player, hand),
             call.stand(player, hand),
         ]
@@ -601,6 +622,38 @@ class EngineTestCase(ut.TestCase):
             call(1),
             call(2),
         ]
+
+        # Test data and state.
+        deck = cards.Deck([
+            cards.Card(11, 0),
+            cards.Card(8, 1),
+            cards.Card(12, 3),
+            cards.Card(2, 0),
+            cards.Card(1, 2),
+        ])
+        running_count = True
+        g = game.Engine(deck, running_count=running_count)
+
+        # Run test.
+        while g.deck:
+            _ = g._draw()
+
+        # Gather actual data.
+        act = g.card_count
+        act_ui_calls = mock_update_count.mock_calls
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+        self.assertListEqual(exp_ui_calls, act_ui_calls)
+
+    @patch('blackjack.game.BaseUI.update_count')
+    def test__draw_updates_count_no_running_count(self, mock_update_count):
+        """If Engine.running_count is False, don't send the event to
+        update the count to the UI.
+        """
+        # Expected value.
+        exp = 2
+        exp_ui_calls = []
 
         # Test data and state.
         deck = cards.Deck([
@@ -1497,7 +1550,6 @@ class EngineTestCase(ut.TestCase):
         # needs to have all three cards, too.
         expected = [
             call.flip(dealer, expected_hand),
-            call.update_count(-1),
             call.hit(dealer, expected_hand),
             call.stand(dealer, expected_hand),
         ]

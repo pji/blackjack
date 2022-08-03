@@ -20,10 +20,7 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
-* Add card count display to LogUI.
-* Make card count in LogUI optional.
 * Add card count display to TableUI.
-* Make card count in TableUI optional.
 * Display recent actions in TableUI.
 * Build UI for saving and restoring game state.
 * Allow for insurance less than half of initial bet.
