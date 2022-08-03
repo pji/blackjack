@@ -553,6 +553,26 @@ class ParseCliTestCase(ut.TestCase):
             self.assertEqual(exp[key], act[key])
         self.assertDictEqual(exp, act)
 
+    def test_use_logui(self):
+        """When passed the -L option, change the UI to use LogUI
+        instead of TableUI.
+        """
+        # Expected values.
+        exp = cli.LogUI
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', f'-L']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act = engine.ui
+
+        # Determine test result.
+        self.assertIsInstance(act, exp)
+
 
 class TableUITestCase(ut.TestCase):
     def test_subclass(self):

@@ -589,6 +589,11 @@ def parse_cli() -> argparse.Namespace:
         type=str
     )
     p.add_argument(
+        '-L', '--use_logui',
+        help='Use logging interface rather than table.',
+        action='store_true'
+    )
+    p.add_argument(
         '-p', '--players',
         help='Number of computer players.',
         action='store',
@@ -625,8 +630,11 @@ def build_game(args: argparse.Namespace) -> game.Engine:
         playerlist.append(user)
 
     # Build the UI.
-    seats = 1 + len(playerlist)
-    ui = TableUI(seats=seats)
+    if args.use_logui:
+        ui: game.EngineUI = LogUI()
+    else:
+        seats = 1 + len(playerlist)
+        ui = TableUI(seats=seats)
 
     # Build and return the game.
     return game.Engine(
