@@ -1165,3 +1165,30 @@ class TableUITestCase(ut.TestCase):
             self.assertEqual(exp_resp, act_resp)
         for exp, act in zip(exp_calls, act_calls):
             self.assertEqual(exp, act)
+
+    # Update count tests.
+    @patch('blackjack.termui.main')
+    def test_update_count(self, mock_main):
+        """When called, update the running count in the UI."""
+        # Expected value.
+        status = {
+            'Count': '2',
+        }
+        exp = call().send(('update_status', status))
+
+        # Test data and state.
+        player = players.Player(name='spam', chips=80)
+        data = [[player, 80, '', '', ''],]
+        ui = cli.TableUI()
+        ui.ctlr.data = data
+        ui.start()
+
+        # Run test.
+        ui.update_count(status['Count'])
+
+        # Gather actual
+        act = mock_main.mock_calls[-1]
+        ui.end()
+
+        # Determine test result.
+        self.assertEqual(exp, act)

@@ -537,6 +537,10 @@ class TableUI(game.EngineUI):
 
     def update_count(self, count):
         """Update the running card count in the UI."""
+        status = {
+            'Count': f'{count}'
+        }
+        self.loop.send(('update_status', status))
 
     def wins(self, player, bet):
         """Player wins."""
