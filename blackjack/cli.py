@@ -239,7 +239,8 @@ class TableUI(game.EngineUI):
     """A table-based terminal UI for blackjack."""
     # General operation methods.
     def __init__(self, ctlr: Optional[termui.TerminalController] = None,
-                 seats: int = 1) -> None:
+                 seats: int = 1,
+                 show_status: bool = False) -> None:
         """Initialize and instance of the class.
 
         :param ctlr: (Optional.) The TerminalController object running
@@ -249,12 +250,12 @@ class TableUI(game.EngineUI):
         """
         self.seats = seats
         if not ctlr:
-            ctlr = self._make_ctlr()
+            ctlr = self._make_ctlr(show_status)
         self.ctlr = ctlr
         self.is_interactive = False
         self.loop = None
 
-    def _make_ctlr(self):
+    def _make_ctlr(self, show_status: bool = False):
         """Returns a termui.Table object for blackjack."""
         fields = (
             ('Player', '{:<14}'),
@@ -263,7 +264,12 @@ class TableUI(game.EngineUI):
             ('Hand', '{:<27}'),
             ('Event', '{:<23}'),
         )
-        return termui.Table('Blackjack', fields, rows=self.seats)
+        return termui.Table(
+            'Blackjack',
+            fields,
+            rows=self.seats,
+            show_status=show_status
+        )
 
     def end(self):
         """End the UI loop gracefully."""
@@ -643,7 +649,7 @@ def build_game(args: argparse.Namespace) -> game.Engine:
         ui: game.EngineUI = LogUI()
     else:
         seats = 1 + len(playerlist)
-        ui = TableUI(seats=seats)
+        ui = TableUI(seats=seats, show_status=args.count_cards)
 
     # Build and return the game.
     return game.Engine(

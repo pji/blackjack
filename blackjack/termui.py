@@ -265,7 +265,7 @@ class Table(TerminalController):
             y = y_start + line
             self._clear_row(y)
             text = f'{key}: {self.status[key]}'
-            print(self.term.move(y, 0) + text)
+            print(self.term.move(y, 1) + text)
         print(self.term.move(y + 1, 0) + self._bot)
 
     def _draw_table_bottom(self):

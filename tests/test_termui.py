@@ -369,7 +369,7 @@ class TableTestCase(ut.TestCase):
             call(self.loc.format(6, 1) + row.format(*data[1])),
             call(self.loc.format(7, 1) + frame),
             call(self.loc.format(8, 1) + ' ' * 80),
-            call(self.loc.format(8, 1) + status),
+            call(self.loc.format(8, 2) + status),
             call(self.loc.format(9, 1) + frame),
         ]
 
@@ -486,7 +486,7 @@ class TableTestCase(ut.TestCase):
         frame = '\u2500' * 23
         exp_calls = [
             call(self.loc.format(8, 1) + ' ' * 80),
-            call(self.loc.format(8, 1) + f'Count: {exp_status["Count"]}'),
+            call(self.loc.format(8, 2) + f'Count: {exp_status["Count"]}'),
             call(self.loc.format(9, 1) + frame),
         ]
 
