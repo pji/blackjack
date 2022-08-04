@@ -249,13 +249,14 @@ class TableUI(game.EngineUI):
             available for the game.
         """
         self.seats = seats
+        self.show_status = show_status
         if not ctlr:
-            ctlr = self._make_ctlr(show_status)
+            ctlr = self._make_ctlr()
         self.ctlr = ctlr
         self.is_interactive = False
         self.loop = None
 
-    def _make_ctlr(self, show_status: bool = False):
+    def _make_ctlr(self):
         """Returns a termui.Table object for blackjack."""
         fields = (
             ('Player', '{:<14}'),
@@ -268,7 +269,7 @@ class TableUI(game.EngineUI):
             'Blackjack',
             fields,
             rows=self.seats,
-            show_status=show_status
+            show_status=self.show_status
         )
 
     def end(self):

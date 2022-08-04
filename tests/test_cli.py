@@ -614,6 +614,7 @@ class TableUITestCase(ut.TestCase):
         exp = {
             'ctlr': ctlr,
             'seats': 6,
+            'show_status': False,
         }
 
         ui = cli.TableUI(**exp)
@@ -632,6 +633,25 @@ class TableUITestCase(ut.TestCase):
         act = ui.ctlr
 
         self.assertTrue(isinstance(act, exp))
+
+    def test__make_ctlr_with_show_status(self):
+        """When TableUI.show_status is True, the Table returned
+        should also have show_status set to True.
+        """
+        # Expected value.
+        exp = True
+
+        # Test data and state.
+        ui = cli.TableUI(show_status=True)
+
+        # Run test.
+        ctlr = ui._make_ctlr()
+
+        # Gather actual.
+        act = ctlr.show_status
+
+        # Determine test result.
+        self.assertEqual(exp, act)
 
     @patch('blackjack.termui.main')
     def test_end(self, mock_main):
