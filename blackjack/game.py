@@ -381,6 +381,7 @@ class Engine:
             'deck_size': self.deck_size,
             'dealer': self.dealer,
             'playerlist': self.playerlist,
+            'running_count': self.running_count,
             'save_file': self.save_file,
         }
 
@@ -437,6 +438,7 @@ class Engine:
             self.dealer = Dealer.deserialize(serial['dealer'])
             self.playerlist = [restore_player(player)
                                for player in serial['playerlist']]
+            self.running_count = serial['running_count']
             self.save_file = serial['save_file']
 
     def _double_down(self, player: Player, hand: Hand) -> None:

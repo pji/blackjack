@@ -426,6 +426,7 @@ class EngineTestCase(ut.TestCase):
             'deck_size': deck2.size,
             'dealer': dealer2.serialize(),
             'playerlist': [],
+            'running_count': False,
             'save_file': 'baked.beans',
         }
 
@@ -448,6 +449,7 @@ class EngineTestCase(ut.TestCase):
                 player1.serialize(),
                 player2.serialize(),
             ],
+            'running_count': True,
             'save_file': 'tomato',
         }
 
@@ -1725,7 +1727,7 @@ class EngineTestCase(ut.TestCase):
         dealer = players.Dealer(name='spam')
         player1 = players.AutoPlayer(name='eggs')
         player2 = players.AutoPlayer(name='bacon')
-        exp_attrs = json.dumps({
+        exp_attrs = {
             'class': 'Engine',
             'buyin': 200,
             'card_count': 0,
@@ -1736,9 +1738,10 @@ class EngineTestCase(ut.TestCase):
                 player1.serialize(),
                 player2.serialize(),
             ],
+            'running_count': False,
             'save_file': 'save.json',
-        })
-        mock_open().__enter__().read.return_value = exp_attrs
+        }
+        mock_open().__enter__().read.return_value = json.dumps(exp_attrs)
 
         exp_open = [
             call(),
@@ -1762,11 +1765,11 @@ class EngineTestCase(ut.TestCase):
         g.restore()
         act_open = mock_open.mock_calls
         act_ui = mock_ui.mock_calls
-        act_attrs = g.serialize()
+        act_attrs = json.loads(g.serialize())
 
         self.assertListEqual(exp_open, act_open)
         self.assertListEqual(exp_ui, act_ui)
-        self.assertEqual(exp_attrs, act_attrs)
+        self.assertDictEqual(exp_attrs, act_attrs)
 
     # Test Engine.save().
     @patch('blackjack.game.open')
@@ -1820,6 +1823,7 @@ class EngineTestCase(ut.TestCase):
                 player1.serialize(),
                 player2.serialize(),
             ],
+            'running_count': False,
             'save_file': 'ham',
         }
 
