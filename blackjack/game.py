@@ -294,16 +294,21 @@ class Engine:
         engine._deserialize(s)
         return engine
 
-    def __init__(self, deck: Deck = None,
-                 dealer: Optional[Player] = None,
-                 playerlist: Optional[list] = None,
-                 ui: EngineUI = None,
-                 buyin: float = 0,
-                 save_file: str = 'save.json',
-                 deck_size: int = 6,
-                 deck_cut: bool = False,
-                 card_count: int = 0,
-                 running_count: bool = False) -> None:
+    def __init__(
+            self,
+            deck: Deck = None,
+            dealer: Optional[Player] = None,
+            playerlist: Optional[list] = None,
+            ui: EngineUI = None,
+            buyin: float = 0,
+            save_file: str = 'save.json',
+            deck_size: int = 6,
+            deck_cut: bool = False,
+            card_count: int = 0,
+            running_count: bool = False,
+            bet_max: int = 500,
+            bet_min: int = 20
+    ) -> None:
         """Initialize an instance of the class.
 
         :param casino: Whether the game is using a casino deck.
@@ -338,6 +343,8 @@ class Engine:
         self.running_count = running_count
         self.seats = len(playerlist)
         self.save_file = save_file
+        self.bet_max = bet_max
+        self.bet_min = bet_min
 
     def __repr__(self):
         cls = self.__class__
@@ -375,9 +382,12 @@ class Engine:
         """Return the object serialized as a dictionary."""
         return {
             'class': self.__class__.__name__,
+            'bet_max': self.bet_max,
+            'bet_min': self.bet_min,
             'buyin': self.buyin,
             'card_count': self.card_count,
             'deck': self.deck,
+            'deck_cut': self.deck_cut,
             'deck_size': self.deck_size,
             'dealer': self.dealer,
             'playerlist': self.playerlist,
@@ -432,9 +442,12 @@ class Engine:
         """
         serial = loads(s)
         if serial['class'] == self.__class__.__name__:
+            self.bet_max = serial['bet_max']
+            self.bet_min = serial['bet_min']
             self.buyin = serial['buyin']
             self.card_count = serial['card_count']
             self.deck = Deck.deserialize(serial['deck'])
+            self.deck_cut = serial['deck_cut']
             self.dealer = Dealer.deserialize(serial['dealer'])
             self.playerlist = [restore_player(player)
                                for player in serial['playerlist']]

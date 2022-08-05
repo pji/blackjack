@@ -18,6 +18,13 @@ from unittest.mock import Mock, call, patch
 from blackjack import cards, game, players
 
 
+# Utility functions.
+def loopback(value):
+    """Return whatever is sent to it."""
+    return value
+
+
+# Test cases.
 class EngineTestCase(ut.TestCase):
     def test_exists(self):
         """The class Game should exist in the game module."""
@@ -25,6 +32,43 @@ class EngineTestCase(ut.TestCase):
         self.assertTrue('Engine' in names)
 
     # Engine.__init__() tests.
+    @patch('blackjack.cards.shuffle', side_effect=loopback)
+    def test_default_attrs(self, _):
+        """When given no parameters, use the default parameters for
+        the new object.
+        """
+        # Expected values.
+        exp = {
+            'buyin': 0,
+            'bet_max': 500,
+            'bet_min': 20,
+            'card_count': 0,
+            'deck': cards.Deck.build(6),
+            'deck_cut': False,
+            'deck_size': 6,
+            'dealer': players.Dealer(name='Dealer'),
+            'playerlist': (),
+            'running_count': False,
+            'save_file': 'save.json',
+        }
+        exp_ui_type = game.BaseUI
+
+        # Run test.
+        engine = game.Engine()
+
+        # Extract actuals.
+        act = engine._asdict()
+        del act['class']
+        act_ui = engine.ui
+
+        # Determine test result.
+        for key in exp:
+            exp_key = (key, exp[key])
+            act_key = (key, act[key])
+            self.assertEqual(exp_key, act_key)
+        self.assertDictEqual(exp, act)
+        self.assertIsInstance(act_ui, exp_ui_type)
+
     def test_deck_given(self):
         """If a deck is given, it should be stored in the deck
         attribute.
@@ -35,20 +79,6 @@ class EngineTestCase(ut.TestCase):
         actual = g.deck
 
         self.assertTrue(expected is actual)
-
-    def test_deck_default(self):
-        """If no deck or deck size is given, a casino deck should be
-        created and stored in the deck attribute.
-        """
-        expected_cls = cards.Deck
-        expected_len = 52 * 6
-
-        g = game.Engine()
-        actual_cls = g.deck
-        actual_len = len(g.deck)
-
-        self.assertTrue(isinstance(actual_cls, expected_cls))
-        self.assertEqual(expected_len, actual_len)
 
     def test_deck_size_given(self):
         """Given a deck size and no deck and no random cut, game.Engine
@@ -95,15 +125,6 @@ class EngineTestCase(ut.TestCase):
         self.assertIsInstance(actual_cls, expected_cls)
         self.assertEqual(expected_len, actual_len)
 
-    def test_dealer_default(self):
-        """If not passed a dealer, the game should create a dealer."""
-        expected = players.Dealer
-
-        g = game.Engine()
-        actual = g.dealer
-
-        self.assertTrue(isinstance(actual, expected))
-
     def test_dealer_given(self):
         """If given a dealer, the game should use it."""
         expected = 'Eric'
@@ -136,17 +157,6 @@ class EngineTestCase(ut.TestCase):
 
         self.assertTrue(isinstance(actual, expected))
 
-    def test_playerlist_default(self):
-        """If not given players, the playerlist attribute should be
-        initialized to an empty tuple.
-        """
-        expected = ()
-
-        g = game.Engine()
-        actual = g.playerlist
-
-        self.assertEqual(expected, actual)
-
     def test_playerlist_given(self):
         """If given a list of players, that list should be stored in
         the playerlist attribute.
@@ -170,17 +180,6 @@ class EngineTestCase(ut.TestCase):
         expected = 500.00
 
         g = game.Engine(buyin=expected)
-        actual = g.buyin
-
-        self.assertEqual(expected, actual)
-
-    def test_buyin_default(self):
-        """If no value is given for buyin, the value of the buyin
-        attribute should default to zero.
-        """
-        expected = 0
-
-        g = game.Engine()
         actual = g.buyin
 
         self.assertEqual(expected, actual)
@@ -210,17 +209,6 @@ class EngineTestCase(ut.TestCase):
         expected = True
 
         g = game.Engine(running_count=expected)
-        actual = g.running_count
-
-        self.assertEqual(expected, actual)
-
-    def test_running_count_default(self):
-        """If no value is given for running_count, the value of the
-        running_count attribute should default to False.
-        """
-        expected = False
-
-        g = game.Engine()
         actual = g.running_count
 
         self.assertEqual(expected, actual)
@@ -420,9 +408,12 @@ class EngineTestCase(ut.TestCase):
         dealer2 = players.Dealer(name='ham')
         exp_before = {
             'class': 'Engine',
+            'bet_max': 500,
+            'bet_min': 20,
             'buyin': 0,
             'card_count': 0,
             'deck': deck2.serialize(),
+            'deck_cut': False,
             'deck_size': deck2.size,
             'dealer': dealer2.serialize(),
             'playerlist': [],
@@ -440,9 +431,12 @@ class EngineTestCase(ut.TestCase):
         player2 = players.AutoPlayer(name='bacon')
         exp_after = {
             'class': 'Engine',
+            'bet_max': 100,
+            'bet_min': 10,
             'buyin': 200,
             'card_count': 7,
             'deck': deck.serialize(),
+            'deck_cut': True,
             'deck_size': deck.size,
             'dealer': dealer.serialize(),
             'playerlist': [
@@ -1729,9 +1723,12 @@ class EngineTestCase(ut.TestCase):
         player2 = players.AutoPlayer(name='bacon')
         exp_attrs = {
             'class': 'Engine',
+            'bet_max': 500,
+            'bet_min': 20,
             'buyin': 200,
             'card_count': 0,
             'deck': deck.serialize(),
+            'deck_cut': False,
             'deck_size': 6,
             'dealer': dealer.serialize(),
             'playerlist': [
@@ -1814,9 +1811,12 @@ class EngineTestCase(ut.TestCase):
         player2 = players.AutoPlayer(name='bacon')
         exp = {
             'class': 'Engine',
+            'bet_max': 500,
+            'bet_min': 20,
             'buyin': 200,
             'card_count': 0,
             'deck': deck.serialize(),
+            'deck_cut': False,
             'deck_size': deck.size,
             'dealer': dealer.serialize(),
             'playerlist': [

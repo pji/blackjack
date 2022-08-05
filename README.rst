@@ -22,6 +22,7 @@ The following features are on the nice-to-have list:
 
 * Allow user variable bets.
 * Allow computer player variable bets.
+* Fix game.Engine.seats when restoring from file.
 * Allow players to count cards.
 * Allow players to be bad at counting cards.
 * Allow users to join a table partway through the shoe.
