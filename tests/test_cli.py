@@ -573,6 +573,38 @@ class ParseCliTestCase(ut.TestCase):
             self.assertEqual(exp[key], act[key])
         self.assertDictEqual(exp, act)
 
+    def test_restore_from_file_with_counting(self):
+        """When passed a -f option followed by a file path and -K,
+        create a new game from the save information stored in the file.
+        """
+        # Set up for expected value.
+        path = 'tests/data/savefile'
+        with open(path) as fp:
+
+            # Expected values.
+            exp = load(fp)
+        exp_show_status = True
+
+        # Test data and state.
+        sys.argv = [
+            'python -m blackjack',
+            '-f tests/data/savefile',
+            '-K',
+        ]
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        serial = engine.serialize()
+        act = loads(serial)
+        act_show_status = engine.ui.show_status
+
+        # Determine test result.
+        self.assertDictEqual(exp, act)
+        self.assertEqual(exp_show_status, act_show_status)
+
     def test_use_logui(self):
         """When passed the -L option, change the UI to use LogUI
         instead of TableUI.
