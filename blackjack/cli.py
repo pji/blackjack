@@ -632,7 +632,7 @@ def build_game(args: argparse.Namespace) -> game.Engine:
     if args.file:
         engine = game.Engine.load(args.file.lstrip())
         seats = 1 + len(engine.playerlist)
-        engine.ui = TableUI(seats=seats)
+        engine.ui = TableUI(seats=seats, show_status=args.count_cards)
         return engine
 
     # Create dealer and players.

@@ -239,12 +239,20 @@ class Table(TerminalController):
         """Clear the bottom of the table and the footer."""
         bottom_table_row = self.rows + self._header_rows
         input_row = bottom_table_row + 1
-        for row in range(bottom_table_row, input_row + 1)[::-1]:
-            self._clear_row(row)
+        if not self.show_status:
+            self._clear_row(input_row)
+        self._clear_row(bottom_table_row)
 
     def _clear_row(self, y:int) -> None:
         """Clear a line in the UI."""
         print(self.term.move(y, 0) + ' ' * 80)
+
+    def _clear_status(self) -> None:
+        """Clear the status."""
+        status_row = self._header_rows + self.rows + self._table_bottom_rows
+        rows = [status_row + n for n in range(len(self.status) + 2)]
+        for row in rows[::-1]:
+            self._clear_row(row)
 
     def _draw_cell(self, row:int, col:int, value:Any) -> None:
         """Given a row, column, and value, draw that cell in the UI."""
@@ -345,14 +353,22 @@ class Table(TerminalController):
         :param data: A changed version of the data table.
         """
         while self.rows > len(data):
+            if self.show_status:
+                self._clear_status()
             self._clear_footer()
             self.rows -= 1
             self._draw_table_bottom()
+            if self.show_status:
+                self._draw_status()
 
         while self.rows < len(data):
+            if self.show_status:
+                self._clear_status()
             self._clear_footer()
             self.rows += 1
             self._draw_table_bottom()
+            if self.show_status:
+                self._draw_status()
 
         for row in range(len(self.data)):
             for col in range(len(self.data[row])):

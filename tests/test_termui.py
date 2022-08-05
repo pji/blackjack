@@ -566,6 +566,43 @@ class TableTestCase(ut.TestCase):
         self.assertListEqual(exp_calls, act_calls)
 
     @patch('blackjack.termui.print')
+    def test_update_smaller_table_with_status(self, mock_print):
+        """When called with a data table that is smaller than the
+        current table, update() should remove rows from the existing
+        table to allow for the cell comparisons. It should then clear
+        the removed rows from the UI and reprint the table bottom. If
+        the status is displayed, it should be repositioned properly.
+        """
+        new_data = [[0, 0],]
+        frame = '\u2500' * 23
+        status = 'Count: 0'
+        exp_calls = [
+            call(self.loc.format(9, 1) + ' ' * 80),
+            call(self.loc.format(8, 1) + ' ' * 80),
+            call(self.loc.format(7, 1) + ' ' * 80),
+            call(self.loc.format(6, 1) + frame),
+            call(self.loc.format(7, 1) + ' ' * 80),
+            call(self.loc.format(7, 2) + status),
+            call(self.loc.format(8, 1) + frame),
+        ]
+
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        data = [[0, 0], [0, 0]]
+        ctlr = termui.Table('eggs', fields, data=data, show_status=True)
+        main = termui.main(ctlr)
+        next(main)
+
+        main.send(('update', new_data))
+
+        main.close()
+        act_calls = mock_print.mock_calls[-7:]
+
+        self.assertListEqual(exp_calls, act_calls)
+
+    @patch('blackjack.termui.print')
     def test_update_bigger_table(self, mock_print):
         """When called with a data table that is bigger than the
         current table, update() should add rows to the existing
@@ -591,6 +628,47 @@ class TableTestCase(ut.TestCase):
         main.send(('update', new_data))
         main.close()
         act_calls = mock_print.mock_calls[:-2]
+
+        self.assertListEqual(exp_calls, act_calls)
+
+    @patch('blackjack.termui.print')
+    def test_update_bigger_table_with_status(self, mock_print):
+        """When called with a data table that is bigger than the
+        current table, update() should add rows to the existing
+        table to allow for the cell comparisons. It should then add
+        the new rows to the UI and reprint the table bottom. It should
+        then clear the removed rows from the UI and reprint the table
+        bottom. If the status is displayed, it should be repositioned
+        properly.
+        """
+        new_data = [[0, 0], [0, 0]]
+        frame = '\u2500' * 23
+        status = 'Count: 0'
+        exp_calls = [
+            call(self.loc.format(8, 1) + ' ' * 80),
+            call(self.loc.format(7, 1) + ' ' * 80),
+            call(self.loc.format(6, 1) + ' ' * 80),
+            call(self.loc.format(7, 1) + frame),
+            call(self.loc.format(8, 1) + ' ' * 80),
+            call(self.loc.format(8, 2) + status),
+            call(self.loc.format(9, 1) + frame),
+            call(self.loc.format(6, 2) + ' ' * 10),
+            call(self.loc.format(6, 13) + ' ' * 10),
+        ]
+
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        data = [[0, 0]]
+        ctlr = termui.Table('eggs', fields, data=data, show_status=True)
+        main = termui.main(ctlr)
+        next(main)
+
+        main.send(('update', new_data))
+
+        act_calls = mock_print.mock_calls[-9:]
+        main.close()
 
         self.assertListEqual(exp_calls, act_calls)
 

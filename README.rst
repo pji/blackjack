@@ -20,8 +20,8 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
-* Allow restored games to display card count.
-* Allow variable bets.
+* Allow user variable bets.
+* Allow computer player variable bets.
 * Allow players to count cards.
 * Allow players to be bad at counting cards.
 * Allow users to join a table partway through the shoe.
