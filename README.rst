@@ -21,6 +21,9 @@ The primary to-do list is complete.
 The following features are on the nice-to-have list:
 
 * Allow user variable bets.
+    * Create willbet.py that governs player betting.
+    * Create number input prompt.
+    * Add input prompt to game.start.
 * Allow computer player variable bets.
 * Fix game.Engine.seats when restoring from file.
 * Allow players to count cards.
