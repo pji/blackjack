@@ -529,6 +529,14 @@ class Engine(BaseEngine):
         playerlist[index] = None
         self.playerlist = playerlist
 
+    def _replace_player(self, player: Player) -> Player:
+        """The given player leaves and is replaced by a new player."""
+        self.ui.leaves(player)
+        new_player = make_player(bet=self.bet_max)
+        new_player.bet = self.bet_min
+        self.ui.joins(new_player)
+        return new_player
+
     def _split(self, hand: Hand, player: Player) -> bool:
         """Handle the splitting decision on a hand.
 
@@ -547,6 +555,28 @@ class Engine(BaseEngine):
             self.ui.splits(player, 20)
             return True
         return False
+
+    def _take_bet(self, player: Player) -> Player:
+        """Take the bet from the player, replacing them if they
+        can't cover the bet.
+        """
+        player.bet = player.will_bet(self)
+
+        # Players who can't cover their bet are replaced.
+        if (
+                player.chips < self.bet_min
+                or player.bet < self.bet_min
+                or player.bet > player.chips
+        ):
+            player = self._replace_player(player)
+
+        # Players who bet more than maximum are capped.
+        elif player.bet > self.bet_max:
+            player.bet = self.bet_max
+
+        # Take their chips and return the player.
+        player.chips -= player.bet
+        return player
 
     def deal(self):
         """Deal a round of blackjack."""
@@ -698,6 +728,10 @@ class Engine(BaseEngine):
         serial['playerlist'] = [player.serialize()
                                 for player in serial['playerlist']]
         return dumps(serial)
+
+    def bet(self):
+        """Get the bets from each player."""
+        self.playerlist = [self._take_bet(p) for p in self.playerlist]
 
     def start(self):
         """Start a round of blackjack."""

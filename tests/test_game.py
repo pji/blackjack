@@ -14,6 +14,7 @@ from itertools import zip_longest
 import json
 import unittest as ut
 from unittest.mock import Mock, call, patch
+from types import MethodType
 
 from blackjack import cards, game, players
 
@@ -1832,6 +1833,200 @@ class EngineTestCase(ut.TestCase):
         act = json.loads(text)
 
         self.assertDictEqual(exp, act)
+
+    # Test Engine.bet().
+    @patch('blackjack.game.BaseUI.joins')
+    @patch('blackjack.game.BaseUI.leaves')
+    @patch('blackjack.game.make_player')
+    def _replace_player_tests(
+            self,
+            exp_before,
+            exp_after,
+            exp_call_leaves,
+            exp_call_joins,
+            new_player,
+            engine,
+            mock_make,
+            mock_leaves,
+            mock_joins
+    ):
+        """Test for bet conditions that cause players to be replaced."""
+        # Patch test behavior.
+        mock_make.return_value = new_player
+
+        # Run test and get actuals.
+        act_before = engine.playerlist[:]
+        engine.bet()
+        act_after = engine.playerlist[:]
+        act_call_leaves = mock_leaves.mock_calls
+        act_call_joins = mock_joins.mock_calls
+
+        # Determine test result.
+        self.assertTupleEqual(exp_before, act_before)
+        self.assertTupleEqual(exp_after, act_after)
+        self.assertListEqual(exp_call_leaves, act_call_leaves)
+        self.assertListEqual(exp_call_joins, act_call_joins)
+
+    def test_bet_take_bet(self):
+        """Engine.bet() will take the bet from each player in the game,
+        tracking the amount with the player."""
+        # Expected values.
+        exp_chips = [1000, 1500, ]
+        exp_bet = 500
+
+        # Test data and state.
+        names = ['John', 'Michael', ]
+        playerlist = [
+            players.AutoPlayer([], name, chips + exp_bet)
+            for name, chips in zip(names, exp_chips)
+        ]
+        engine = game.Engine(
+            playerlist=playerlist,
+            bet_min=20,
+            bet_max=exp_bet
+        )
+
+        # Run test.
+        engine.bet()
+
+        # Extract actuals.
+        act_chips = [player.chips for player in playerlist]
+        act_bets = [player.bet for player in playerlist]
+
+        # Determine test result.
+        self.assertListEqual(exp_chips, act_chips)
+        for act_bet in act_bets:
+            self.assertEqual(exp_bet, act_bet)
+
+    def test_bet_remove_players_without_enough_chips(self):
+        """Engine.bet() will remove players who cannot make the
+        minimum bet."""
+        # Expected values.
+        new_player = players.AutoPlayer([], 'Graham', 1000)
+        exp_before = (
+            players.AutoPlayer([], 'John', 1000),
+            players.AutoPlayer([], 'Michael', 1500),
+            players.AutoPlayer([], 'Terry', 10),
+        )
+        exp_after = (*exp_before[:2], new_player)
+        exp_call_leaves = [call(exp_before[2]), ]
+        exp_call_joins = [call(new_player), ]
+
+        # Test data and state.
+        bet_min = exp_before[-1].chips + 10
+        engine = game.Engine(
+            playerlist=exp_before,
+            bet_min=bet_min
+        )
+
+        # Run test and determine result.
+        self._replace_player_tests(
+            exp_before,
+            exp_after,
+            exp_call_leaves,
+            exp_call_joins,
+            new_player,
+            engine
+        )
+
+    def test_bet_remove_players_below_min_bet(self):
+        """Engine.bet() will remove players who bet below the minimum."""
+        # Expected values.
+        new_player = players.AutoPlayer([], 'Graham', 1000)
+        exp_before = (
+            players.AutoPlayer([], 'John', 1000),
+            players.AutoPlayer([], 'Michael', 1500),
+            players.AutoPlayer([], 'Terry', 1000),
+        )
+        exp_after = (exp_before[0], new_player, exp_before[2])
+        exp_call_leaves = [call(exp_before[1]), ]
+        exp_call_joins = [call(new_player), ]
+
+        # Test data and state.
+        def will_bet_zero(self, _):
+            return 0
+        exp_before[1].will_bet = MethodType(will_bet_zero, exp_before[1])
+        bet_min = 20
+        engine = game.Engine(
+            playerlist=exp_before,
+            bet_min=bet_min
+        )
+
+        # Run test and determine result.
+        self._replace_player_tests(
+            exp_before,
+            exp_after,
+            exp_call_leaves,
+            exp_call_joins,
+            new_player,
+            engine
+        )
+
+    def test_bet_cap_bet_above_maximum(self):
+        """Engine.bet() will change bets above the maximum bet to the
+        maximum bet."""
+        # Expected values.
+        bet_max = 100
+        playerlist = (
+            players.AutoPlayer([], 'John', 1000),
+            players.AutoPlayer([], 'Michael', 1500),
+            players.AutoPlayer([], 'Terry', 1000),
+        )
+        exp = [(p.name, bet_max, p.chips) for p in playerlist]
+
+        # Test data and state.
+        def will_bet_more(self, _):
+            return bet_max + 50
+        for player in playerlist:
+            player.chips += bet_max
+        playerlist[1].will_bet = MethodType(will_bet_more, playerlist[1])
+        engine = game.Engine(
+            playerlist=playerlist,
+            bet_max=bet_max
+        )
+
+        # Run test and get actuals.
+        engine.bet()
+        act = [(p.name, p.bet, p.chips) for p in engine.playerlist]
+
+        # Determine test result.
+        self.assertListEqual(exp, act)
+
+    def test_bet_remove_players_cannot_cover_bet(self):
+        """Engine.bet() will remove players who bet more chips than
+        they have."""
+        # Expected values.
+        new_player = players.AutoPlayer([], 'Graham', 1000)
+        exp_before = (
+            players.AutoPlayer([], 'John', 400),
+            players.AutoPlayer([], 'Michael', 1500),
+            players.AutoPlayer([], 'Terry', 1000),
+        )
+        exp_after = (new_player, *exp_before[1:])
+        exp_call_leaves = [call(exp_before[0]), ]
+        exp_call_joins = [call(new_player), ]
+
+        # Test data and state.
+        def will_bet_500(self, _):
+            return 500
+        exp_before[0].will_bet = MethodType(will_bet_500, exp_before[0])
+        bet_min = 20
+        bet_max = 1000
+        engine = game.Engine(
+            playerlist=exp_before,
+            bet_min=bet_min,
+            bet_max=bet_max
+        )
+
+        # Run test and determine result.
+        self._replace_player_tests(
+            exp_before,
+            exp_after,
+            exp_call_leaves,
+            exp_call_joins,
+            new_player,
+            engine
+        )
 
     # Test Engine.start().
     def test_start_take_payment(self):

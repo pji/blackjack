@@ -176,6 +176,7 @@ class Player:
             chips = 0
         self.chips = chips
         self.insured = 0
+        self.bet = 0
 
     def __str__(self):
         return self.name
@@ -189,10 +190,8 @@ class Player:
             return NotImplemented
 
         self_dict = self._asdict()
-        del self_dict['chips']
         del self_dict['insured']
         other_dict = other._asdict()
-        del other_dict['chips']
         del other_dict['insured']
 
         return self_dict == other_dict
