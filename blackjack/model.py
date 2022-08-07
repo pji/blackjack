@@ -14,6 +14,46 @@ from unicodedata import normalize
 from typing import Any, Iterable, Sequence
 
 
+# Base classes.
+class BaseEngine(ABC):
+    bet_max: int
+    bet_min: int
+
+    """The base class for the game engine."""
+    @abstractmethod
+    def deal(self) -> None:
+        """Dealing phase."""
+
+    @abstractmethod
+    def end(self) -> None:
+        """End of the hand."""
+
+    @abstractmethod
+    def new_game(self) -> None:
+        """Start a new game."""
+
+    @abstractmethod
+    def play(self) -> None:
+        """Play the hand."""
+
+    @abstractmethod
+    def restore(self, fname: str) -> None:
+        """Restore a game from a save."""
+
+    @abstractmethod
+    def save(self, fname: str) -> None:
+        """Save a game."""
+
+    @abstractmethod
+    def serialize(self) -> None:
+        """Serialize the game."""
+
+    @abstractmethod
+    def start(self) -> None:
+        """Start of the hand."""
+
+
+# Base validation classes.
 class _BaseDescriptor:
     """A basic data descriptor."""
 

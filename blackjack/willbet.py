@@ -12,22 +12,38 @@ determine whether the player will hit or stand. They must:
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
-from blackjack.game import Engine
+from typing import Callable
+
+from blackjack.model import BaseEngine
 
 
-def will_bet_dealer(self, engine: Engine) -> int:
+def will_bet_dealer(self, engine: BaseEngine) -> int:
     """The dealer cannot bet."""
     msg = 'Dealer cannot bet.'
     raise TypeError(msg)
 
 
-def will_bet_max(self, engine: Engine) -> int:
+def will_bet_max(self, engine: BaseEngine) -> int:
     """The player always bets the maximum amount."""
     if self.chips < engine.bet_max:
         return self.chips
     return engine.bet_max
 
 
-def will_bet_min(self, engine: Engine) -> int:
+def will_bet_min(self, engine: BaseEngine) -> int:
     """The player always bets the minimum amount."""
     return engine.bet_min
+
+
+def will_bet_user(self, engine: BaseEngine) -> int:
+    """Player prompts user for bet."""
+    raise NotImplementedError
+
+
+# List of valid will_bet functions.
+will_bets: list[Callable] = [
+    will_bet_dealer,
+    will_bet_user,
+    will_bet_max,
+    will_bet_min,
+]

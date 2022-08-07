@@ -12,7 +12,7 @@ from json import dumps, loads
 from typing import Generator, Optional, Union
 
 from blackjack.cards import Deck, DeckObj, DOWN, Hand
-from blackjack.model import Integer_, IsYes, valfactory
+from blackjack.model import BaseEngine, Integer_, IsYes, valfactory
 from blackjack.players import (Dealer, Player, make_player, restore_player,
                                ValidPlayers, ValidPlayer)
 
@@ -277,7 +277,7 @@ ValidUI = valfactory('ValidUI', validate_ui, 'Invalid EngineUI ({}).')
 
 
 # Game engine class.
-class Engine:
+class Engine(BaseEngine):
     """A game engine for blackjack."""
     deck = DeckObj('deck')
     playerlist = ValidPlayers('playerlist')

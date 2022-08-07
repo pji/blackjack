@@ -34,6 +34,63 @@ class PlayerTestCase(ut.TestCase):
 
         self.assertTrue(issubclass(actual, expected))
 
+    def test___format__(self):
+        """__format__() should return as though it was called on the
+        value of the name attribute.
+        """
+        tmp = '{:<6}'
+        expected = tmp.format('spam')
+
+        p = players.Player(name='spam')
+        actual = tmp.format(p)
+
+        self.assertEqual(expected, actual)
+
+    def test___str__(self):
+        """__str__() should return the name of the Player object."""
+        expected = 'Spam'
+
+        p = players.Player(name=expected)
+        actual = p.__str__()
+
+        self.assertEqual(expected, actual)
+
+    def test__asdict(self):
+        """When called, asdict() should serialize the object to a
+        dictionary.
+        """
+        hands = (
+            cards.Hand((
+                cards.Card(11, 3),
+                cards.Card(2, 1),
+            )),
+        )
+        exp = {
+            'class': 'Player',
+            'chips': 200,
+            'hands': hands,
+            'insured': 0,
+            'name': 'spam',
+            'will_bet': 'will_bet_max',
+            'will_buyin': 'will_buyin_always',
+            'will_double_down': 'will_double_down_always',
+            'will_hit': 'will_hit_dealer',
+            'will_insure': 'will_insure_always',
+            'will_split': 'will_split_always',
+        }
+
+        player = players.Player(hands, 'spam', 200)
+        player.will_bet = MethodType(players.willbet.will_bet_max, player)
+        player.will_buyin = MethodType(players.will_buyin_always, player)
+        player.will_double_down = MethodType(players.will_double_down_always,
+                                             player)
+        player.will_hit = MethodType(players.will_hit_dealer, player)
+        player.will_insure = MethodType(players.will_insure_always, player)
+        player.will_split = MethodType(players.will_split_always, player)
+        act = player._asdict()
+
+        self.assertEqual(exp, act)
+
     def test_deserialize(self):
         """When given a Player serialized as a JSON string,
         deserialize() should return the deserialized instance
@@ -54,6 +111,7 @@ class PlayerTestCase(ut.TestCase):
         exp.will_hit = MethodType(players.will_hit_dealer, exp)
         exp.will_insure = MethodType(players.will_insure_always, exp)
         exp.will_split = MethodType(players.will_split_always, exp)
+        exp.will_bet = MethodType(players.willbet.will_bet_max, exp)
 
         serial = exp.serialize()
         act = players.Player.deserialize(serial)
@@ -71,6 +129,7 @@ class PlayerTestCase(ut.TestCase):
             )),
         )
         exp = players.Player(hands, 'spam', 200)
+        exp.will_bet = MethodType(players.willbet.will_bet_max, exp)
         exp.will_buyin = MethodType(players.will_buyin_always, exp)
         exp.will_double_down = MethodType(players.will_double_down_always, exp)
         exp.will_hit = MethodType(players.will_hit_dealer, exp)
@@ -88,6 +147,7 @@ class PlayerTestCase(ut.TestCase):
             'will_hit': 'will_hit_dealer',
             'will_insure': 'will_insure_always',
             'will_split': 'will_split_always',
+            'will_bet': 'will_bet_max',
         }
         act = players.Player.fromdict(value)
 
@@ -116,6 +176,7 @@ class PlayerTestCase(ut.TestCase):
             'will_hit': 'will_hit_dealer',
             'will_insure': 'will_insure_always',
             'will_split': 'will_split_always',
+            'will_bet': 'will_bet_max',
         }
         methods = [key for key in value if key.startswith('will_')]
         player = players.Player.fromdict(value)
@@ -201,61 +262,6 @@ class PlayerTestCase(ut.TestCase):
         actual = player.insured
         self.assertEqual(expected, actual)
 
-    def test___str__(self):
-        """__str__() should return the name of the Player object."""
-        expected = 'Spam'
-
-        p = players.Player(name=expected)
-        actual = p.__str__()
-
-        self.assertEqual(expected, actual)
-
-    def test___format__(self):
-        """__format__() should return as though it was called on the
-        value of the name attribute.
-        """
-        tmp = '{:<6}'
-        expected = tmp.format('spam')
-
-        p = players.Player(name='spam')
-        actual = tmp.format(p)
-
-        self.assertEqual(expected, actual)
-
-    def test__asdict(self):
-        """When called, asdict() should serialize the object to a
-        dictionary.
-        """
-        hands = (
-            cards.Hand((
-                cards.Card(11, 3),
-                cards.Card(2, 1),
-            )),
-        )
-        exp = {
-            'class': 'Player',
-            'chips': 200,
-            'hands': hands,
-            'insured': 0,
-            'name': 'spam',
-            'will_buyin': 'will_buyin_always',
-            'will_double_down': 'will_double_down_always',
-            'will_hit': 'will_hit_dealer',
-            'will_insure': 'will_insure_always',
-            'will_split': 'will_split_always',
-        }
-
-        player = players.Player(hands, 'spam', 200)
-        player.will_buyin = MethodType(players.will_buyin_always, player)
-        player.will_double_down = MethodType(players.will_double_down_always,
-                                             player)
-        player.will_hit = MethodType(players.will_hit_dealer, player)
-        player.will_insure = MethodType(players.will_insure_always, player)
-        player.will_split = MethodType(players.will_split_always, player)
-        act = player._asdict()
-
-        self.assertEqual(exp, act)
-
     def test_serialize(self):
         """When called, serialize() should return the object
         serialized as a JSON string.
@@ -272,6 +278,7 @@ class PlayerTestCase(ut.TestCase):
             'hands': (hands[0].serialize(),),
             'insured': 0,
             'name': 'spam',
+            'will_bet': 'will_bet_max',
             'will_buyin': 'will_buyin_always',
             'will_double_down': 'will_double_down_always',
             'will_hit': 'will_hit_dealer',
@@ -280,6 +287,7 @@ class PlayerTestCase(ut.TestCase):
         })
 
         player = players.Player(hands, 'spam', 200)
+        player.will_bet = MethodType(players.willbet.will_bet_max, player)
         player.will_buyin = MethodType(players.will_buyin_always, player)
         player.will_double_down = MethodType(players.will_double_down_always,
                                              player)
@@ -295,36 +303,43 @@ class playerfactoryTestCase(ut.TestCase):
     def test_player_subclass(self):
         """playerfactory() should return Player subclasses."""
         expected = players.Player
-        actual = players.playerfactory('Spam', None, None, None, None, None)
+        actual = players.playerfactory(
+            'Spam',
+            None,
+            None,
+            None,
+            None,
+            None,
+            None
+        )
         self.assertTrue(issubclass(actual, expected))
 
-    def test_will_hit(self):
-        """Given a will_hit function, the subclass should have a
-        will_hit method.
+    def test_will_bet(self):
+        """Given a will_bet function, the subclass should have a
+        will_bet method.
         """
-        expected = 'spam'
+        # Expected value.
+        exp = 100
 
-        def func(self, hand):
-            return 'spam'
-        Eggs = players.playerfactory('Eggs', func, None, None, None, None)
-        obj = Eggs()
-        actual = obj.will_hit(None)
-
-        self.assertEqual(expected, actual)
-
-    def test_will_split(self):
-        """Given a will_split function, the subclass should have a
-        will_split method.
-        """
-        expected = False
-
-        def func(self, hand, the_game):
-            return False
-        Spam = players.playerfactory('Spam', None, func, None, None, None)
+        # Test data and state.
+        def func(self, game):
+            return 100
+        Spam = players.playerfactory(
+            'Spam',
+            None,
+            None,
+            None,
+            None,
+            None,
+            will_bet=func
+        )
         obj = Spam()
-        actual = obj.will_split(None, None)
 
-        self.assertEqual(expected, actual)
+        # Run test.
+        act = obj.will_bet(None)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
 
     def test_will_buyin(self):
         """Given a will_buyin function, the subclass should have a
@@ -354,6 +369,20 @@ class playerfactoryTestCase(ut.TestCase):
 
         self.assertEqual(expected, actual)
 
+    def test_will_hit(self):
+        """Given a will_hit function, the subclass should have a
+        will_hit method.
+        """
+        expected = 'spam'
+
+        def func(self, hand):
+            return 'spam'
+        Eggs = players.playerfactory('Eggs', func, None, None, None, None)
+        obj = Eggs()
+        actual = obj.will_hit(None)
+
+        self.assertEqual(expected, actual)
+
     def test_will_insure(self):
         """Given a will_insure function, the subclass should have a
         will_insure method.
@@ -365,6 +394,20 @@ class playerfactoryTestCase(ut.TestCase):
         Spam = players.playerfactory('Spam', None, None, None, None, func)
         obj = Spam()
         actual = obj.will_insure(None)
+
+        self.assertEqual(expected, actual)
+
+    def test_will_split(self):
+        """Given a will_split function, the subclass should have a
+        will_split method.
+        """
+        expected = False
+
+        def func(self, hand, the_game):
+            return False
+        Spam = players.playerfactory('Spam', None, func, None, None, None)
+        obj = Spam()
+        actual = obj.will_split(None, None)
 
         self.assertEqual(expected, actual)
 
@@ -417,6 +460,7 @@ class make_playerTestCase(ut.TestCase):
             _ = method(phand, g)
 
         methods = [
+            player.will_bet,
             player.will_buyin,
             player.will_insure,
         ]

@@ -22,8 +22,10 @@ The following features are on the nice-to-have list:
 
 * Allow user variable bets.
     * Create willbet.py that governs player betting.
+    * Add will_bet to players.
+    * Track the bet of each player through the hand.
     * Create number input prompt.
-    * Add input prompt to game.start.
+    * Create the will_bet for users.
 * Allow computer player variable bets.
 * Fix game.Engine.seats when restoring from file.
 * Allow players to count cards.

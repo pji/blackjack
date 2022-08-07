@@ -11,11 +11,12 @@ players, including the dealer.
 from functools import partial
 from json import dumps, loads
 from random import choice
-from typing import Callable, Type
+from typing import Callable, Optional, Type
 from types import MethodType
 
 import mkname
 
+from blackjack import willbet
 from blackjack.cards import Hand, HandTuple
 from blackjack.model import Integer_, PosInt, Text, valfactory, valtupfactory
 from blackjack.willbuyin import (
@@ -62,6 +63,13 @@ from blackjack.willsplit import (
 
 
 # Utility functions.
+def undef_behavior(self, *args, **kwargs) -> None:
+    """A default function for use by playerfactory when a behavior
+    isn't defined.
+    """
+    raise TypeError('Behavior was not defined.')
+
+
 def get_chips(bet):
     """Return the number of chips to give to a player.
 
@@ -136,13 +144,14 @@ class Player:
             'will_buyin': will_buyins,
             'will_double_down': will_double_downs,
             'will_insure': will_insures,
+            'will_bet': willbet.will_bets,
         }
         for meth in methods:
             fn_names = [fn.__name__ for fn in methods[meth]]
             try:
                 index = fn_names.index(dict_[meth])
             except ValueError:
-                msg = f'Invalid {meth} given.'
+                msg = f'Invalid {meth} given. {dict_[meth]}'
                 raise ValueError(msg)
             bound = MethodType(methods[meth][index], player)
             setattr(player, meth, bound)
@@ -201,6 +210,7 @@ class Player:
             'hands': self.hands,
             'insured': self.insured,
             'name': self.name,
+            'will_bet': self.will_bet.__name__,
             'will_buyin': self.will_buyin.__name__,
             'will_double_down': self.will_double_down.__name__,
             'will_hit': self.will_hit.__name__,
@@ -214,10 +224,7 @@ class Player:
         serial['hands'] = [hand.serialize() for hand in serial['hands']]
         return dumps(serial)
 
-    def will_hit(self, hand:Hand, the_game) -> bool:
-        raise NotImplementedError
-
-    def will_split(self, hand:Hand, the_game) -> bool:
+    def will_bet(self, the_game) -> bool:
         raise NotImplementedError
 
     def will_buyin(self, hand:Hand, the_game) -> bool:
@@ -226,13 +233,26 @@ class Player:
     def will_double_down(self, hand:Hand, the_game) -> bool:
         raise NotImplementedError
 
+    def will_hit(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+
     def will_insure(self, the_game) -> bool:
+        raise NotImplementedError
+
+    def will_split(self, hand:Hand, the_game) -> bool:
         raise NotImplementedError
 
 
 # Factory functions.
-def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
-                  will_double_down, will_insure) -> type:
+def playerfactory(
+        name,
+        will_hit_fn,
+        will_split_fn,
+        will_buyin_fn,
+        will_double_down,
+        will_insure,
+        will_bet: Optional[Callable] = undef_behavior
+) -> type:
     """A factory function for Player subclasses."""
     attrs = {
         'will_hit': will_hit_fn,
@@ -240,6 +260,7 @@ def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
         'will_buyin': will_buyin_fn,
         'will_double_down': will_double_down,
         'will_insure': will_insure,
+        'will_bet': will_bet,
     }
     return type(name, (Player,), attrs)
 
@@ -281,6 +302,7 @@ def make_player(chips=200, bet=None) -> Player:
         'will_buyin': choice(will_buyins[1:]).__name__,
         'will_double_down': choice(will_double_downs[2:]).__name__,
         'will_insure': choice(will_insures[2:]).__name__,
+        'will_bet': choice(willbet.will_bets[2:]).__name__,
     }
     player = Player.fromdict(attrs)
     return player
@@ -293,7 +315,8 @@ Dealer = playerfactory(
     will_split_dealer,
     will_buyin_dealer,
     will_double_down_dealer,
-    will_insure_dealer
+    will_insure_dealer,
+    will_bet=willbet.will_bet_dealer
 )
 AutoPlayer = playerfactory(
     'AutoPlayer',
@@ -301,7 +324,8 @@ AutoPlayer = playerfactory(
     will_split_always,
     will_buyin_always,
     will_double_down_always,
-    will_insure_always
+    will_insure_always,
+    will_bet=willbet.will_bet_max
 )
 BetterPlayer = playerfactory(
     'BetterPlayer',
