@@ -333,7 +333,8 @@ BetterPlayer = playerfactory(
     will_split_recommended,
     will_buyin_always,
     will_double_down_recommended,
-    will_insure_never
+    will_insure_never,
+    will_bet=willbet.will_bet_min
 )
 NeverPlayer = playerfactory(
     'NeverPlayer',
@@ -341,7 +342,8 @@ NeverPlayer = playerfactory(
     will_split_never,
     will_buyin_never,
     will_double_down_never,
-    will_insure_never
+    will_insure_never,
+    will_bet=willbet.will_bet_never
 )
 RandomPlayer = playerfactory(
     'RandomPlayer',
@@ -349,7 +351,8 @@ RandomPlayer = playerfactory(
     will_split_random,
     will_buyin_random,
     will_double_down_random,
-    will_insure_random
+    will_insure_random,
+    will_bet=willbet.will_bet_random
 )
 UserPlayer = playerfactory(
     'UserPlayer',
@@ -357,7 +360,8 @@ UserPlayer = playerfactory(
     will_split_user,
     will_buyin_always,
     will_double_down_user,
-    will_insure_user
+    will_insure_user,
+    will_bet=willbet.will_bet_user
 )
 
 

@@ -9,6 +9,7 @@ This module contains the unit tests for the blackjack.willbet module.
 """
 from types import MethodType
 import unittest as ut
+from unittest.mock import patch
 
 from blackjack import players, game, willbet
 
@@ -75,4 +76,26 @@ class WillBetMinTestCase(WillBetTestCase):
         """
         exp = self.engine.bet_min
         fn = willbet.will_bet_min
+        self.returned_value_test(fn, exp)
+
+
+class WillBetNeverTestCase(WillBetTestCase):
+    def test_will_always_return_zero(self):
+        """When called as the will_bet method of a Player object
+        with a game.Engine, will_bet_never will return zero.
+        """
+        exp = 0
+        fn = willbet.will_bet_never
+        self.returned_value_test(fn, exp)
+
+
+class WillBetRandomTestCase(WillBetTestCase):
+    @patch('blackjack.willbet.randrange', return_value=125)
+    def test_will_return_a_random_number(self, mock_randrange):
+        """When called as the will_bet method of a Player object
+        with a game.Engine, will_bet_random will return a random
+        number between the minimum and maximum bet.
+        """
+        exp = mock_randrange()
+        fn = willbet.will_bet_random
         self.returned_value_test(fn, exp)

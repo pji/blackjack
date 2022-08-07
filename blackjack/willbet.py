@@ -12,6 +12,7 @@ determine whether the player will hit or stand. They must:
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from random import randrange
 from typing import Callable
 
 from blackjack.model import BaseEngine
@@ -35,6 +36,16 @@ def will_bet_min(self, engine: BaseEngine) -> int:
     return engine.bet_min
 
 
+def will_bet_never(self, engine: BaseEngine) -> int:
+    """The player always bets the minimum amount."""
+    return 0
+
+
+def will_bet_random(self, engine: BaseEngine) -> int:
+    """The player always bets the minimum amount."""
+    return randrange(engine.bet_min, engine.bet_max)
+
+
 def will_bet_user(self, engine: BaseEngine) -> int:
     """Player prompts user for bet."""
     raise NotImplementedError
@@ -46,4 +57,6 @@ will_bets: list[Callable] = [
     will_bet_user,
     will_bet_max,
     will_bet_min,
+    will_bet_never,
+    will_bet_random,
 ]
