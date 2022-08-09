@@ -476,7 +476,7 @@ class TableTestCase(ut.TestCase):
     # Table.input_number() tests.
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.termui.print')
-    def test_input_number(self, mock_print, mock_inkey):
+    def test_input_multichar(self, mock_print, mock_inkey):
         """When called with a prompt, input_number() should write the
         prompt to the UI and return the response from the user.
         """
@@ -486,7 +486,7 @@ class TableTestCase(ut.TestCase):
             call(self.loc.format(7, 2) + fmt.format(prompt)),
             call(self.loc.format(7, 2) + fmt.format('')),
         ]
-        exp_resp = 20
+        exp_resp = '20'
 
         mock_inkey.side_effect = ('2', '0', '\n')
         fields = [
@@ -496,7 +496,7 @@ class TableTestCase(ut.TestCase):
         ctlr = termui.Table('Eggs', fields)
         main = termui.main(ctlr)
         next(main)
-        act_resp = main.send(('input_number', prompt))
+        act_resp = main.send(('input_multichar', prompt))
         del main
         act_print = mock_print.mock_calls
 
@@ -505,7 +505,7 @@ class TableTestCase(ut.TestCase):
 
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.termui.print')
-    def test_input_number_default(self, mock_print, mock_inkey):
+    def test_input_multichar_default(self, mock_print, mock_inkey):
         """When called with a prompt and a default, input_number()
         should write the prompt to the UI and return the response
         from the user. If the user's response is only a newline,
@@ -517,7 +517,7 @@ class TableTestCase(ut.TestCase):
             call(self.loc.format(7, 2) + fmt.format(prompt)),
             call(self.loc.format(7, 2) + fmt.format('')),
         ]
-        exp_resp = 20
+        exp_resp = '20'
 
         mock_inkey.side_effect = ('\n', )
         fields = [
@@ -527,7 +527,7 @@ class TableTestCase(ut.TestCase):
         ctlr = termui.Table('Eggs', fields)
         main = termui.main(ctlr)
         next(main)
-        act_resp = main.send(('input_number', prompt, exp_resp))
+        act_resp = main.send(('input_multichar', prompt, exp_resp))
         del main
         act_print = mock_print.mock_calls
 
@@ -536,7 +536,7 @@ class TableTestCase(ut.TestCase):
 
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.termui.print')
-    def test_input_number_with_status(self, mock_print, mock_inkey):
+    def test_input_multichar_with_status(self, mock_print, mock_inkey):
         """When called with a prompt, input_number() should write the
         prompt to the UI and return the response from the user.
         """
@@ -549,7 +549,7 @@ class TableTestCase(ut.TestCase):
             call(self.loc.format(9, 2) + fmt.format(prompt)),
             call(self.loc.format(9, 2) + fmt.format('')),
         ]
-        exp_resp = 20
+        exp_resp = '20'
 
         # Test data and state.
         mock_inkey.side_effect = ('2', '0', '\n')
@@ -562,7 +562,7 @@ class TableTestCase(ut.TestCase):
         next(main)
 
         # Run test and gather actuals.
-        act_resp = main.send(('input_number', prompt))
+        act_resp = main.send(('input_multichar', prompt))
         del main
         act_print = mock_print.mock_calls
 

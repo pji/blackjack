@@ -21,7 +21,9 @@ The primary to-do list is complete.
 The following features are on the nice-to-have list:
 
 * Allow user variable bets.
-    * Create number input prompt.
+    * Create number input prompt for Table.
+    * Number prompt can only accept numbers.
+    * Create number input prompt for TableUI.
     * Create the will_bet for users.
 * Allow computer player variable bets.
 * Fix game.Engine.seats when restoring from file.

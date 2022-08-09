@@ -350,11 +350,11 @@ class Table(TerminalController):
             resp = default
         return resp
 
-    def input_number(
+    def input_multichar(
             self,
             prompt: str,
-            default: int = 0
-    ) -> int:
+            default: str = ''
+    ) -> str:
         """Prompt the user for input, and return the input.
 
         :param prompt: The input prompt.
@@ -387,7 +387,7 @@ class Table(TerminalController):
         # Return the input.
         if not text or text == '\n':
             return default
-        return int(text)
+        return text
 
     def update(self, data:Sequence[list]) -> None:
         """Update the entire UI.
