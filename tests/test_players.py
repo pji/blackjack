@@ -450,6 +450,7 @@ class make_playerTestCase(ut.TestCase):
         dealer = players.Dealer((dhand,), 'Dealer')
         g = game.Engine(None, dealer, None, None, 2)
         player = players.make_player()
+        player.bet = 2
 
         methods = [
             player.will_hit,

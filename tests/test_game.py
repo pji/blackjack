@@ -725,6 +725,7 @@ class EngineTestCase(ut.TestCase):
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
         player = players.AutoPlayer(cards.Hand(), 'Eric', 10)
+        player.bet = expected_insured * 2
         g = game.Engine(None, dealer, (player,), None, 20)
         g._insure(player)
         actual_insured = player.insured
@@ -769,6 +770,7 @@ class EngineTestCase(ut.TestCase):
         expected = (player, 10)
 
         ui = Mock()
+        player.bet = expected[1] * 2
         g = game.Engine(None, dealer, (player,), None, 20)
         g._insure(player)
 
@@ -1671,7 +1673,7 @@ class EngineTestCase(ut.TestCase):
         self.assertEqual(expected_hand, actual_hand)
         self.assertEqual(expected_dd, actual_dd)
 
-    def test_play_with_double_down(self):
+    def test_play_with_insurance(self):
         """Given a dealer hand with an ace showing an a player who
         will insure, play() should insure the player then play the
         round as usual.
@@ -1688,6 +1690,7 @@ class EngineTestCase(ut.TestCase):
             cards.Card(6, 3),
         ])
         player = players.AutoPlayer([hand,], 'Eric', 20)
+        player.bet = expected_insured * 2
         deck = cards.Deck([
             cards.Card(8, 1, cards.DOWN),
             cards.Card(11, 0, cards.DOWN),
@@ -2039,9 +2042,10 @@ class EngineTestCase(ut.TestCase):
     def test_start_take_payment(self):
         """In a Engine with players who will buy-in and a buy-in,
         buyin() should take the buy-in from the player's chips
-        totals.
+        totals and set that amount as the player's bet.
         """
         expected = 180.00
+        exp_bet = [20, 20]
 
         p1 = players.AutoPlayer([], 'John', 200)
         p2 = players.AutoPlayer([], 'Michael', 200)
@@ -2050,9 +2054,11 @@ class EngineTestCase(ut.TestCase):
         g.start()
         actual_p1 = p1.chips
         actual_p2 = p2.chips
+        act_bet = [p.bet for p in (p1, p2)]
 
         self.assertEqual(expected, actual_p1)
         self.assertEqual(expected, actual_p2)
+        self.assertListEqual(exp_bet, act_bet)
 
     def test_start_too_few_chips(self):
         """If a player tries to buy into a game but does not have

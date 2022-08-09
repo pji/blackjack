@@ -735,12 +735,14 @@ class Engine(BaseEngine):
         for player in self.playerlist:
             if player.chips >= self.buyin and player.will_buyin(self):
                 player.chips -= self.buyin
+                player.bet = self.buyin
                 self.ui.bet(player, self.buyin)
             else:
                 self._remove_player(player)
                 self.ui.leaves(player)
                 player = make_player(bet=self.buyin)
                 self._add_player(player)
+                player.bet = self.buyin
                 self.ui.joins(player)
                 self.ui.bet(player, self.buyin)
 

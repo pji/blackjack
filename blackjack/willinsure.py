@@ -26,7 +26,7 @@ def will_insure_always(self, the_game) -> int:
     :return: A decision whether to insure.
     :rtype: int
     """
-    return the_game.buyin // 2
+    return self.bet // 2
 
 
 def will_insure_never(self, the_game) -> int:
@@ -42,7 +42,7 @@ def will_insure_never(self, the_game) -> int:
 
 def will_insure_random(self, the_game) -> int:
     """Buy insurance randomly."""
-    return choice(range(the_game.buyin // 2))
+    return choice(range(self.bet // 2))
 
 
 def will_insure_user(self, the_game) -> int:
@@ -50,7 +50,7 @@ def will_insure_user(self, the_game) -> int:
     is_yes = the_game.ui.insure_prompt()
     insurance = 0
     if is_yes.value:
-        insurance = the_game.buyin // 2
+        insurance = self.bet // 2
     return insurance
 
 
