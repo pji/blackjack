@@ -975,12 +975,13 @@ class EngineTestCase(ut.TestCase):
             cards.Card(9, 1),
         ])
         player = players.AutoPlayer((phand,), 'John', 0)
+        player.bet = 20
         dhand = cards.Hand([
             cards.Card(1, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
         g.end()
         actual = player.chips
 
@@ -1003,12 +1004,13 @@ class EngineTestCase(ut.TestCase):
             cards.Card(9, 1),
         ])
         player = players.AutoPlayer((ohand, phand,), 'John', 0)
+        player.bet = 20
         dhand = cards.Hand([
             cards.Card(1, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
         g.end()
         actual = player.chips
 
@@ -1025,12 +1027,13 @@ class EngineTestCase(ut.TestCase):
             cards.Card(12, 1),
         ])
         player = players.AutoPlayer((phand,), 'John', 0)
+        player.bet = expected / 2.5
         dhand = cards.Hand([
             cards.Card(13, 0),
             cards.Card(12, 3),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
         g.end()
         actual = player.chips
 
@@ -1048,13 +1051,14 @@ class EngineTestCase(ut.TestCase):
             cards.Card(12, 1),
         ])
         player = players.AutoPlayer((phand,), 'John', 0)
+        player.bet = expected / 2.5
         dhand = cards.Hand([
             cards.Card(1, 0),
             cards.Card(6, 3),
             cards.Card(4, 3),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
         g.end()
         actual = player.chips
 
@@ -1096,12 +1100,13 @@ class EngineTestCase(ut.TestCase):
             cards.Card(9, 1),
         ])
         player = players.Player([hand1, hand2], 'Michael', 0)
+        player.bet = 20
         dhand = cards.Hand([
             cards.Card(7, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
         g.end()
         actual = player.chips
 
@@ -1111,22 +1116,30 @@ class EngineTestCase(ut.TestCase):
         """If the player wins, the player gets double their initial
         bet.
         """
+        # Expected value.
         expected = 40
 
+        # Test data and state.
         phand = cards.Hand([
             cards.Card(10, 1),
             cards.Card(10, 0),
         ])
         player = players.AutoPlayer((phand,), 'John', 0)
+        player.bet = expected // 2
         dhand = cards.Hand([
             cards.Card(7, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
+
+        # Run test.
         g.end()
+
+        # Gather actual.
         actual = player.chips
 
+        # Determine test result.
         self.assertEqual(expected, actual)
 
     @patch('blackjack.game.BaseUI.wins_split')
@@ -1145,6 +1158,7 @@ class EngineTestCase(ut.TestCase):
             cards.Card(9, 1),
         ])
         player = players.Player([hand1, hand2], 'Michael', 180)
+        player.bet = 20
 
         # This looks a little weird. Shouldn't the hand be different
         # between the first two call.updates() since the cards in the
@@ -1155,14 +1169,14 @@ class EngineTestCase(ut.TestCase):
         # hand is sent. Since objects are mutable, the hand has three
         # cards in it when assertEqual() runs, so the expected hand
         # needs to have all three cards, too.
-        expected = call(player, 40)
+        expected = call(player, player.bet * 2)
 
         dhand = cards.Hand([
             cards.Card(7, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
         g.end()
         actual = mock_wins.mock_calls[-1]
 
@@ -1223,6 +1237,7 @@ class EngineTestCase(ut.TestCase):
             cards.Card(9, 1),
         ])
         player = players.Player([hand1, hand2], 'Michael', 180)
+        player.bet
 
         # This looks a little weird. Shouldn't the hand be different
         # between the first two call.updates() since the cards in the
@@ -1233,14 +1248,14 @@ class EngineTestCase(ut.TestCase):
         # hand is sent. Since objects are mutable, the hand has three
         # cards in it when assertEqual() runs, so the expected hand
         # needs to have all three cards, too.
-        expected = call(player, 20)
+        expected = call(player, player.bet)
 
         dhand = cards.Hand([
             cards.Card(7, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
         g.end()
         actual = mock_ties_split.mock_calls[-1]
 
@@ -1252,6 +1267,7 @@ class EngineTestCase(ut.TestCase):
         to the UI. If the hand is split, that event should be
         'splitpayout' if the hand wins.
         """
+        # Set up for expected values.
         hand2 = cards.Hand([
             cards.Card(10, 1),
             cards.Card(10, 0),
@@ -1262,7 +1278,9 @@ class EngineTestCase(ut.TestCase):
             cards.Card(9, 1),
         ])
         player = players.Player([hand1, hand2], 'Michael', 180)
+        player.bet = 20
 
+        # Expected values.
         # This looks a little weird. Shouldn't the hand be different
         # between the first two call.updates() since the cards in the
         # hand will be different at those points?
@@ -1272,17 +1290,23 @@ class EngineTestCase(ut.TestCase):
         # hand is sent. Since objects are mutable, the hand has three
         # cards in it when assertEqual() runs, so the expected hand
         # needs to have all three cards, too.
-        expected = call(player, 40)
+        expected = call(player, player.bet * 2)
 
+        # Test data and state.
         dhand = cards.Hand([
             cards.Card(7, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
+
+        # Run test.
         g.end()
+
+        # Gather actuals.
         actual = mock_split.mock_calls[-1]
 
+        # Determine test result.
         self.assertEqual(expected, actual)
 
     @patch('blackjack.game.BaseUI.tie')
@@ -1290,24 +1314,34 @@ class EngineTestCase(ut.TestCase):
         """If the player ties, the player gets back their initial
         bet.
         """
+        # Set up for expected values.
         phand = cards.Hand([
             cards.Card(10, 1),
             cards.Card(10, 0),
         ])
         player = players.AutoPlayer((phand,), 'John', 0)
-        expected = 20
-        expected_call = call(player, 20)
+        player.bet = 20
 
+        # Expected values.
+        expected = player.bet
+        expected_call = call(player, player.bet)
+
+        # Test data and state.
         dhand = cards.Hand([
             cards.Card(10, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
+
+        # Run test.
         g.end()
+
+        # Gather actuals.
         actual = player.chips
         actual_call = mock_tie.mock_calls[-1]
 
+        # Determine test success.
         self.assertEqual(expected, actual)
         self.assertEqual(expected_call, actual_call)
 
@@ -1349,12 +1383,13 @@ class EngineTestCase(ut.TestCase):
         ])
         phand.doubled_down = True
         player = players.AutoPlayer((phand,), 'John', 0)
+        player.bet = expected // 4
         dhand = cards.Hand([
             cards.Card(7, 3),
             cards.Card(11, 0),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
         g.end()
         actual = player.chips
 
@@ -1407,6 +1442,7 @@ class EngineTestCase(ut.TestCase):
         ]
         phand = cards.Hand(cardlist)
         player = players.AutoPlayer((phand,), 'Michael', 180)
+        player.bet = 20
 
         # This looks a little weird. Shouldn't the hand be different
         # between the first two call.updates() since the cards in the
@@ -1417,14 +1453,14 @@ class EngineTestCase(ut.TestCase):
         # hand is sent. Since objects are mutable, the hand has three
         # cards in it when assertEqual() runs, so the expected hand
         # needs to have all three cards, too.
-        expected = call(player, 40)
+        expected = call(player, player.bet * 2)
 
         dhand = cards.Hand([
             cards.Card(7, 0, cards.UP),
             cards.Card(10, 0, cards.DOWN),
         ])
         dealer = players.Dealer((dhand,), 'Dealer', None)
-        g = game.Engine(None, dealer, (player,), None, 20)
+        g = game.Engine(None, dealer, (player,), None, 30)
         g.end()
         actual = mock_wins.mock_calls[-1]
 

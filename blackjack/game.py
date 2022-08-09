@@ -595,6 +595,56 @@ class Engine(BaseEngine):
         self.dealer.hands[0].append(self._draw())
         self.ui.deal(self.dealer, self.dealer.hands[0])
 
+    def new_game(self):
+        """Update the UI with the players at the start of the game."""
+        self.ui.joins(self.dealer)
+        for player in self.playerlist:
+            self.ui.joins(player)
+
+    def restore(self, fname: str = 'save.json') -> None:
+        """Restore the state of a saved Engine object."""
+        with open(fname, 'r') as f:
+            s = f.read()
+        self._deserialize(s)
+        self.ui.reset()
+        self.new_game()
+
+    def save(self, fname: str = 'save.json') -> None:
+        """Save the state of the current game."""
+        serial = self.serialize()
+        with open(fname, 'w') as f:
+            f.write(serial)
+
+    def serialize(self):
+        """Return the object serialized as a JSON string."""
+        serial = self._asdict()
+        serial['deck'] = serial['deck'].serialize()
+        serial['dealer'] = serial['dealer'].serialize()
+        serial['playerlist'] = [player.serialize()
+                                for player in serial['playerlist']]
+        return dumps(serial)
+
+    def start(self):
+        """Start a round of blackjack."""
+        for player in self.playerlist:
+            if player.chips >= self.buyin and player.will_buyin(self):
+                player.chips -= self.buyin
+                player.bet = self.buyin
+                self.ui.bet(player, self.buyin)
+            else:
+                self._remove_player(player)
+                self.ui.leaves(player)
+                player = make_player(bet=self.buyin)
+                self._add_player(player)
+                player.bet = self.buyin
+                self.ui.joins(player)
+                self.ui.bet(player, self.buyin)
+
+    # Fixed for betting.
+    def bet(self):
+        """Get the bets from each player."""
+        self.playerlist = [self._take_bet(p) for p in self.playerlist]
+
     def end(self):
         """End a round of blackjack."""
         dhand = self.dealer.hands[0]
@@ -663,18 +713,12 @@ class Engine(BaseEngine):
                     else:
                         mod = 1
 
-                payout = mod * self.buyin
+                payout = mod * player.bet
                 player.chips += payout
                 if event == self.ui.loses or event == self.ui.loses_split:
                     event(player)
                 else:
                     event(player, payout)
-
-    def new_game(self):
-        """Update the UI with the players at the start of the game."""
-        self.ui.joins(self.dealer)
-        for player in self.playerlist:
-            self.ui.joins(player)
 
     def play(self):
         """Play a round of blackjack."""
@@ -706,50 +750,6 @@ class Engine(BaseEngine):
                 card.flip()
                 self.ui.flip(self.dealer, hand)
         self._hit(self.dealer, self.dealer.hands[0])
-
-    def restore(self, fname: str = 'save.json') -> None:
-        """Restore the state of a saved Engine object."""
-        with open(fname, 'r') as f:
-            s = f.read()
-        self._deserialize(s)
-        self.ui.reset()
-        self.new_game()
-
-    def save(self, fname: str = 'save.json') -> None:
-        """Save the state of the current game."""
-        serial = self.serialize()
-        with open(fname, 'w') as f:
-            f.write(serial)
-
-    def serialize(self):
-        """Return the object serialized as a JSON string."""
-        serial = self._asdict()
-        serial['deck'] = serial['deck'].serialize()
-        serial['dealer'] = serial['dealer'].serialize()
-        serial['playerlist'] = [player.serialize()
-                                for player in serial['playerlist']]
-        return dumps(serial)
-
-    def start(self):
-        """Start a round of blackjack."""
-        for player in self.playerlist:
-            if player.chips >= self.buyin and player.will_buyin(self):
-                player.chips -= self.buyin
-                player.bet = self.buyin
-                self.ui.bet(player, self.buyin)
-            else:
-                self._remove_player(player)
-                self.ui.leaves(player)
-                player = make_player(bet=self.buyin)
-                self._add_player(player)
-                player.bet = self.buyin
-                self.ui.joins(player)
-                self.ui.bet(player, self.buyin)
-
-    # Fixed for betting.
-    def bet(self):
-        """Get the bets from each player."""
-        self.playerlist = [self._take_bet(p) for p in self.playerlist]
 
 
 # The main game loop for blackjack.
