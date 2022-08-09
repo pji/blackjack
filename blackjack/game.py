@@ -576,6 +576,7 @@ class Engine(BaseEngine):
 
         # Take their chips and return the player.
         player.chips -= player.bet
+        self.ui.bet(player, player.bet)
         return player
 
     def deal(self):
@@ -729,10 +730,6 @@ class Engine(BaseEngine):
                                 for player in serial['playerlist']]
         return dumps(serial)
 
-    def bet(self):
-        """Get the bets from each player."""
-        self.playerlist = [self._take_bet(p) for p in self.playerlist]
-
     def start(self):
         """Start a round of blackjack."""
         for player in self.playerlist:
@@ -746,6 +743,11 @@ class Engine(BaseEngine):
                 self._add_player(player)
                 self.ui.joins(player)
                 self.ui.bet(player, self.buyin)
+
+    # Fixed for betting.
+    def bet(self):
+        """Get the bets from each player."""
+        self.playerlist = [self._take_bet(p) for p in self.playerlist]
 
 
 # The main game loop for blackjack.

@@ -1867,19 +1867,24 @@ class EngineTestCase(ut.TestCase):
         self.assertListEqual(exp_call_leaves, act_call_leaves)
         self.assertListEqual(exp_call_joins, act_call_joins)
 
-    def test_bet_take_bet(self):
+    @patch('blackjack.game.BaseUI.bet')
+    def test_bet_take_bet(self, mock_bet):
         """Engine.bet() will take the bet from each player in the game,
         tracking the amount with the player."""
         # Expected values.
         exp_chips = [1000, 1500, ]
         exp_bet = 500
-
-        # Test data and state.
         names = ['John', 'Michael', ]
         playerlist = [
             players.AutoPlayer([], name, chips + exp_bet)
             for name, chips in zip(names, exp_chips)
         ]
+        exp_call_bet = [
+            call(playerlist[0], exp_bet),
+            call(playerlist[1], exp_bet),
+        ]
+
+        # Test data and state.
         engine = game.Engine(
             playerlist=playerlist,
             bet_min=20,
@@ -1892,11 +1897,13 @@ class EngineTestCase(ut.TestCase):
         # Extract actuals.
         act_chips = [player.chips for player in playerlist]
         act_bets = [player.bet for player in playerlist]
+        act_call_bet = mock_bet.mock_calls
 
         # Determine test result.
         self.assertListEqual(exp_chips, act_chips)
         for act_bet in act_bets:
             self.assertEqual(exp_bet, act_bet)
+        self.assertListEqual(exp_call_bet, act_call_bet)
 
     def test_bet_remove_players_without_enough_chips(self):
         """Engine.bet() will remove players who cannot make the
