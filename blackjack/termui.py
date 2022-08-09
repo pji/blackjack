@@ -322,8 +322,11 @@ class Table(TerminalController):
         if self.show_status:
             self._draw_status()
 
-    def input(self, prompt: str,
-              default: Optional[Keystroke] = None) -> Optional[Keystroke]:
+    def input(
+            self,
+            prompt: str,
+            default: Optional[Keystroke] = None
+    ) -> Optional[Keystroke]:
         """Prompt the user for input, and return the input.
 
         :param prompt: The input prompt.
@@ -346,6 +349,45 @@ class Table(TerminalController):
         if not resp or resp == '\n':
             resp = default
         return resp
+
+    def input_number(
+            self,
+            prompt: str,
+            default: int = 0
+    ) -> int:
+        """Prompt the user for input, and return the input.
+
+        :param prompt: The input prompt.
+        :param default: (Optional.) The value to return if the user
+            doesn't provide input.
+        :return: The user's input.
+        :rtype: str
+        """
+        # Move to the input row and print the input prompt.
+        y = (
+            len(self.data)
+            + self._header_rows
+            + self._table_bottom_rows
+            + self._status_rows
+        )
+        fmt = '{:<' + str(self.term.width) + '}'
+        print(self.term.move(y, 1) + fmt.format(prompt))
+
+        # Collect the input.
+        text = ''
+        with self.term.cbreak():
+            resp: Optional[Keystroke] = self.term.inkey()
+            while resp != '\n':
+                text = text + str(resp)
+                resp = self.term.inkey()
+
+        # Rehome the cursor.
+        print(self.term.move(y, 1) + fmt.format(''))
+
+        # Return the input.
+        if not text or text == '\n':
+            return default
+        return int(text)
 
     def update(self, data:Sequence[list]) -> None:
         """Update the entire UI.

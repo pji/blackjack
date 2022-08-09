@@ -415,6 +415,35 @@ class TableTestCase(ut.TestCase):
 
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.termui.print')
+    def test_input_default(self, mock_print, mock_inkey):
+        """If the user input is empty, return the default value
+        instead.
+        """
+        prompt = 'spam'
+        fmt = '{:<80}'
+        exp_print = [
+            call(self.loc.format(7, 2) + fmt.format(prompt)),
+            call(self.loc.format(7, 2) + fmt.format('')),
+        ]
+        exp_resp = 'n'
+
+        mock_inkey.return_value = ''
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields)
+        main = termui.main(ctlr)
+        next(main)
+        act_resp = main.send(('input', prompt, exp_resp))
+        del main
+        act_print = mock_print.mock_calls
+
+        self.assertEqual(exp_print, act_print)
+        self.assertEqual(exp_resp, act_resp)
+
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.termui.print')
     def test_input_with_show_status(self, mock_print, mock_inkey):
         """When called with a prompt, input() should write the prompt
         to the UI and return the response from the user. When
@@ -444,11 +473,12 @@ class TableTestCase(ut.TestCase):
         self.assertListEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
 
+    # Table.input_number() tests.
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.termui.print')
-    def test_input_default(self, mock_print, mock_inkey):
-        """If the user input is empty, return the default value
-        instead.
+    def test_input_number(self, mock_print, mock_inkey):
+        """When called with a prompt, input_number() should write the
+        prompt to the UI and return the response from the user.
         """
         prompt = 'spam'
         fmt = '{:<80}'
@@ -456,9 +486,9 @@ class TableTestCase(ut.TestCase):
             call(self.loc.format(7, 2) + fmt.format(prompt)),
             call(self.loc.format(7, 2) + fmt.format('')),
         ]
-        exp_resp = 'n'
+        exp_resp = 20
 
-        mock_inkey.return_value = ''
+        mock_inkey.side_effect = ('2', '0', '\n')
         fields = [
             ('Name', '{:>10}'),
             ('Value', '{:>10}'),
@@ -466,10 +496,77 @@ class TableTestCase(ut.TestCase):
         ctlr = termui.Table('Eggs', fields)
         main = termui.main(ctlr)
         next(main)
-        act_resp = main.send(('input', prompt, exp_resp))
+        act_resp = main.send(('input_number', prompt))
         del main
         act_print = mock_print.mock_calls
 
+        self.assertEqual(exp_print, act_print)
+        self.assertEqual(exp_resp, act_resp)
+
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.termui.print')
+    def test_input_number_default(self, mock_print, mock_inkey):
+        """When called with a prompt and a default, input_number()
+        should write the prompt to the UI and return the response
+        from the user. If the user's response is only a newline,
+        input_number() should return the default.
+        """
+        prompt = 'spam'
+        fmt = '{:<80}'
+        exp_print = [
+            call(self.loc.format(7, 2) + fmt.format(prompt)),
+            call(self.loc.format(7, 2) + fmt.format('')),
+        ]
+        exp_resp = 20
+
+        mock_inkey.side_effect = ('\n', )
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields)
+        main = termui.main(ctlr)
+        next(main)
+        act_resp = main.send(('input_number', prompt, exp_resp))
+        del main
+        act_print = mock_print.mock_calls
+
+        self.assertEqual(exp_print, act_print)
+        self.assertEqual(exp_resp, act_resp)
+
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.termui.print')
+    def test_input_number_with_status(self, mock_print, mock_inkey):
+        """When called with a prompt, input_number() should write the
+        prompt to the UI and return the response from the user.
+        """
+        # Set up expected.
+        prompt = 'spam'
+        fmt = '{:<80}'
+
+        # Expected values.
+        exp_print = [
+            call(self.loc.format(9, 2) + fmt.format(prompt)),
+            call(self.loc.format(9, 2) + fmt.format('')),
+        ]
+        exp_resp = 20
+
+        # Test data and state.
+        mock_inkey.side_effect = ('2', '0', '\n')
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields, show_status=True)
+        main = termui.main(ctlr)
+        next(main)
+
+        # Run test and gather actuals.
+        act_resp = main.send(('input_number', prompt))
+        del main
+        act_print = mock_print.mock_calls
+
+        # Determine test result.
         self.assertEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
 

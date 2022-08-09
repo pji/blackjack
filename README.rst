@@ -21,14 +21,6 @@ The primary to-do list is complete.
 The following features are on the nice-to-have list:
 
 * Allow user variable bets.
-    * Track the bet of each player through the hand.
-        * Accept bet at start of each hand.
-        * Track the amount of the bet.
-        * Ensure bet is at least minimum.
-        * Ensure bet is no more than maximum.
-        * Ensure player has enough chips.
-        * Take chips from player.
-        * Award chips at end of hand.
     * Create number input prompt.
     * Create the will_bet for users.
 * Allow computer player variable bets.
