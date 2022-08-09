@@ -296,7 +296,7 @@ class Bet:
     """User input that is a valid bet."""
     value = PosInt('value')
 
-    def __init__(self, value: Union[str, bool]):
+    def __init__(self, value: Union[str, int, bool]):
         """Initialize and instance of the class.
 
         :param value: The bet.

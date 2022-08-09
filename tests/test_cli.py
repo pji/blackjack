@@ -284,7 +284,7 @@ class LogUITestCase(ut.TestCase):
 
     # Test _multichar_prompt().
     @patch('blackjack.cli.input', return_value='20')
-    def test_input_multichar(self, mock_input):
+    def test__multichar_prompt(self, mock_input):
         """Given a prompt and a default value, prompt the user for
         multiple characters of input.
         """
@@ -302,6 +302,33 @@ class LogUITestCase(ut.TestCase):
 
         # Determine test result.
         self.assertEqual(exp_resp, act_resp)
+        self.assertEqual(exp_call, act_call)
+
+    @patch('blackjack.cli.LogUI._multichar_prompt', return_value='20')
+    def test_bet_prompt(self, mock_input):
+        """When called, prompt the user for the bet amount and return
+        that amount as a Bet.
+        """
+        # Set up for expected values.
+        bet_min = 20
+        bet_max = 500
+
+        # Expected value.
+        exp_bet = model.Bet(int(mock_input()))
+        exp_call = call(
+            f'How much do you wish to bet? [{bet_min}-{bet_max}]',
+            str(bet_min)
+        )
+
+        # Test data and state.
+        ui = cli.LogUI()
+
+        # Run test and gather actuals.
+        act_bet = ui.bet_prompt(bet_min, bet_max)
+        act_call = mock_input.mock_calls[-1]
+
+        # Determine test results.
+        self.assertEqual(exp_bet, act_bet)
         self.assertEqual(exp_call, act_call)
 
     # Test _yesno_prompt().

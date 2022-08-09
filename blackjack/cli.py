@@ -226,9 +226,15 @@ class LogUI(game.BaseUI):
 
         return response
 
-    def bet_prompt(self) -> model.Bet:
+    def bet_prompt(self, bet_min: int, bet_max: int) -> model.Bet:
         """Ask user for a bet.."""
-        raise NotImplementedError
+        # Prompt for input.
+        prompt = f'How much do you wish to bet? [{bet_min}-{bet_max}]'
+        default = str(bet_min)
+        value = self._multichar_prompt(prompt, default)
+
+        # Validate and return.
+        return model.Bet(value)
 
     def doubledown_prompt(self) -> model.IsYes:
         """Ask user if they want to double down."""
@@ -321,7 +327,7 @@ class TableUI(game.EngineUI):
                 pass
         return valid
 
-    def bet_prompt(self) -> model.Bet:
+    def bet_prompt(self, bet_min: int, bet_max: int) -> model.Bet:
         """Ask user for a bet.."""
         raise NotImplementedError
 

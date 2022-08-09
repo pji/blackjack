@@ -42,7 +42,7 @@ class EngineUI(ABC):
 
     # Input methods.
     @abstractmethod
-    def bet_prompt(self) -> Bet:
+    def bet_prompt(self, bet_min: int, bet_max: int) -> Bet:
         """Ask user for a bet.."""
 
     @abstractmethod
@@ -165,7 +165,7 @@ class BaseUI(EngineUI):
         pass
 
     # Input methods.
-    def bet_prompt(self) -> Bet:
+    def bet_prompt(self, bet_min: int, bet_max: int) -> Bet:
         """Ask user to enter a valid bet."""
         return Bet('0')
 
