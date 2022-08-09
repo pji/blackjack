@@ -292,6 +292,26 @@ TextTuple = valtupfactory(
 
 
 # Common trusted objects.
+class Bet:
+    """User input that is a valid bet."""
+    value = PosInt('value')
+
+    def __init__(self, value: Union[str, bool]):
+        """Initialize and instance of the class.
+
+        :param value: The bet.
+        :return: None.
+        :rtype: None.
+        """
+        self.value = value
+
+    def __eq__(self, other):
+        cls = self.__class__
+        if not isinstance(other, cls):
+            return NotImplemented
+        return self.value == other.value
+
+
 class IsYes:
     """User input that is either yes or no."""
     value = YesNo('value')

@@ -188,6 +188,18 @@ class LogUI(game.BaseUI):
         self.wins(player, bet)
 
     # Input methods.
+    def _multichar_prompt(
+            self,
+            prompt: str,
+            default: str = ''
+    ) -> str:
+        """Prompt the user for multiple characters."""
+        msg = f'{prompt} > '
+        resp = input(prompt)
+        if not resp:
+            resp = default
+        return resp
+
     def _yesno_prompt(self, prompt:str,
                       default: Union[str, bool] = True) -> model.IsYes:
         """Prompt the user for a yes/no answer."""
@@ -213,6 +225,10 @@ class LogUI(game.BaseUI):
                 pass
 
         return response
+
+    def bet_prompt(self) -> model.Bet:
+        """Ask user for a bet.."""
+        raise NotImplementedError
 
     def doubledown_prompt(self) -> model.IsYes:
         """Ask user if they want to double down."""
@@ -304,6 +320,10 @@ class TableUI(game.EngineUI):
             except ValueError:
                 pass
         return valid
+
+    def bet_prompt(self) -> model.Bet:
+        """Ask user for a bet.."""
+        raise NotImplementedError
 
     def doubledown_prompt(self) -> model.IsYes:
         """Ask user if they want to double down."""

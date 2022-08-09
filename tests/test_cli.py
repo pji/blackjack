@@ -282,10 +282,32 @@ class LogUITestCase(ut.TestCase):
         # Determine test result.
         self.assertListEqual(exp, act)
 
+    # Test _multichar_prompt().
+    @patch('blackjack.cli.input', return_value='20')
+    def test_input_multichar(self, mock_input):
+        """Given a prompt and a default value, prompt the user for
+        multiple characters of input.
+        """
+        # Expected value.
+        prompt = 'spam'
+        exp_resp = mock_input()
+        exp_call = call(prompt)
+
+        # Test data and state
+        ui = cli.LogUI()
+
+        # Run test and gather actuals.
+        act_resp = ui._multichar_prompt(prompt)
+        act_call = mock_input.mock_calls[-1]
+
+        # Determine test result.
+        self.assertEqual(exp_resp, act_resp)
+        self.assertEqual(exp_call, act_call)
+
     # Test _yesno_prompt().
     @patch('blackjack.cli.input')
     def test_yesno_prompt(self, mock_input):
-        """Given a prompt and a default value, prompt the use for a
+        """Given a prompt and a default value, prompt the user for a
         yes/no answer and return the result.
         """
         exp_resp = model.IsYes('y')

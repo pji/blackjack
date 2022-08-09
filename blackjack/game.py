@@ -12,7 +12,7 @@ from json import dumps, loads
 from typing import Generator, Optional, Union
 
 from blackjack.cards import Deck, DeckObj, DOWN, Hand
-from blackjack.model import BaseEngine, Integer_, IsYes, valfactory
+from blackjack.model import BaseEngine, Bet, Integer_, IsYes, valfactory
 from blackjack.players import (Dealer, Player, make_player, restore_player,
                                ValidPlayers, ValidPlayer)
 
@@ -41,6 +41,10 @@ class EngineUI(ABC):
         """Start the UI."""
 
     # Input methods.
+    @abstractmethod
+    def bet_prompt(self) -> Bet:
+        """Ask user for a bet.."""
+
     @abstractmethod
     def doubledown_prompt(self) -> IsYes:
         """Ask user if they want to double down."""
@@ -161,6 +165,10 @@ class BaseUI(EngineUI):
         pass
 
     # Input methods.
+    def bet_prompt(self) -> Bet:
+        """Ask user to enter a valid bet."""
+        return Bet('0')
+
     def doubledown_prompt(self) -> IsYes:
         """Ask user if they want to double down."""
         return IsYes(True)
