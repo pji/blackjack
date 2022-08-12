@@ -21,7 +21,6 @@ The primary to-do list is complete.
 The following features are on the nice-to-have list:
 
 * Allow user variable bets.
-    * Number prompt echoes to screen.
     * Number prompt can only accept numbers.
     * Remove old Engine.start() code.
 * Separate number of seats from number of players.
