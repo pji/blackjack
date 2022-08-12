@@ -11,7 +11,7 @@ from types import MethodType
 import unittest as ut
 from unittest.mock import patch
 
-from blackjack import players, game, willbet
+from blackjack import players, game, model, willbet
 
 
 class WillBetTestCase(ut.TestCase):
@@ -98,4 +98,15 @@ class WillBetRandomTestCase(WillBetTestCase):
         """
         exp = mock_randrange()
         fn = willbet.will_bet_random
+        self.returned_value_test(fn, exp)
+
+
+class WillBetUserTestCase(WillBetTestCase):
+    @patch('blackjack.game.BaseUI.bet_prompt', return_value=model.Bet(125))
+    def test_hit(self, mock_input):
+        """When the user choses an amount to bet, will_bet_user()
+        will return the amount of the bet.
+        """
+        exp = mock_input().value
+        fn = willbet.will_bet_user
         self.returned_value_test(fn, exp)

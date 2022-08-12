@@ -12,7 +12,14 @@ from json import dumps, loads
 from typing import Generator, Optional, Union
 
 from blackjack.cards import Deck, DeckObj, DOWN, Hand
-from blackjack.model import BaseEngine, Bet, Integer_, IsYes, valfactory
+from blackjack.model import (
+    BaseEngine,
+    Bet,
+    EngineUI,
+    Integer_,
+    IsYes,
+    valfactory
+)
 from blackjack.players import (Dealer, Player, make_player, restore_player,
                                ValidPlayers, ValidPlayer)
 
@@ -26,127 +33,6 @@ def _build_hand(deck):
 
 
 # UI classes.
-class EngineUI(ABC):
-    # General operation methods.
-    @abstractmethod
-    def end(self):
-        """End the UI."""
-
-    @abstractmethod
-    def reset(self):
-        """Restart the UI."""
-
-    @abstractmethod
-    def start(self):
-        """Start the UI."""
-
-    # Input methods.
-    @abstractmethod
-    def bet_prompt(self, bet_min: int, bet_max: int) -> Bet:
-        """Ask user for a bet.."""
-
-    @abstractmethod
-    def doubledown_prompt(self) -> IsYes:
-        """Ask user if they want to double down."""
-
-    @abstractmethod
-    def hit_prompt(self) -> IsYes:
-        """Ask user if they want to hit."""
-
-    @abstractmethod
-    def insure_prompt(self) -> IsYes:
-        """Ask user if they want to insure."""
-
-    @abstractmethod
-    def nextgame_prompt(self) -> IsYes:
-        """Ask user if they want to play another round."""
-
-    @abstractmethod
-    def split_prompt(self) -> IsYes:
-        """Ask user if they want to split."""
-
-    # Update methods.
-    @abstractmethod
-    def bet(self, player, bet):
-        """Player places initial bet."""
-
-    @abstractmethod
-    def cleanup(self):
-        """Clean up after the round ends."""
-
-    @abstractmethod
-    def deal(self, player, hand):
-        """Player receives initial hand."""
-
-    @abstractmethod
-    def doubledown(self, player, bet):
-        """Player doubles down."""
-
-    @abstractmethod
-    def flip(self, player, hand):
-        """Player flips a card."""
-
-    @abstractmethod
-    def hit(self, player, hand):
-        """Player hits."""
-
-    @abstractmethod
-    def insures(self, player, bet):
-        """Player insures their hand."""
-
-    @abstractmethod
-    def insurepay(self, player, bet):
-        """Insurance is paid to player."""
-
-    @abstractmethod
-    def joins(self, player):
-        """Player joins the game."""
-
-    @abstractmethod
-    def leaves(self, player):
-        """Player leaves the game."""
-
-    @abstractmethod
-    def loses(self, player):
-        """Player loses."""
-
-    @abstractmethod
-    def loses_split(self, player):
-        """Player loses on their split hand."""
-
-    @abstractmethod
-    def shuffles(self, player):
-        """The deck is shuffled."""
-
-    @abstractmethod
-    def splits(self, player, bet):
-        """Player splits their hand."""
-
-    @abstractmethod
-    def stand(self, player, hand):
-        """Player stands."""
-
-    @abstractmethod
-    def tie(self, player, bet):
-        """Player ties."""
-
-    @abstractmethod
-    def ties_split(self, player, bet):
-        """Player ties on their split hand."""
-
-    @abstractmethod
-    def update_count(self, count):
-        """Update the running card count in the UI."""
-
-    @abstractmethod
-    def wins(self, player, bet):
-        """Player wins."""
-
-    @abstractmethod
-    def wins_split(self, player, bet):
-        """Player wins on their split hand."""
-
-
 class BaseUI(EngineUI):
     """A base class for UI classes. It demonstrates the UI API, and it
     serves as a silent UI for use in testing.

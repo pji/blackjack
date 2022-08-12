@@ -48,7 +48,8 @@ def will_bet_random(self, engine: BaseEngine) -> int:
 
 def will_bet_user(self, engine: BaseEngine) -> int:
     """Player prompts user for bet."""
-    raise NotImplementedError
+    bet = engine.ui.bet_prompt(engine.bet_min, engine.bet_max)
+    return bet.value
 
 
 # List of valid will_bet functions.
