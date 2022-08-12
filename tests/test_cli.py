@@ -1185,6 +1185,35 @@ class TableUITestCase(ut.TestCase):
         self.assertEqual(exp, act)
 
     # Input method tests.
+    @patch('blackjack.termui.Table.input_multichar', return_value='300')
+    def test_bet_prompt(self, mock_input):
+        """When called, _multichar_prompt() should send the UI a
+        prompt for user input and return the result.
+        """
+        # Expected value.
+        bet_min = 20
+        bet_max = 500
+        exp_value = model.Bet(mock_input())
+        exp_call = call(
+            f'How much do you wish to bet? [{bet_min}-{bet_max}]',
+            '20'
+        )
+
+        # Test data and state.
+        ui = cli.TableUI()
+        ui.start()
+
+        # Run test and gather actuals.
+        act_value = ui.bet_prompt(bet_min, bet_max)
+        act_call = mock_input.mock_calls[-1]
+
+        # Test clean up.
+        ui.end()
+
+        # Determine test results.
+        self.assertEqual(exp_value, act_value)
+        self.assertEqual(exp_call, act_call)
+
     @patch('blackjack.termui.main')
     def test___prompt_calls(self, mock_main):
         """When called, _prompt() should send the UI a prompt for user
@@ -1198,6 +1227,25 @@ class TableUITestCase(ut.TestCase):
         act_call = mock_main.mock_calls[-1]
         ui.end()
 
+        self.assertEqual(exp_call, act_call)
+
+    @patch('blackjack.termui.main')
+    @patch('blackjack.cli.TableUI._prompt')
+    def test__yesno_prompt(self, mock_prompt, _):
+        """When called, _multichar_prompt() should prompt the user
+        for an answer. The response should be returned.
+        """
+        exp_resp = model.IsYes('y')
+        exp_call = call('Play another round? [yn] > ', 'y')
+
+        ui = cli.TableUI()
+        mock_prompt.return_value = 'y'
+        ui.start()
+        act_resp = ui._yesno_prompt('Play another round?', 'y')
+        ui.end()
+        act_call = mock_prompt.mock_calls[-1]
+
+        self.assertEqual(exp_resp.value, act_resp.value)
         self.assertEqual(exp_call, act_call)
 
     @patch('blackjack.termui.main')

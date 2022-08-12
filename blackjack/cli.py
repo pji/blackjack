@@ -12,7 +12,7 @@ import argparse
 from collections import namedtuple
 from time import sleep
 import traceback as tb
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Generator, Optional, Sequence, Union
 
 from blessed import Terminal
 
@@ -259,6 +259,8 @@ class LogUI(game.BaseUI):
 
 class TableUI(game.EngineUI):
     """A table-based terminal UI for blackjack."""
+    loop: Generator
+
     # General operation methods.
     def __init__(self, ctlr: Optional[termui.TerminalController] = None,
                  seats: int = 1,
@@ -276,7 +278,6 @@ class TableUI(game.EngineUI):
             ctlr = self._make_ctlr()
         self.ctlr = ctlr
         self.is_interactive = False
-        self.loop = None
 
     def _make_ctlr(self):
         """Returns a termui.Table object for blackjack."""
@@ -329,7 +330,16 @@ class TableUI(game.EngineUI):
 
     def bet_prompt(self, bet_min: int, bet_max: int) -> model.Bet:
         """Ask user for a bet.."""
-        raise NotImplementedError
+        prompt = f'How much do you wish to bet? [{bet_min}-{bet_max}]'
+        default = str(bet_min)
+        valid = None
+        while not valid:
+            resp = self.loop.send(('input_multichar', prompt, default))
+            try:
+                valid = model.Bet(resp)
+            except ValueError:
+                pass
+        return valid
 
     def doubledown_prompt(self) -> model.IsYes:
         """Ask user if they want to double down."""
