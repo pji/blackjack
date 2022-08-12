@@ -21,24 +21,27 @@ The primary to-do list is complete.
 The following features are on the nice-to-have list:
 
 * Allow user variable bets.
-    * Create number input prompt for Table.
+    * Number prompt echoes to screen.
     * Number prompt can only accept numbers.
-    * Create number input prompt for TableUI.
-    * Create the will_bet for users.
-* Allow computer player variable bets.
-* Fix game.Engine.seats when restoring from file.
-* Allow players to count cards.
-* Allow players to be bad at counting cards.
-* Allow users to join a table partway through the shoe.
-* Display recent actions in TableUI.
+    * Remove old Engine.start() code.
+* Separate number of seats from number of players.
+	* Fix game.Engine.seats when restoring from file.
+	* Allow empty seats.
+	* Allow players to join partway through a hand.
+* Card counting.
+	* Allow players to count cards.
+	* Allow players to be bad at counting cards.
+	* Allow users to join a table partway through the shoe.
+* Allow player interaction.
+	* Display recent actions in TableUI.
+	* Allow players to notice other players.
+	* Allow players to react to other players.
+	* Allow players to notice actions of other players.
+	* Allow players to react to the actions of other players.
+	* Allow casino to react to players.
+	* Add casino catching and removing card counting players.
 * Build UI for saving and restoring game state.
 * Allow for insurance less than half of initial bet.
-* Allow players to notice other players.
-* Allow players to react to other players.
-* Allow players to notice actions of other players.
-* Allow players to react to the actions of other players.
-* Allow casino to react to players.
-* Add casino catching and removing card counting players.
 * Allow splitting more than once.
 * Add ability to configure by file.
 * Allow multiple human players to play in single game over network.

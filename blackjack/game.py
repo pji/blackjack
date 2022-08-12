@@ -658,7 +658,7 @@ def main(engine: Engine, is_interactive: bool = True) -> Generator:
     engine.new_game()
     play = yield True
     while play:
-        engine.start()
+        engine.bet()
         engine.deal()
         engine.play()
         engine.end()
