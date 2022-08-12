@@ -18,7 +18,7 @@ from textwrap import wrap
 
 import mypy.api
 import pycodestyle as pcs
-import rstcheck
+import rstcheck_core.checker as rstchecker
 
 
 # Script configuration.
@@ -88,7 +88,7 @@ def check_rst(file_paths, ignore):
         for file in files:
             with open(file) as fh:
                 lines = fh.read()
-            result = list(rstcheck.check(lines))
+            result = list(rstchecker.check_source(lines))
             if result:
                 results.append(file, *result)
         return results
