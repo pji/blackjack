@@ -371,14 +371,19 @@ class Table(TerminalController):
             + self._status_rows
         )
         fmt = '{:<' + str(self.term.width) + '}'
-        print(self.term.move(y, 1) + fmt.format(prompt))
+        full_prompt = fmt.format(prompt + ' > ')
+        print(self.term.move(y, 1) + full_prompt)
+        x = len(prompt) + 2
 
         # Collect the input.
         text = ''
         with self.term.cbreak():
             resp: Optional[Keystroke] = self.term.inkey()
             while resp != '\n':
-                text = text + str(resp)
+                char = str(resp)
+                print(self.term.move(y, x) + char)
+                x += 1
+                text = text + char
                 resp = self.term.inkey()
 
         # Rehome the cursor.

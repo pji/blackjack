@@ -483,7 +483,9 @@ class TableTestCase(ut.TestCase):
         prompt = 'spam'
         fmt = '{:<80}'
         exp_print = [
-            call(self.loc.format(7, 2) + fmt.format(prompt)),
+            call(self.loc.format(7, 2) + fmt.format(prompt + ' > ')),
+            call(self.loc.format(7, 7) + '2'),
+            call(self.loc.format(7, 8) + '0'),
             call(self.loc.format(7, 2) + fmt.format('')),
         ]
         exp_resp = '20'
@@ -500,7 +502,7 @@ class TableTestCase(ut.TestCase):
         del main
         act_print = mock_print.mock_calls
 
-        self.assertEqual(exp_print, act_print)
+        self.assertListEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
 
     @patch('blessed.Terminal.inkey')
@@ -514,7 +516,7 @@ class TableTestCase(ut.TestCase):
         prompt = 'spam'
         fmt = '{:<80}'
         exp_print = [
-            call(self.loc.format(7, 2) + fmt.format(prompt)),
+            call(self.loc.format(7, 2) + fmt.format(prompt + ' > ')),
             call(self.loc.format(7, 2) + fmt.format('')),
         ]
         exp_resp = '20'
@@ -531,7 +533,7 @@ class TableTestCase(ut.TestCase):
         del main
         act_print = mock_print.mock_calls
 
-        self.assertEqual(exp_print, act_print)
+        self.assertListEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
 
     @patch('blessed.Terminal.inkey')
@@ -546,7 +548,9 @@ class TableTestCase(ut.TestCase):
 
         # Expected values.
         exp_print = [
-            call(self.loc.format(9, 2) + fmt.format(prompt)),
+            call(self.loc.format(9, 2) + fmt.format(prompt + ' > ')),
+            call(self.loc.format(9, 7) + '2'),
+            call(self.loc.format(9, 8) + '0'),
             call(self.loc.format(9, 2) + fmt.format('')),
         ]
         exp_resp = '20'
@@ -567,7 +571,7 @@ class TableTestCase(ut.TestCase):
         act_print = mock_print.mock_calls
 
         # Determine test result.
-        self.assertEqual(exp_print, act_print)
+        self.assertListEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
 
     # Table.status() tests.
