@@ -18,6 +18,18 @@ from typing import Callable
 from blackjack.model import BaseEngine
 
 
+def will_bet_count(self, engine: BaseEngine) -> int:
+    """The player bets max when count is positive and min when the
+    count is not.
+    """
+    bet = engine.bet_min
+    if engine.card_count > 0:
+        bet = engine.bet_max
+    if bet > self.chips:
+        bet = self.chips
+    return bet
+
+
 def will_bet_dealer(self, engine: BaseEngine) -> int:
     """The dealer cannot bet."""
     msg = 'Dealer cannot bet.'
@@ -54,8 +66,12 @@ def will_bet_user(self, engine: BaseEngine) -> int:
 
 # List of valid will_bet functions.
 will_bets: list[Callable] = [
+    # Functions for special players.
     will_bet_dealer,
     will_bet_user,
+
+    # Functions safe for random players.
+    will_bet_count,
     will_bet_max,
     will_bet_min,
     will_bet_never,

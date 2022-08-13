@@ -418,6 +418,7 @@ class EngineUI(ABC):
 class BaseEngine(ABC):
     bet_max: int
     bet_min: int
+    card_count: int
     ui: EngineUI
 
     """The base class for the game engine."""

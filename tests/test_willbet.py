@@ -31,16 +31,35 @@ class WillBetTestCase(ut.TestCase):
 
 
 # Test cases.
-@ut.skip
 class WillBetCountTestCase(WillBetTestCase):
     def test_will_bet_high_with_high_count(self):
         """When called as the will_bet method of a Player object
         with a game.Engine, will_bet_count will return the maximum
-        bet allowed by the game when the running count is high.
+        bet allowed by the game when the running count is positive.
         """
         exp = self.engine.bet_max
         fn = willbet.will_bet_count
         self.engine.card_count = 1
+        self.returned_value_test(fn, exp)
+
+    def test_will_bet_low_with_low_count(self):
+        """When called as the will_bet method of a Player object
+        with a game.Engine, will_bet_count will return the minimum
+        bet allowed by the game when the running count is negative.
+        """
+        exp = self.engine.bet_min
+        fn = willbet.will_bet_count
+        self.engine.card_count = -1
+        self.returned_value_test(fn, exp)
+
+    def test_will_bet_low_with_neutral_count(self):
+        """When called as the will_bet method of a Player object
+        with a game.Engine, will_bet_count will return the minimum
+        bet allowed by the game when the running count is neutral.
+        """
+        exp = self.engine.bet_min
+        fn = willbet.will_bet_count
+        self.engine.card_count = 0
         self.returned_value_test(fn, exp)
 
     def test_will_not_bet_more_chips_than_has(self):
