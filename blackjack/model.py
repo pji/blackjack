@@ -422,6 +422,10 @@ class BaseEngine(ABC):
 
     """The base class for the game engine."""
     @abstractmethod
+    def bet(self) -> None:
+        """Betting phase."""
+
+    @abstractmethod
     def deal(self) -> None:
         """Dealing phase."""
 
@@ -448,7 +452,3 @@ class BaseEngine(ABC):
     @abstractmethod
     def serialize(self) -> None:
         """Serialize the game."""
-
-    @abstractmethod
-    def start(self) -> None:
-        """Start of the hand."""
