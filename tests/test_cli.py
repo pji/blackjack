@@ -651,6 +651,10 @@ class ParseCliTestCase(ut.TestCase):
         act_show_status = engine.ui.show_status
 
         # Determine test result.
+        for key in exp:
+            e = key, exp[key]
+            a = key, act[key]
+            self.assertEqual(e, a)
         self.assertDictEqual(exp, act)
         self.assertEqual(exp_show_status, act_show_status)
 

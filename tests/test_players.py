@@ -72,7 +72,6 @@ class PlayerTestCase(ut.TestCase):
             'insured': 0,
             'name': 'spam',
             'will_bet': 'will_bet_max',
-            'will_buyin': 'will_buyin_always',
             'will_double_down': 'will_double_down_always',
             'will_hit': 'will_hit_dealer',
             'will_insure': 'will_insure_always',
@@ -81,7 +80,6 @@ class PlayerTestCase(ut.TestCase):
 
         player = players.Player(hands, 'spam', 200)
         player.will_bet = MethodType(players.willbet.will_bet_max, player)
-        player.will_buyin = MethodType(players.will_buyin_always, player)
         player.will_double_down = MethodType(players.will_double_down_always,
                                              player)
         player.will_hit = MethodType(players.will_hit_dealer, player)
@@ -103,7 +101,6 @@ class PlayerTestCase(ut.TestCase):
             )),
         )
         exp = players.Player(hands, 'spam', 200)
-        exp.will_buyin = MethodType(players.will_buyin_always, exp)
         exp.will_double_down = MethodType(
             players.will_double_down_always,
             exp
@@ -130,7 +127,6 @@ class PlayerTestCase(ut.TestCase):
         )
         exp = players.Player(hands, 'spam', 200)
         exp.will_bet = MethodType(players.willbet.will_bet_max, exp)
-        exp.will_buyin = MethodType(players.will_buyin_always, exp)
         exp.will_double_down = MethodType(players.will_double_down_always, exp)
         exp.will_hit = MethodType(players.will_hit_dealer, exp)
         exp.will_insure = MethodType(players.will_insure_always, exp)
@@ -203,7 +199,7 @@ class PlayerTestCase(ut.TestCase):
             'hands': hands,
             'insured': 0,
             'name': 'spam',
-            'will_buyin': 'will_buyin_always',
+            'will_bet': 'will_bet_max',
             'will_double_down': 'will_double_down_always',
             'will_hit': 'will_hit_dealer',
             'will_insure': 'will_insure_always',
@@ -279,7 +275,6 @@ class PlayerTestCase(ut.TestCase):
             'insured': 0,
             'name': 'spam',
             'will_bet': 'will_bet_max',
-            'will_buyin': 'will_buyin_always',
             'will_double_down': 'will_double_down_always',
             'will_hit': 'will_hit_dealer',
             'will_insure': 'will_insure_always',
@@ -288,9 +283,10 @@ class PlayerTestCase(ut.TestCase):
 
         player = players.Player(hands, 'spam', 200)
         player.will_bet = MethodType(players.willbet.will_bet_max, player)
-        player.will_buyin = MethodType(players.will_buyin_always, player)
-        player.will_double_down = MethodType(players.will_double_down_always,
-                                             player)
+        player.will_double_down = MethodType(
+            players.will_double_down_always,
+            player
+        )
         player.will_hit = MethodType(players.will_hit_dealer, player)
         player.will_insure = MethodType(players.will_insure_always, player)
         player.will_split = MethodType(players.will_split_always, player)
@@ -305,7 +301,6 @@ class playerfactoryTestCase(ut.TestCase):
         expected = players.Player
         actual = players.playerfactory(
             'Spam',
-            None,
             None,
             None,
             None,
@@ -330,7 +325,6 @@ class playerfactoryTestCase(ut.TestCase):
             None,
             None,
             None,
-            None,
             will_bet=func
         )
         obj = Spam()
@@ -341,20 +335,6 @@ class playerfactoryTestCase(ut.TestCase):
         # Determine test result.
         self.assertEqual(exp, act)
 
-    def test_will_buyin(self):
-        """Given a will_buyin function, the subclass should have a
-        will_buyin method.
-        """
-        expected = False
-
-        def func(self, game):
-            return False
-        Spam = players.playerfactory('Spam', None, None, func, None, None)
-        obj = Spam()
-        actual = obj.will_buyin(None)
-
-        self.assertEqual(expected, actual)
-
     def test_will_double_down(self):
         """Given a will_double_down function, the subclass should
         have a will_double_down method.
@@ -363,7 +343,7 @@ class playerfactoryTestCase(ut.TestCase):
 
         def func(self, game):
             return False
-        Spam = players.playerfactory('Spam', None, None, None, func, None)
+        Spam = players.playerfactory('Spam', None, None, func, None)
         obj = Spam()
         actual = obj.will_double_down(None)
 
@@ -391,7 +371,7 @@ class playerfactoryTestCase(ut.TestCase):
 
         def func(self, game):
             return 20
-        Spam = players.playerfactory('Spam', None, None, None, None, func)
+        Spam = players.playerfactory('Spam', None, None, None, func)
         obj = Spam()
         actual = obj.will_insure(None)
 
@@ -462,7 +442,6 @@ class make_playerTestCase(ut.TestCase):
 
         methods = [
             player.will_bet,
-            player.will_buyin,
             player.will_insure,
         ]
         for method in methods:

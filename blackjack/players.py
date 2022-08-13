@@ -19,13 +19,6 @@ import mkname
 from blackjack import willbet
 from blackjack.cards import Hand, HandTuple
 from blackjack.model import Integer_, PosInt, Text, valfactory, valtupfactory
-from blackjack.willbuyin import (
-    will_buyin_dealer,
-    will_buyin_always,
-    will_buyin_never,
-    will_buyin_random,
-    will_buyins
-)
 from blackjack.willdoubledown import (
     will_double_down_user,
     will_double_down_dealer,
@@ -141,7 +134,6 @@ class Player:
         methods = {
             'will_hit': will_hits,
             'will_split': will_splits,
-            'will_buyin': will_buyins,
             'will_double_down': will_double_downs,
             'will_insure': will_insures,
             'will_bet': willbet.will_bets,
@@ -210,7 +202,6 @@ class Player:
             'insured': self.insured,
             'name': self.name,
             'will_bet': self.will_bet.__name__,
-            'will_buyin': self.will_buyin.__name__,
             'will_double_down': self.will_double_down.__name__,
             'will_hit': self.will_hit.__name__,
             'will_insure': self.will_insure.__name__,
@@ -247,7 +238,6 @@ def playerfactory(
         name,
         will_hit_fn,
         will_split_fn,
-        will_buyin_fn,
         will_double_down,
         will_insure,
         will_bet: Optional[Callable] = undef_behavior
@@ -256,7 +246,6 @@ def playerfactory(
     attrs = {
         'will_hit': will_hit_fn,
         'will_split': will_split_fn,
-        'will_buyin': will_buyin_fn,
         'will_double_down': will_double_down,
         'will_insure': will_insure,
         'will_bet': will_bet,
@@ -298,7 +287,6 @@ def make_player(chips=200, bet=None) -> Player:
         'chips': chips,
         'will_hit': choice(will_hits[2:]).__name__,
         'will_split': choice(will_splits[2:]).__name__,
-        'will_buyin': choice(will_buyins[1:]).__name__,
         'will_double_down': choice(will_double_downs[2:]).__name__,
         'will_insure': choice(will_insures[2:]).__name__,
         'will_bet': choice(willbet.will_bets[2:]).__name__,
@@ -312,7 +300,6 @@ Dealer = playerfactory(
     'Dealer',
     will_hit_dealer,
     will_split_dealer,
-    will_buyin_dealer,
     will_double_down_dealer,
     will_insure_dealer,
     will_bet=willbet.will_bet_dealer
@@ -321,7 +308,6 @@ AutoPlayer = playerfactory(
     'AutoPlayer',
     will_hit_dealer,
     will_split_always,
-    will_buyin_always,
     will_double_down_always,
     will_insure_always,
     will_bet=willbet.will_bet_max
@@ -330,7 +316,6 @@ BetterPlayer = playerfactory(
     'BetterPlayer',
     will_hit_recommended,
     will_split_recommended,
-    will_buyin_always,
     will_double_down_recommended,
     will_insure_never,
     will_bet=willbet.will_bet_min
@@ -339,7 +324,6 @@ NeverPlayer = playerfactory(
     'NeverPlayer',
     will_hit_never,
     will_split_never,
-    will_buyin_never,
     will_double_down_never,
     will_insure_never,
     will_bet=willbet.will_bet_never
@@ -348,7 +332,6 @@ RandomPlayer = playerfactory(
     'RandomPlayer',
     will_hit_random,
     will_split_random,
-    will_buyin_random,
     will_double_down_random,
     will_insure_random,
     will_bet=willbet.will_bet_random
@@ -357,7 +340,6 @@ UserPlayer = playerfactory(
     'UserPlayer',
     will_hit_user,
     will_split_user,
-    will_buyin_always,
     will_double_down_user,
     will_insure_user,
     will_bet=willbet.will_bet_user
