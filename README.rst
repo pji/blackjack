@@ -21,7 +21,6 @@ The primary to-do list is complete.
 The following features are on the nice-to-have list:
 
 * Card counting.
-	* Allow players to count cards.
 	* Allow players to be bad at counting cards.
 	* Allow users to join a table partway through the shoe.
 * Separate number of seats from number of players.
@@ -36,6 +35,8 @@ The following features are on the nice-to-have list:
 	* Allow players to react to the actions of other players.
 	* Allow casino to react to players.
 	* Add casino catching and removing card counting players.
+* Remove willbuyin methods.
+* Use mkname functions for all of name building.
 * Build UI for saving and restoring game state.
 * Allow for insurance less than half of initial bet.
 * Allow splitting more than once.
