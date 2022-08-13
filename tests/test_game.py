@@ -558,9 +558,9 @@ class EngineTestCase(ut.TestCase):
         self.assertIsInstance(actual, expected)
         self.assertEqual(exp_num_cards, act_num_cards)
         if actual.rank == 1 or actual.rank >= 10:
-            self.assertEqual(act_count, 1)
-        elif actual.rank <= 6:
             self.assertEqual(act_count, -1)
+        elif actual.rank <= 6:
+            self.assertEqual(act_count, 1)
         else:
             self.assertEqual(act_count, 0)
 
@@ -612,12 +612,12 @@ class EngineTestCase(ut.TestCase):
     def test__draw_updates_count(self, mock_update_count):
         """Drawing a card from the deck should update the count."""
         # Expected value.
-        exp = 2
+        exp = -2
         exp_ui_calls = [
-            call(1),
+            call(-1),
             call(0),
-            call(1),
-            call(2),
+            call(-1),
+            call(-2),
         ]
 
         # Test data and state.
@@ -649,7 +649,7 @@ class EngineTestCase(ut.TestCase):
         update the count to the UI.
         """
         # Expected value.
-        exp = 2
+        exp = -2
         exp_ui_calls = []
 
         # Test data and state.

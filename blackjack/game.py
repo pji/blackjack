@@ -377,11 +377,11 @@ class Engine(BaseEngine):
         # Maintain card count.
         pre_count = self.card_count
         if card.rank == 1:
-            self.card_count += 1
-        elif card.rank <= 6:
             self.card_count -= 1
-        elif card.rank >= 10:
+        elif card.rank <= 6:
             self.card_count += 1
+        elif card.rank >= 10:
+            self.card_count -= 1
         if self.running_count and self.card_count - pre_count:
             self.ui.update_count(self.card_count)
 

@@ -20,16 +20,14 @@ The primary to-do list is complete.
 
 The following features are on the nice-to-have list:
 
-* Allow user variable bets.
-    * Remove old Engine.start() code.
-* Separate number of seats from number of players.
-	* Fix game.Engine.seats when restoring from file.
-	* Allow empty seats.
-	* Allow players to join partway through a hand.
 * Card counting.
 	* Allow players to count cards.
 	* Allow players to be bad at counting cards.
 	* Allow users to join a table partway through the shoe.
+* Separate number of seats from number of players.
+	* Fix game.Engine.seats when restoring from file.
+	* Allow empty seats.
+	* Allow players to join partway through a hand.
 * Allow player interaction.
 	* Display recent actions in TableUI.
 	* Allow players to notice other players.
