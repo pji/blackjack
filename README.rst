@@ -16,13 +16,18 @@ of the repository::
 
 Still To Do
 -----------
-The primary to-do list is complete.
-
-The following features are on the nice-to-have list:
+The primary to-do list for version 0.0.2:
 
 * Card counting.
 	* Allow players to be bad at counting cards.
 	* Allow users to join a table partway through the shoe.
+* Clean up.
+	* Remove willbuyin methods.
+	* Use mkname functions for all of name building.
+* Allow for insurance less than half of initial bet.
+
+The following features are possible for future versions:
+
 * Separate number of seats from number of players.
 	* Fix game.Engine.seats when restoring from file.
 	* Allow empty seats.
@@ -35,10 +40,7 @@ The following features are on the nice-to-have list:
 	* Allow players to react to the actions of other players.
 	* Allow casino to react to players.
 	* Add casino catching and removing card counting players.
-* Remove willbuyin methods.
-* Use mkname functions for all of name building.
 * Build UI for saving and restoring game state.
-* Allow for insurance less than half of initial bet.
 * Allow splitting more than once.
 * Add ability to configure by file.
 * Allow multiple human players to play in single game over network.
