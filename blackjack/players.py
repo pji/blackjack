@@ -15,6 +15,7 @@ from typing import Callable, Optional, Type
 from types import MethodType
 
 import mkname
+from yadr import roll
 
 from blackjack import willbet
 from blackjack import willdoubledown as wdd
@@ -44,28 +45,14 @@ def get_chips(bet):
     return bet * multiplier
 
 
-def get_name():
-    """Return a random name."""
+def make_name():
+    """Create a name for a player."""
     config = mkname.get_config('')
     db_loc = mkname.init_db(config['db_path'])
     names = mkname.get_names_by_kind(db_loc, 'given')
+    if roll('1d3') > 1:
+        return mkname.build_compound_name(names)
     return mkname.select_name(names)
-
-
-def name_builder(start:str, end:str) -> str:
-    """Given three strings, return a string that combines them.
-
-    :param beginning: The string to use for the beginning of the
-        result.
-    :param middle: The string to use for the middle of the result.
-    :param end: The string to use for the end of the result.
-    :return: The new string.
-    :rtype: str
-    """
-    config = mkname.get_config('')
-    db_loc = mkname.init_db(config['db_path'])
-    names = mkname.get_names_by_kind(db_loc, 'given')
-    return mkname.build_compound_name(names)
 
 
 # Base class.
@@ -242,12 +229,6 @@ def restore_player(s: str) -> Player:
 
 def make_player(chips=200, bet=None) -> Player:
     """Make a random player for a blackjack game."""
-    def make_name() -> str:
-        if 0 != choice(range(3)):
-            return get_name()
-        else:
-            return name_builder(get_name(), get_name())
-
     if bet:
         chips = get_chips(bet)
     attrs = {
@@ -265,7 +246,7 @@ def make_player(chips=200, bet=None) -> Player:
     return player
 
 
-# Player subclasses.
+# Player special case subclasses.
 Dealer = playerfactory(
     'Dealer',
     will_bet=willbet.will_bet_dealer,
@@ -274,6 +255,17 @@ Dealer = playerfactory(
     will_insure=wi.will_insure_dealer,
     will_split=ws.will_split_dealer
 )
+UserPlayer = playerfactory(
+    'UserPlayer',
+    will_bet=willbet.will_bet_user,
+    will_double_down=wdd.will_double_down_user,
+    will_hit=wh.will_hit_user,
+    will_insure=wi.will_insure_user,
+    will_split=ws.will_split_user
+)
+
+
+# Example player subclasses.
 AutoPlayer = playerfactory(
     'AutoPlayer',
     will_bet=willbet.will_bet_max,
@@ -305,14 +297,6 @@ RandomPlayer = playerfactory(
     will_hit=wh.will_hit_random,
     will_insure=wi.will_insure_random,
     will_split=ws.will_split_random
-)
-UserPlayer = playerfactory(
-    'UserPlayer',
-    will_bet=willbet.will_bet_user,
-    will_double_down=wdd.will_double_down_user,
-    will_hit=wh.will_hit_user,
-    will_insure=wi.will_insure_user,
-    will_split=ws.will_split_user
 )
 
 
