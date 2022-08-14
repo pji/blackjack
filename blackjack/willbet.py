@@ -15,6 +15,8 @@ determine whether the player will hit or stand. They must:
 from random import randrange
 from typing import Callable
 
+from yadr import roll
+
 from blackjack.model import BaseEngine
 
 
@@ -24,6 +26,23 @@ def will_bet_count(self, engine: BaseEngine) -> int:
     """
     bet = engine.bet_min
     if engine.card_count > 0:
+        bet = engine.bet_max
+    if bet > self.chips:
+        bet = self.chips
+    return bet
+
+
+def will_bet_count_badly(self, engine: BaseEngine) -> int:
+    """The player bets max when count is positive and min when the
+    count is not.
+    """
+    miscount = roll('1d19')
+    if not isinstance(miscount, int):
+        msg = f'Type needs to be int. Was: {type(miscount).__name__}'
+        raise ValueError(msg)
+    head_count = engine.card_count + miscount - 10
+    bet = engine.bet_min
+    if head_count > 0:
         bet = engine.bet_max
     if bet > self.chips:
         bet = self.chips
@@ -72,6 +91,7 @@ will_bets: list[Callable] = [
 
     # Functions safe for random players.
     will_bet_count,
+    will_bet_count_badly,
     will_bet_max,
     will_bet_min,
     will_bet_never,
