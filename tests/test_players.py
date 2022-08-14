@@ -80,11 +80,16 @@ class PlayerTestCase(ut.TestCase):
 
         player = players.Player(hands, 'spam', 200)
         player.will_bet = MethodType(players.willbet.will_bet_max, player)
-        player.will_double_down = MethodType(players.will_double_down_always,
-                                             player)
-        player.will_hit = MethodType(players.will_hit_dealer, player)
-        player.will_insure = MethodType(players.will_insure_always, player)
-        player.will_split = MethodType(players.will_split_always, player)
+        player.will_double_down = MethodType(
+            players.wdd.will_double_down_always,
+            player
+        )
+        player.will_hit = MethodType(players.wh.will_hit_dealer, player)
+        player.will_insure = MethodType(
+            players.wi.will_insure_always,
+            player
+        )
+        player.will_split = MethodType(players.ws.will_split_always, player)
         act = player._asdict()
 
         self.assertEqual(exp, act)
@@ -102,12 +107,12 @@ class PlayerTestCase(ut.TestCase):
         )
         exp = players.Player(hands, 'spam', 200)
         exp.will_double_down = MethodType(
-            players.will_double_down_always,
+            players.wdd.will_double_down_always,
             exp
         )
-        exp.will_hit = MethodType(players.will_hit_dealer, exp)
-        exp.will_insure = MethodType(players.will_insure_always, exp)
-        exp.will_split = MethodType(players.will_split_always, exp)
+        exp.will_hit = MethodType(players.wh.will_hit_dealer, exp)
+        exp.will_insure = MethodType(players.wi.will_insure_always, exp)
+        exp.will_split = MethodType(players.ws.will_split_always, exp)
         exp.will_bet = MethodType(players.willbet.will_bet_max, exp)
 
         serial = exp.serialize()
@@ -127,10 +132,13 @@ class PlayerTestCase(ut.TestCase):
         )
         exp = players.Player(hands, 'spam', 200)
         exp.will_bet = MethodType(players.willbet.will_bet_max, exp)
-        exp.will_double_down = MethodType(players.will_double_down_always, exp)
-        exp.will_hit = MethodType(players.will_hit_dealer, exp)
-        exp.will_insure = MethodType(players.will_insure_always, exp)
-        exp.will_split = MethodType(players.will_split_always, exp)
+        exp.will_double_down = MethodType(
+            players.wdd.will_double_down_always,
+            exp
+        )
+        exp.will_hit = MethodType(players.wh.will_hit_dealer, exp)
+        exp.will_insure = MethodType(players.wi.will_insure_always, exp)
+        exp.will_split = MethodType(players.ws.will_split_always, exp)
 
         value = {
             'class': 'Player',
@@ -284,12 +292,15 @@ class PlayerTestCase(ut.TestCase):
         player = players.Player(hands, 'spam', 200)
         player.will_bet = MethodType(players.willbet.will_bet_max, player)
         player.will_double_down = MethodType(
-            players.will_double_down_always,
+            players.wdd.will_double_down_always,
             player
         )
-        player.will_hit = MethodType(players.will_hit_dealer, player)
-        player.will_insure = MethodType(players.will_insure_always, player)
-        player.will_split = MethodType(players.will_split_always, player)
+        player.will_hit = MethodType(players.wh.will_hit_dealer, player)
+        player.will_insure = MethodType(
+            players.wi.will_insure_always,
+            player
+        )
+        player.will_split = MethodType(players.ws.will_split_always, player)
         act = player.serialize()
 
         self.assertEqual(exp, act)
@@ -321,10 +332,6 @@ class playerfactoryTestCase(ut.TestCase):
             return 100
         Spam = players.playerfactory(
             'Spam',
-            None,
-            None,
-            None,
-            None,
             will_bet=func
         )
         obj = Spam()
@@ -343,7 +350,10 @@ class playerfactoryTestCase(ut.TestCase):
 
         def func(self, game):
             return False
-        Spam = players.playerfactory('Spam', None, None, func, None)
+        Spam = players.playerfactory(
+            'Spam',
+            will_double_down=func
+        )
         obj = Spam()
         actual = obj.will_double_down(None)
 
@@ -357,7 +367,10 @@ class playerfactoryTestCase(ut.TestCase):
 
         def func(self, hand):
             return 'spam'
-        Eggs = players.playerfactory('Eggs', func, None, None, None, None)
+        Eggs = players.playerfactory(
+            'Eggs',
+            will_hit=func
+        )
         obj = Eggs()
         actual = obj.will_hit(None)
 
@@ -371,7 +384,10 @@ class playerfactoryTestCase(ut.TestCase):
 
         def func(self, game):
             return 20
-        Spam = players.playerfactory('Spam', None, None, None, func)
+        Spam = players.playerfactory(
+            'Spam',
+            will_insure=func
+        )
         obj = Spam()
         actual = obj.will_insure(None)
 
@@ -385,7 +401,10 @@ class playerfactoryTestCase(ut.TestCase):
 
         def func(self, hand, the_game):
             return False
-        Spam = players.playerfactory('Spam', None, func, None, None, None)
+        Spam = players.playerfactory(
+            'Spam',
+            will_split=func
+        )
         obj = Spam()
         actual = obj.will_split(None, None)
 
