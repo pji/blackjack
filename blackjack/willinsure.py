@@ -47,11 +47,9 @@ def will_insure_random(self, the_game) -> int:
 
 def will_insure_user(self, the_game) -> int:
     """Get a insurance decision from the user."""
-    is_yes = the_game.ui.insure_prompt()
-    insurance = 0
-    if is_yes.value:
-        insurance = self.bet // 2
-    return insurance
+    insure_max = self.bet // 2
+    insurance = the_game.ui.insure_prompt(insure_max)
+    return insurance.value
 
 
 def will_insure_dealer(self, *args):

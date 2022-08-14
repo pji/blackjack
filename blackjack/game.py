@@ -63,9 +63,9 @@ class BaseUI(EngineUI):
         """Ask user if they want to hit."""
         return IsYes(True)
 
-    def insure_prompt(self) -> IsYes:
+    def insure_prompt(self, insure_max: int) -> Bet:
         """Ask user if they want to insure."""
-        return IsYes(True)
+        return Bet(20)
 
     def nextgame_prompt(self) -> IsYes:
         """Ask user if they want to play another round."""

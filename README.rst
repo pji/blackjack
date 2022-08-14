@@ -21,7 +21,7 @@ The primary to-do list for version 0.0.2:
 * Card counting.
 	* Allow players to be bad at counting cards.
 	* Allow users to join a table partway through the shoe.
-* Allow for insurance less than half of initial bet.
+* Standardize range validation of bets and insurance.
 
 The following features are possible for future versions:
 

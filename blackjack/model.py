@@ -322,7 +322,7 @@ class EngineUI(ABC):
         """Ask user if they want to hit."""
 
     @abstractmethod
-    def insure_prompt(self) -> IsYes:
+    def insure_prompt(self, insure_max: int) -> Bet:
         """Ask user if they want to insure."""
 
     @abstractmethod

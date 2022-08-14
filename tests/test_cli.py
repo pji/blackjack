@@ -331,6 +331,32 @@ class LogUITestCase(ut.TestCase):
         self.assertEqual(exp_bet, act_bet)
         self.assertEqual(exp_call, act_call)
 
+    @patch('blackjack.cli.LogUI._multichar_prompt', return_value='20')
+    def test_insure_prompt(self, mock_input):
+        """When called, prompt the user for the insure amount and
+        return that amount as a Bet.
+        """
+        # Set up for expected values.
+        insure_max = 500
+
+        # Expected value.
+        exp_insure = model.Bet(int(mock_input()))
+        exp_call = call(
+            f'How much insurance do you want? [0–{insure_max}]',
+            str(0)
+        )
+
+        # Test data and state.
+        ui = cli.LogUI()
+
+        # Run test and gather actuals.
+        act_bet = ui.insure_prompt(insure_max)
+        act_call = mock_input.mock_calls[-1]
+
+        # Determine test results.
+        self.assertEqual(exp_insure, act_bet)
+        self.assertEqual(exp_call, act_call)
+
     # Test _yesno_prompt().
     @patch('blackjack.cli.input')
     def test_yesno_prompt(self, mock_input):
@@ -357,7 +383,6 @@ class LogUITestCase(ut.TestCase):
         prompts = [
             'Double down?',
             'Hit?',
-            'Insure?',
             'Next game?',
             'Split?',
         ]
@@ -369,7 +394,6 @@ class LogUITestCase(ut.TestCase):
         act_resp = []
         act_resp.append(ui.doubledown_prompt())
         act_resp.append(ui.hit_prompt())
-        act_resp.append(ui.insure_prompt())
         act_resp.append(ui.nextgame_prompt())
         act_resp.append(ui.split_prompt())
         act_calls = mock_input.mock_calls
@@ -1218,6 +1242,34 @@ class TableUITestCase(ut.TestCase):
         self.assertEqual(exp_value, act_value)
         self.assertEqual(exp_call, act_call)
 
+    @patch('blackjack.termui.Table.input_multichar', return_value='300')
+    def test_insure_prompt(self, mock_input):
+        """When called, insure_prompt() should send the UI a
+        prompt the user for an insurance about and return the result.
+        """
+        # Expected value.
+        insure_max = 500
+        exp_value = model.Bet(mock_input())
+        exp_call = call(
+            f'How much insurance do you want? [0-{insure_max}]',
+            '0'
+        )
+
+        # Test data and state.
+        ui = cli.TableUI()
+        ui.start()
+
+        # Run test and gather actuals.
+        act_value = ui.insure_prompt(insure_max)
+        act_call = mock_input.mock_calls[-1]
+
+        # Test clean up.
+        ui.end()
+
+        # Determine test results.
+        self.assertEqual(exp_value, act_value)
+        self.assertEqual(exp_call, act_call)
+
     @patch('blackjack.termui.main')
     def test___prompt_calls(self, mock_main):
         """When called, _prompt() should send the UI a prompt for user
@@ -1297,7 +1349,6 @@ class TableUITestCase(ut.TestCase):
         exp_calls = [
             call('Double down?', 'y'),
             call('Hit?', 'y'),
-            call('Buy insurance?', 'y'),
             call('Play another round?', 'y'),
             call('Split your hand?', 'y'),
         ]
@@ -1308,7 +1359,6 @@ class TableUITestCase(ut.TestCase):
         act_resps = []
         act_resps.append(ui.doubledown_prompt())
         act_resps.append(ui.hit_prompt())
-        act_resps.append(ui.insure_prompt())
         act_resps.append(ui.nextgame_prompt())
         act_resps.append(ui.split_prompt())
         act_calls = mock_yesno.mock_calls[-5:]
