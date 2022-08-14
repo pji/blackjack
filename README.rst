@@ -19,7 +19,6 @@ Still To Do
 The primary to-do list for version 0.0.2:
 
 * Card counting.
-	* Allow players to be bad at counting cards.
 	* Allow users to join a table partway through the shoe.
 * Standardize range validation of bets and insurance.
 
