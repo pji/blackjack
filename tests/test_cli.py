@@ -374,6 +374,34 @@ class LogUITestCase(ut.TestCase):
         self.assertEqual(exp_resp.value, act_resp.value)
         self.assertEqual(exp_call, act_call)
 
+    @patch('blackjack.cli.print')
+    @patch('blackjack.cli.input')
+    def test_yesno_prompt_invalid_input(self, mock_input, mock_print):
+        """Given a prompt and a default value, prompt the user for a
+        yes/no answer until they give a valid answer. Then return the
+        valid response.
+        """
+        exp_resp = model.IsYes('y')
+        exp_input_calls = [
+            call('spam [yn] > '),
+            call('spam [yn] > '),
+            call('spam [yn] > '),
+        ]
+        exp_error_calls = [
+            call('Invalid input.'),
+            call('Invalid input.'),
+        ]
+
+        mock_input.side_effect = ('6', 'k', 'y')
+        ui = cli.LogUI()
+        act_resp = ui._yesno_prompt('spam', 'y')
+        act_input_calls = mock_input.mock_calls
+        act_error_calls = mock_print.mock_calls
+
+        self.assertEqual(exp_resp.value, act_resp.value)
+        self.assertEqual(exp_input_calls, act_input_calls)
+        self.assertEqual(exp_error_calls, act_error_calls)
+
     @patch('blackjack.cli.LogUI._yesno_prompt')
     def test_prompt_yesnos(self, mock_input):
         """The input methods that ask yes/no questions should call

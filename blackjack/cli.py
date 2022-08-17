@@ -221,8 +221,9 @@ class LogUI(game.BaseUI):
 
             # If it's not valid, the ValueError will be caught,
             # response won't be set, so the prompt will be repeated.
-            except ValueError:
-                pass
+            except (ValueError, AttributeError):
+                print('Invalid input.')
+                response = None
 
         return response
 
