@@ -254,12 +254,21 @@ class LogUI(game.BaseUI):
 
     def insure_prompt(self, insure_max: int) -> model.Bet:
         """Ask user how much they want to insure."""
+        # Set up prompt for input.
         prompt = f'How much insurance do you want? [0–{insure_max}]'
         default = '0'
-        value = self._multichar_prompt(prompt, default)
+        response: Optional[model.Bet] = None
+
+        # Prompt for input until a valid input is received.
+        while response is None:
+            untrusted = self._multichar_prompt(prompt, default)
+            try:
+                response = model.Bet(untrusted, insure_max, 0)
+            except ValueError:
+                pass
 
         # Validate and return.
-        return model.Bet(value)
+        return response
 
     def nextgame_prompt(self) -> model.IsYes:
         """Ask user if they want to play another round."""
@@ -374,7 +383,7 @@ class TableUI(game.EngineUI):
         while not valid:
             resp = self.loop.send(('input_multichar', prompt, default))
             try:
-                valid = model.Bet(resp)
+                valid = model.Bet(resp, insure_max, 0)
             except ValueError:
                 pass
         return valid

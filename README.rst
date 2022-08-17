@@ -18,10 +18,6 @@ Still To Do
 -----------
 The primary to-do list for version 0.0.2:
 
-* Card counting.
-	* Allow users to join a table partway through the shoe.
-* Standardize range validation of bets and insurance.
-
 The following features are possible for future versions:
 
 * Separate number of seats from number of players.
@@ -36,6 +32,7 @@ The following features are possible for future versions:
 	* Allow players to react to the actions of other players.
 	* Allow casino to react to players.
 	* Add casino catching and removing card counting players.
+	* Allow players to join a table partway through the shoe.
 * Build UI for saving and restoring game state.
 * Allow splitting more than once.
 * Add ability to configure by file.
