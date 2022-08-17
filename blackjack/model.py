@@ -11,7 +11,7 @@ data model.
 from abc import ABC, abstractmethod
 from typing import Union
 from unicodedata import normalize
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Optional, Sequence
 
 
 # Base validation classes.
@@ -255,22 +255,46 @@ TextTuple = valtupfactory(
 # Common trusted objects.
 class Bet:
     """User input that is a valid bet."""
-    value = PosInt('value')
-
-    def __init__(self, value: Union[str, int, bool]):
+    def __init__(
+            self,
+            value: str | int,
+            value_max: Optional[int] = None,
+            value_min: Optional[int] = None
+    ):
         """Initialize and instance of the class.
 
         :param value: The bet.
         :return: None.
         :rtype: None.
         """
-        self.value = value
+        self.value_max = value_max
+        self.value_min = value_min
+
+        # Setting this before the max and min will break the validation
+        # built into the value property.
+        self.value = validate_positive_int(self, value)
 
     def __eq__(self, other):
         cls = self.__class__
         if not isinstance(other, cls):
             return NotImplemented
         return self.value == other.value
+
+    @property
+    def value(self) -> int:
+        """The value of the bet."""
+        return self._value
+
+    @value.setter
+    def value(self, value: int) -> None:
+        """Setter and validation for the bet value."""
+        if self.value_max is not None and value > self.value_max:
+            reason = f'Invalid: value is greater than {self.value_max}.'
+            raise ValueError(reason)
+        if self.value_min is not None and value < self.value_min:
+            reason = f'Invalid: value is less than {self.value_min}.'
+            raise ValueError(reason)
+        self._value = value
 
 
 class IsYes:

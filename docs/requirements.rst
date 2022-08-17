@@ -814,3 +814,15 @@ of the application. The range for insurance changes based on the size
 of the player's bet. And, technically, the possible range of bets isn't
 set until partway into the runtime of the program. Another answer is
 likely needed.
+
+For now, I'll put it in the relevant decision methods. That means the
+Engine object will be trusting all decision methods will return a value
+within the proper range. That's not ideal, so I may want to put extra
+validation in in the future. However, for now, the decision methods
+will handle it.
+
+Actually, strike that. With the way the UI interaction is set up, it's
+a mess to handle the prompting on a validation failure in the decision
+method. So, instead, I'll go back to doing it in the Bet object. The
+bet object will just have to do it with a property rather than with a
+data descriptor.
