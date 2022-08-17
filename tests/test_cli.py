@@ -449,6 +449,27 @@ class ParseCliTestCase(ut.TestCase):
         # Determine test result.
         self.assertDictEqual(exp, act)
 
+    def test_automated_players_only(self):
+        """Given the -a option, the game should not include
+        a UserPlayer.
+        """
+        # The not expected value:
+        not_exp = players.UserPlayer
+
+        # Test data and state.
+        sys.argv = ['python -m blackjack', f'-a']
+
+        # Run test.
+        args = cli.parse_cli()
+        engine = cli.build_game(args)
+
+        # Gather actual data.
+        act_list = engine.playerlist
+
+        # Determine test result.
+        for act in act_list:
+            self.assertNotIsInstance(act, not_exp)
+
     def test_change_buyin(self):
         """When passed the -b option, change amount of chips needed to
         buy into each hand.
