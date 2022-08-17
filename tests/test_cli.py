@@ -331,6 +331,42 @@ class LogUITestCase(ut.TestCase):
         self.assertEqual(exp_bet, act_bet)
         self.assertEqual(exp_call, act_call)
 
+    @patch('blackjack.cli.print')
+    @patch('blackjack.cli.input')
+    def test_bet_prompt_invalid_input(self, mock_input, mock_print):
+        """When called, prompt the user for the bet amount and return
+        that amount as a Bet.
+        """
+        # Set up for expected values.
+        bet_min = 20
+        bet_max = bet_min + 100
+
+        # Expected value.
+        exp_bet = model.Bet(bet_min)
+        exp_input_calls = [
+            call(f'How much do you wish to bet? [{bet_min}-{bet_max}]'),
+            call(f'How much do you wish to bet? [{bet_min}-{bet_max}]'),
+            call(f'How much do you wish to bet? [{bet_min}-{bet_max}]'),
+        ]
+        exp_error_calls = [
+            call('Invalid input.'),
+            call('Invalid input.'),
+        ]
+
+        # Test data and state.
+        mock_input.side_effect = ['y', f'{bet_max + 1}', f'{exp_bet.value}']
+        ui = cli.LogUI()
+
+        # Run test and gather actuals.
+        act_bet = ui.bet_prompt(bet_min, bet_max)
+        act_input_calls = mock_input.mock_calls
+        act_error_calls = mock_print.mock_calls
+
+        # Determine test results.
+        self.assertEqual(exp_input_calls, act_input_calls)
+        self.assertEqual(exp_error_calls, act_error_calls)
+        self.assertEqual(exp_bet, act_bet)
+
     @patch('blackjack.cli.LogUI._multichar_prompt', return_value='20')
     def test_insure_prompt(self, mock_input):
         """When called, prompt the user for the insure amount and
@@ -350,12 +386,51 @@ class LogUITestCase(ut.TestCase):
         ui = cli.LogUI()
 
         # Run test and gather actuals.
-        act_bet = ui.insure_prompt(insure_max)
+        act_insure = ui.insure_prompt(insure_max)
         act_call = mock_input.mock_calls[-1]
 
         # Determine test results.
-        self.assertEqual(exp_insure, act_bet)
+        self.assertEqual(exp_insure, act_insure)
         self.assertEqual(exp_call, act_call)
+
+    @patch('blackjack.cli.print')
+    @patch('blackjack.cli.input')
+    def test_insure_prompt_invalid_input(self, mock_input, mock_print):
+        """When called, prompt the user for the insure amount and
+        return that amount as a Bet.
+        """
+        # Set up for expected values.
+        insure_max = 500
+
+        # Expected value.
+        exp_insure = model.Bet(insure_max - 50)
+        exp_input_calls = [
+            call(f'How much insurance do you want? [0–{insure_max}]'),
+            call(f'How much insurance do you want? [0–{insure_max}]'),
+            call(f'How much insurance do you want? [0–{insure_max}]'),
+        ]
+        exp_error_calls = [
+            call('Invalid input.'),
+            call('Invalid input.'),
+        ]
+
+        # Test data and state.
+        mock_input.side_effect = [
+            'y',
+            f'{insure_max + 1}',
+            f'{exp_insure.value}'
+        ]
+        ui = cli.LogUI()
+
+        # Run test and gather actuals.
+        act_insure = ui.insure_prompt(insure_max)
+        act_input_calls = mock_input.mock_calls
+        act_error_calls = mock_print.mock_calls
+
+        # Determine test results.
+        self.assertEqual(exp_input_calls, act_input_calls)
+        self.assertEqual(exp_error_calls, act_error_calls)
+        self.assertEqual(exp_insure, act_insure)
 
     # Test _yesno_prompt().
     @patch('blackjack.cli.input')

@@ -254,6 +254,8 @@ TextTuple = valtupfactory(
 
 # Common trusted objects.
 class Bet:
+    msg = 'Invalid ({}).'
+
     """User input that is a valid bet."""
     def __init__(
             self,

@@ -223,7 +223,6 @@ class LogUI(game.BaseUI):
             # response won't be set, so the prompt will be repeated.
             except (ValueError, AttributeError):
                 print('Invalid input.')
-                response = None
 
         return response
 
@@ -240,7 +239,7 @@ class LogUI(game.BaseUI):
             try:
                 response = model.Bet(untrusted, bet_max, bet_min)
             except ValueError:
-                pass
+                print('Invalid input.')
 
         # Validate and return.
         return response
@@ -266,7 +265,7 @@ class LogUI(game.BaseUI):
             try:
                 response = model.Bet(untrusted, insure_max, 0)
             except ValueError:
-                pass
+                print('Invalid input.')
 
         # Validate and return.
         return response

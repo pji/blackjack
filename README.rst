@@ -19,7 +19,7 @@ Still To Do
 The primary to-do list for version 0.0.2:
 
 *   Add more description to CLI help.
-*   Display error when input is invalid.
+*   Display error in TableUI when input is invalid.
 
 The following features are possible for future versions:
 
