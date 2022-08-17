@@ -233,7 +233,7 @@ class WillBetRandomTestCase(WillBetTestCase):
 
 class WillBetUserTestCase(WillBetTestCase):
     @patch('blackjack.game.BaseUI.bet_prompt', return_value=model.Bet(125))
-    def test_hit(self, mock_input):
+    def test_will_bet(self, mock_input):
         """When the user choses an amount to bet, will_bet_user()
         will return the amount of the bet.
         """
