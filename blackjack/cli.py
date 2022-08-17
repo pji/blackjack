@@ -228,13 +228,21 @@ class LogUI(game.BaseUI):
 
     def bet_prompt(self, bet_min: int, bet_max: int) -> model.Bet:
         """Ask user for a bet.."""
-        # Prompt for input.
+        # Set up prompt for input.
         prompt = f'How much do you wish to bet? [{bet_min}-{bet_max}]'
         default = str(bet_min)
-        value = self._multichar_prompt(prompt, default)
+        response: Optional[model.Bet] = None
+
+        # Prompt for input until a valid input is received.
+        while response is None:
+            untrusted = self._multichar_prompt(prompt, default)
+            try:
+                response = model.Bet(untrusted, bet_max, bet_min)
+            except ValueError:
+                pass
 
         # Validate and return.
-        return model.Bet(value)
+        return response
 
     def doubledown_prompt(self) -> model.IsYes:
         """Ask user if they want to double down."""
@@ -341,7 +349,7 @@ class TableUI(game.EngineUI):
         while not valid:
             resp = self.loop.send(('input_multichar', prompt, default))
             try:
-                valid = model.Bet(resp)
+                valid = model.Bet(resp, bet_max, bet_min)
             except ValueError:
                 pass
         return valid
