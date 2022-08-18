@@ -358,13 +358,17 @@ class TableUI(game.EngineUI):
         """Ask user for a bet.."""
         prompt = f'How much do you wish to bet? [{bet_min}-{bet_max}]'
         default = str(bet_min)
+        error = False
         valid = None
         while not valid:
             resp = self.loop.send(('input_multichar', prompt, default))
             try:
                 valid = model.Bet(resp, bet_max, bet_min)
             except ValueError:
-                pass
+                self.loop.send(('error', 'Invalid response.'))
+                error = True
+        if error:
+            self.loop.send(('error', ''))
         return valid
 
     def doubledown_prompt(self) -> model.IsYes:

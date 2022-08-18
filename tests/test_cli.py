@@ -1366,6 +1366,46 @@ class TableUITestCase(ut.TestCase):
         self.assertEqual(exp_value, act_value)
         self.assertEqual(exp_call, act_call)
 
+    @patch('blackjack.termui.Table.error')
+    @patch('blackjack.termui.Table.input_multichar')
+    def test_bet_prompt_handle_invalid(self, mock_input, mock_error):
+        """When called, _multichar_prompt() should send the UI a
+        prompt for user input and return the result.
+        """
+        # Expected value.
+        bet_min = 20
+        bet_max = bet_min + 100
+        exp_value = model.Bet(bet_min + 10)
+        exp_calls = [
+            call(f'How much do you wish to bet? [{bet_min}-{bet_max}]', '20'),
+            call(f'How much do you wish to bet? [{bet_min}-{bet_max}]', '20'),
+            call(f'How much do you wish to bet? [{bet_min}-{bet_max}]', '20'),
+            call('Invalid response.'),
+            call('Invalid response.'),
+            call(''),
+        ]
+
+        # Test data and state.
+        mock_input.side_effect = [
+            'f',
+            f'{bet_max + 10}',
+            f'{exp_value.value}',
+        ]
+        ui = cli.TableUI()
+        ui.start()
+
+        # Run test and gather actuals.
+        act_value = ui.bet_prompt(bet_min, bet_max)
+        act_calls = mock_input.mock_calls
+        act_calls.extend(mock_error.mock_calls)
+
+        # Test clean up.
+        ui.end()
+
+        # Determine test results.
+        self.assertEqual(exp_value, act_value)
+        self.assertListEqual(exp_calls, act_calls)
+
     @patch('blackjack.termui.Table.input_multichar', return_value='300')
     def test_insure_prompt(self, mock_input):
         """When called, insure_prompt() should send the UI a
