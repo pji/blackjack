@@ -638,7 +638,10 @@ class TableUI(game.EngineUI):
 # Command line mainline.
 def parse_cli() -> argparse.Namespace:
     """Parse the command line options used to invoke the game."""
-    p = argparse.ArgumentParser(description='Blackjack')
+    p = argparse.ArgumentParser(
+        prog='blackjack',
+        description='Yet another Python implementation of blackjack.'
+    )
     p.add_argument(
         '-a', '--automated_players_only',
         help='All users will be computer players.',

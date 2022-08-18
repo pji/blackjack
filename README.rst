@@ -16,11 +16,6 @@ of the repository::
 
 Still To Do
 -----------
-The primary to-do list for version 0.0.2:
-
-*   Add more description to CLI help.
-*   Display error in TableUI when input is invalid.
-
 The following features are possible for future versions:
 
 * Separate number of seats from number of players.
@@ -40,6 +35,8 @@ The following features are possible for future versions:
 * Allow splitting more than once.
 * Add ability to configure by file.
 * Allow multiple human players to play in single game over network.
+* Add "How-To" to help.
+* Add "How-To" to Table interface.
 
 
 Testing
