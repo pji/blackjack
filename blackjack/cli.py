@@ -341,13 +341,17 @@ class TableUI(game.EngineUI):
 
     def _yesno_prompt(self, prompt, default):
         prompt = f'{prompt} [yn] > '
+        error = False
         valid = None
         while not valid:
             resp = self._prompt(prompt, default)
             try:
                 valid = model.IsYes(resp)
-            except ValueError:
-                pass
+            except (AttributeError, ValueError):
+                self.loop.send(('error', 'Invalid response.'))
+                error = True
+        if error:
+            self.loop.send(('error', ''))
         return valid
 
     def bet_prompt(self, bet_min: int, bet_max: int) -> model.Bet:
@@ -379,13 +383,17 @@ class TableUI(game.EngineUI):
         """Ask user if they want to insure."""
         prompt = f'How much insurance do you want? [0-{insure_max}]'
         default = '0'
+        error = False
         valid = None
         while not valid:
             resp = self.loop.send(('input_multichar', prompt, default))
             try:
                 valid = model.Bet(resp, insure_max, 0)
             except ValueError:
-                pass
+                self.loop.send(('error', 'Invalid response.'))
+                error = True
+        if error:
+            self.loop.send(('error', ''))
         return valid
 
     def nextgame_prompt(self) -> model.IsYes:

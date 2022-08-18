@@ -1394,6 +1394,41 @@ class TableUITestCase(ut.TestCase):
         self.assertEqual(exp_value, act_value)
         self.assertEqual(exp_call, act_call)
 
+    @patch('blackjack.termui.Table.error')
+    @patch('blackjack.termui.Table.input_multichar')
+    def test_insure_prompt_handle_invalid(self, mock_input, mock_error):
+        """When called, insure_prompt() should send the UI a
+        prompt the user for an insurance about and return the result.
+        """
+        # Expected value.
+        insure_max = 500
+        exp_value = model.Bet(insure_max - 1)
+        exp_calls = [
+            call(f'How much insurance do you want? [0-{insure_max}]', '0'),
+            call(f'How much insurance do you want? [0-{insure_max}]', '0'),
+            call(f'How much insurance do you want? [0-{insure_max}]', '0'),
+            call('Invalid response.'),
+            call('Invalid response.'),
+            call(''),
+        ]
+
+        # Test data and state.
+        mock_input.side_effect = ('f', f'{insure_max + 1}', exp_value.value)
+        ui = cli.TableUI()
+        ui.start()
+
+        # Run test and gather actuals.
+        act_value = ui.insure_prompt(insure_max)
+        act_calls = mock_input.mock_calls
+        act_calls.extend(mock_error.mock_calls)
+
+        # Test clean up.
+        ui.end()
+
+        # Determine test results.
+        self.assertEqual(exp_value, act_value)
+        self.assertListEqual(exp_calls, act_calls)
+
     @patch('blackjack.termui.main')
     def test___prompt_calls(self, mock_main):
         """When called, _prompt() should send the UI a prompt for user
@@ -1428,34 +1463,49 @@ class TableUITestCase(ut.TestCase):
         self.assertEqual(exp_resp.value, act_resp.value)
         self.assertEqual(exp_call, act_call)
 
-    @patch('blackjack.termui.main')
-    @patch('blackjack.cli.TableUI._prompt')
-    def test__yesno_prompt(self, mock_prompt, _):
+    @patch('blackjack.termui.Table.error')
+    @patch('blackjack.termui.Table.input')
+    def test__yesno_prompt_handle_invalid(self, mock_input, mock_error):
         """When called, _yesno_prompt() should prompt the user
         for a yes/no answer. The response should be returned.
         """
+        # Expected value.
         exp_resp = model.IsYes('y')
-        exp_call = call('Play another round? [yn] > ', 'y')
+        exp_calls = [
+            call('Play another round? [yn] > ', 'y'),
+            call('Play another round? [yn] > ', 'y'),
+            call('Play another round? [yn] > ', 'y'),
+            call('Invalid response.'),
+            call('Invalid response.'),
+            call(''),
+        ]
 
+        # Test data and state.
         ui = cli.TableUI()
-        mock_prompt.return_value = 'y'
+        mock_input.side_effect = ('6', 'f', exp_resp.value)
         ui.start()
+
+        # Run test.
         act_resp = ui._yesno_prompt('Play another round?', 'y')
+
+        # Cleanup state and gather actuals.
         ui.end()
-        act_call = mock_prompt.mock_calls[-1]
+        act_calls = mock_input.mock_calls
+        act_calls.extend(mock_error.mock_calls)
 
-        self.assertEqual(exp_resp.value, act_resp.value)
-        self.assertEqual(exp_call, act_call)
+        # Determine test results.
+        self.assertEqual(exp_resp, act_resp)
+        self.assertListEqual(exp_calls, act_calls)
 
-    @patch('blackjack.termui.main')
-    def test__yesno_prompt_unit_valid(self, mock_main):
+    @patch('blackjack.termui.Table.input')
+    def test__yesno_prompt_until_valid(self, mock_main):
         """If the user responds with an invalid value, the prompt
         should be repeated.
         """
         exp_resp = model.IsYes('n')
 
         ui = cli.TableUI()
-        mock_main.return_value = (item for item in [None, None, 'z', ' ', 'n'])
+        mock_main.side_effect = [None, None, 'z', ' ', 'n']
         ui.start()
         act_resp = ui._yesno_prompt('spam', 'y')
         ui.end()
