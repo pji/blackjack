@@ -792,3 +792,37 @@ can be reset after a game object is restored.
 Another side effect of this that that the Engine object probably 
 shouldn't have a deserialize() class method. It should be on the 
 object, and I think I'll call it restore.
+
+
+Range Validation
+----------------
+Bets and insurance have minimum and maximum valid values. However,
+these aren't static ranges:
+
+*   The bet range depends on the minimum and maximum bets set with
+    the game,
+*   The insurance range depends on the bet for the hand.
+
+Current validations are handled in the model using data descriptors.
+These descriptos are set on load, so they can't be easily changed
+when the ranges for bets and insurance are known. Therefore validators
+for those need to be a bit more flexible.
+
+A descriptor may not be the right answer here. Descriptors seem best
+for describing data types with a constant definition through the runtime
+of the application. The range for insurance changes based on the size
+of the player's bet. And, technically, the possible range of bets isn't
+set until partway into the runtime of the program. Another answer is
+likely needed.
+
+For now, I'll put it in the relevant decision methods. That means the
+Engine object will be trusting all decision methods will return a value
+within the proper range. That's not ideal, so I may want to put extra
+validation in in the future. However, for now, the decision methods
+will handle it.
+
+Actually, strike that. With the way the UI interaction is set up, it's
+a mess to handle the prompting on a validation failure in the decision
+method. So, instead, I'll go back to doing it in the Bet object. The
+bet object will just have to do it with a property rather than with a
+data descriptor.

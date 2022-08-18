@@ -11,57 +11,29 @@ players, including the dealer.
 from functools import partial
 from json import dumps, loads
 from random import choice
-from typing import Callable, Type
+from typing import Callable, Optional, Type
 from types import MethodType
 
-import mkname                               # type: ignore
+import mkname
+from yadr import roll
 
+from blackjack import willbet
+from blackjack import willdoubledown as wdd
+from blackjack import willhit as wh
+from blackjack import willinsure as wi
+from blackjack import willsplit as ws
 from blackjack.cards import Hand, HandTuple
 from blackjack.model import Integer_, PosInt, Text, valfactory, valtupfactory
-from blackjack.willbuyin import (
-    will_buyin_dealer,
-    will_buyin_always,
-    will_buyin_never,
-    will_buyin_random,
-    will_buyins
-)
-from blackjack.willdoubledown import (
-    will_double_down_user,
-    will_double_down_dealer,
-    will_double_down_always,
-    will_double_down_never,
-    will_double_down_random,
-    will_double_down_recommended,
-    will_double_downs
-)
-from blackjack.willhit import (
-    will_hit_user,
-    will_hit_dealer,
-    will_hit_never,
-    will_hit_random,
-    will_hit_recommended,
-    will_hits
-)
-from blackjack.willinsure import (
-    will_insure_user,
-    will_insure_dealer,
-    will_insure_always,
-    will_insure_never,
-    will_insure_random,
-    will_insures
-)
-from blackjack.willsplit import (
-    will_split_user,
-    will_split_dealer,
-    will_split_always,
-    will_split_never,
-    will_split_random,
-    will_split_recommended,
-    will_splits
-)
 
 
 # Utility functions.
+def undef_behavior(self, *args, **kwargs) -> None:
+    """A default function for use by playerfactory when a behavior
+    isn't defined.
+    """
+    raise TypeError('Behavior was not defined.')
+
+
 def get_chips(bet):
     """Return the number of chips to give to a player.
 
@@ -73,28 +45,14 @@ def get_chips(bet):
     return bet * multiplier
 
 
-def get_name():
-    """Return a random name."""
+def make_name():
+    """Create a name for a player."""
     config = mkname.get_config('')
     db_loc = mkname.init_db(config['db_path'])
     names = mkname.get_names_by_kind(db_loc, 'given')
+    if roll('1d3') > 1:
+        return mkname.build_compound_name(names)
     return mkname.select_name(names)
-
-
-def name_builder(start:str, end:str) -> str:
-    """Given three strings, return a string that combines them.
-
-    :param beginning: The string to use for the beginning of the
-        result.
-    :param middle: The string to use for the middle of the result.
-    :param end: The string to use for the end of the result.
-    :return: The new string.
-    :rtype: str
-    """
-    config = mkname.get_config('')
-    db_loc = mkname.init_db(config['db_path'])
-    names = mkname.get_names_by_kind(db_loc, 'given')
-    return mkname.build_compound_name(names)
 
 
 # Base class.
@@ -128,19 +86,21 @@ class Player:
             raise TypeError(msg)
 
         player = cls(dict_['hands'], dict_['name'], dict_['chips'])
+        if 'insured' in dict_:
+            player.insured = dict_['insured']
         methods = {
-            'will_hit': will_hits,
-            'will_split': will_splits,
-            'will_buyin': will_buyins,
-            'will_double_down': will_double_downs,
-            'will_insure': will_insures,
+            'will_hit': wh.will_hits,
+            'will_split': ws.will_splits,
+            'will_double_down': wdd.will_double_downs,
+            'will_insure': wi.will_insures,
+            'will_bet': willbet.will_bets,
         }
         for meth in methods:
             fn_names = [fn.__name__ for fn in methods[meth]]
             try:
                 index = fn_names.index(dict_[meth])
             except ValueError:
-                msg = f'Invalid {meth} given.'
+                msg = f'Invalid {meth} given. {dict_[meth]}'
                 raise ValueError(msg)
             bound = MethodType(methods[meth][index], player)
             setattr(player, meth, bound)
@@ -149,7 +109,8 @@ class Player:
 
     def __init__(self, hands: tuple = (),
                  name: str = 'Player',
-                 chips: int = 0) -> None:
+                 chips: int = 0,
+                 insured: int = 0) -> None:
         """Initialize and instance of the class.
 
         :param hands: The player's hands of blackjack.
@@ -164,6 +125,7 @@ class Player:
             chips = 0
         self.chips = chips
         self.insured = 0
+        self.bet = 0
 
     def __str__(self):
         return self.name
@@ -177,10 +139,8 @@ class Player:
             return NotImplemented
 
         self_dict = self._asdict()
-        del self_dict['chips']
         del self_dict['insured']
         other_dict = other._asdict()
-        del other_dict['chips']
         del other_dict['insured']
 
         return self_dict == other_dict
@@ -198,7 +158,7 @@ class Player:
             'hands': self.hands,
             'insured': self.insured,
             'name': self.name,
-            'will_buyin': self.will_buyin.__name__,
+            'will_bet': self.will_bet.__name__,
             'will_double_down': self.will_double_down.__name__,
             'will_hit': self.will_hit.__name__,
             'will_insure': self.will_insure.__name__,
@@ -211,10 +171,7 @@ class Player:
         serial['hands'] = [hand.serialize() for hand in serial['hands']]
         return dumps(serial)
 
-    def will_hit(self, hand:Hand, the_game) -> bool:
-        raise NotImplementedError
-
-    def will_split(self, hand:Hand, the_game) -> bool:
+    def will_bet(self, the_game) -> bool:
         raise NotImplementedError
 
     def will_buyin(self, hand:Hand, the_game) -> bool:
@@ -223,20 +180,32 @@ class Player:
     def will_double_down(self, hand:Hand, the_game) -> bool:
         raise NotImplementedError
 
+    def will_hit(self, hand:Hand, the_game) -> bool:
+        raise NotImplementedError
+
     def will_insure(self, the_game) -> bool:
+        raise NotImplementedError
+
+    def will_split(self, hand:Hand, the_game) -> bool:
         raise NotImplementedError
 
 
 # Factory functions.
-def playerfactory(name, will_hit_fn, will_split_fn, will_buyin_fn,
-                  will_double_down, will_insure) -> type:
+def playerfactory(
+        name,
+        will_bet: Optional[Callable] = undef_behavior,
+        will_double_down: Optional[Callable] = undef_behavior,
+        will_hit: Optional[Callable] = undef_behavior,
+        will_insure: Optional[Callable] = undef_behavior,
+        will_split: Optional[Callable] = undef_behavior
+) -> type:
     """A factory function for Player subclasses."""
     attrs = {
-        'will_hit': will_hit_fn,
-        'will_split': will_split_fn,
-        'will_buyin': will_buyin_fn,
+        'will_bet': will_bet,
         'will_double_down': will_double_down,
+        'will_hit': will_hit,
         'will_insure': will_insure,
+        'will_split': will_split,
     }
     return type(name, (Player,), attrs)
 
@@ -260,12 +229,6 @@ def restore_player(s: str) -> Player:
 
 def make_player(chips=200, bet=None) -> Player:
     """Make a random player for a blackjack game."""
-    def make_name() -> str:
-        if 0 != choice(range(3)):
-            return get_name()
-        else:
-            return name_builder(get_name(), get_name())
-
     if bet:
         chips = get_chips(bet)
     attrs = {
@@ -273,64 +236,67 @@ def make_player(chips=200, bet=None) -> Player:
         'hands': (),
         'name': make_name(),
         'chips': chips,
-        'will_hit': choice(will_hits[2:]).__name__,
-        'will_split': choice(will_splits[2:]).__name__,
-        'will_buyin': choice(will_buyins[1:]).__name__,
-        'will_double_down': choice(will_double_downs[2:]).__name__,
-        'will_insure': choice(will_insures[2:]).__name__,
+        'will_hit': choice(wh.will_hits[2:]).__name__,
+        'will_split': choice(ws.will_splits[2:]).__name__,
+        'will_double_down': choice(wdd.will_double_downs[2:]).__name__,
+        'will_insure': choice(wi.will_insures[2:]).__name__,
+        'will_bet': choice(willbet.will_bets[2:]).__name__,
     }
     player = Player.fromdict(attrs)
     return player
 
 
-# Player subclasses.
+# Player special case subclasses.
 Dealer = playerfactory(
     'Dealer',
-    will_hit_dealer,
-    will_split_dealer,
-    will_buyin_dealer,
-    will_double_down_dealer,
-    will_insure_dealer
-)
-AutoPlayer = playerfactory(
-    'AutoPlayer',
-    will_hit_dealer,
-    will_split_always,
-    will_buyin_always,
-    will_double_down_always,
-    will_insure_always
-)
-BetterPlayer = playerfactory(
-    'BetterPlayer',
-    will_hit_recommended,
-    will_split_recommended,
-    will_buyin_always,
-    will_double_down_recommended,
-    will_insure_never
-)
-NeverPlayer = playerfactory(
-    'NeverPlayer',
-    will_hit_never,
-    will_split_never,
-    will_buyin_never,
-    will_double_down_never,
-    will_insure_never
-)
-RandomPlayer = playerfactory(
-    'RandomPlayer',
-    will_hit_random,
-    will_split_random,
-    will_buyin_random,
-    will_double_down_random,
-    will_insure_random
+    will_bet=willbet.will_bet_dealer,
+    will_double_down=wdd.will_double_down_dealer,
+    will_hit=wh.will_hit_dealer,
+    will_insure=wi.will_insure_dealer,
+    will_split=ws.will_split_dealer
 )
 UserPlayer = playerfactory(
     'UserPlayer',
-    will_hit_user,
-    will_split_user,
-    will_buyin_always,
-    will_double_down_user,
-    will_insure_user
+    will_bet=willbet.will_bet_user,
+    will_double_down=wdd.will_double_down_user,
+    will_hit=wh.will_hit_user,
+    will_insure=wi.will_insure_user,
+    will_split=ws.will_split_user
+)
+
+
+# Example player subclasses.
+AutoPlayer = playerfactory(
+    'AutoPlayer',
+    will_bet=willbet.will_bet_max,
+    will_double_down=wdd.will_double_down_always,
+    will_hit=wh.will_hit_dealer,
+    will_insure=wi.will_insure_always,
+    will_split=ws.will_split_always
+)
+BetterPlayer = playerfactory(
+    'BetterPlayer',
+    will_bet=willbet.will_bet_min,
+    will_double_down=wdd.will_double_down_recommended,
+    will_hit=wh.will_hit_recommended,
+    will_insure=wi.will_insure_never,
+    will_split=ws.will_split_recommended
+)
+NeverPlayer = playerfactory(
+    'NeverPlayer',
+    will_bet=willbet.will_bet_never,
+    will_double_down=wdd.will_double_down_never,
+    will_hit=wh.will_hit_never,
+    will_insure=wi.will_insure_never,
+    will_split=ws.will_split_never
+)
+RandomPlayer = playerfactory(
+    'RandomPlayer',
+    will_bet=willbet.will_bet_random,
+    will_double_down=wdd.will_double_down_random,
+    will_hit=wh.will_hit_random,
+    will_insure=wi.will_insure_random,
+    will_split=ws.will_split_random
 )
 
 

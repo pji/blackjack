@@ -647,8 +647,66 @@ class validate_yesnoTestCase(unittest.TestCase):
 
 
 # Common trusted object tests.
+class BetTestCase(unittest.TestCase):
+    def test_init_defaults(self):
+        """Given a value, the Bet object should be initialized with
+        the proper values for its attributes.
+        """
+        # Expected values.
+        exp = {
+            'value': 200,
+            'value_max': None,
+            'value_min': None,
+        }
+
+        # Run test.
+        bet = model.Bet(exp['value'])
+
+        # Gather actuals.
+        act = {
+            'value': bet.value,
+            'value_max': bet.value_max,
+            'value_min': bet.value_min,
+        }
+
+        # Determine test result.
+        self.assertDictEqual(exp, act)
+
+    def test_rejects_value_over_maximum(self):
+        """Given a maximum value a value over the maximum value, the
+        Bet object should throw a ValueError.
+        """
+        # Expected values.
+        value_max = 24
+        exp_ex = ValueError
+        exp_msg = f'Invalid: value is greater than {value_max}.'
+
+        # Test data and state.
+        value = 25
+
+        # Run test and determine result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = model.Bet(value, value_max=value_max)
+
+    def test_rejects_value_under_minimum(self):
+        """Given a minimum value a value under the minimum value, the
+        Bet object should throw a ValueError.
+        """
+        # Expected values.
+        value_min = 26
+        exp_ex = ValueError
+        exp_msg = f'Invalid: value is less than {value_min}.'
+
+        # Test data and state.
+        value = 25
+
+        # Run test and determine result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = model.Bet(value, value_min=value_min)
+
+
 class YesNoTestCase(unittest.TestCase):
     def test_exists(self):
-        """A function named validate_bool should exist."""
+        """A class named IsYes should exist."""
         names = [item[0] for item in inspect.getmembers(model)]
         self.assertTrue('IsYes' in names)

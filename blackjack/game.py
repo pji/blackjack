@@ -12,7 +12,14 @@ from json import dumps, loads
 from typing import Generator, Optional, Union
 
 from blackjack.cards import Deck, DeckObj, DOWN, Hand
-from blackjack.model import Integer_, IsYes, valfactory
+from blackjack.model import (
+    BaseEngine,
+    Bet,
+    EngineUI,
+    Integer_,
+    IsYes,
+    valfactory
+)
 from blackjack.players import (Dealer, Player, make_player, restore_player,
                                ValidPlayers, ValidPlayer)
 
@@ -26,119 +33,6 @@ def _build_hand(deck):
 
 
 # UI classes.
-class EngineUI(ABC):
-    # General operation methods.
-    @abstractmethod
-    def end(self):
-        """End the UI."""
-
-    @abstractmethod
-    def reset(self):
-        """Restart the UI."""
-
-    @abstractmethod
-    def start(self):
-        """Start the UI."""
-
-    # Input methods.
-    @abstractmethod
-    def doubledown_prompt(self) -> IsYes:
-        """Ask user if they want to double down."""
-
-    @abstractmethod
-    def hit_prompt(self) -> IsYes:
-        """Ask user if they want to hit."""
-
-    @abstractmethod
-    def insure_prompt(self) -> IsYes:
-        """Ask user if they want to insure."""
-
-    @abstractmethod
-    def nextgame_prompt(self) -> IsYes:
-        """Ask user if they want to play another round."""
-
-    @abstractmethod
-    def split_prompt(self) -> IsYes:
-        """Ask user if they want to split."""
-
-    # Update methods.
-    @abstractmethod
-    def bet(self, player, bet):
-        """Player places initial bet."""
-
-    @abstractmethod
-    def cleanup(self):
-        """Clean up after the round ends."""
-
-    @abstractmethod
-    def deal(self, player, hand):
-        """Player receives initial hand."""
-
-    @abstractmethod
-    def doubledown(self, player, bet):
-        """Player doubles down."""
-
-    @abstractmethod
-    def flip(self, player, hand):
-        """Player flips a card."""
-
-    @abstractmethod
-    def hit(self, player, hand):
-        """Player hits."""
-
-    @abstractmethod
-    def insures(self, player, bet):
-        """Player insures their hand."""
-
-    @abstractmethod
-    def insurepay(self, player, bet):
-        """Insurance is paid to player."""
-
-    @abstractmethod
-    def joins(self, player):
-        """Player joins the game."""
-
-    @abstractmethod
-    def leaves(self, player):
-        """Player leaves the game."""
-
-    @abstractmethod
-    def loses(self, player):
-        """Player loses."""
-
-    @abstractmethod
-    def loses_split(self, player):
-        """Player loses on their split hand."""
-
-    @abstractmethod
-    def shuffles(self, player):
-        """The deck is shuffled."""
-
-    @abstractmethod
-    def splits(self, player, bet):
-        """Player splits their hand."""
-
-    @abstractmethod
-    def stand(self, player, hand):
-        """Player stands."""
-
-    @abstractmethod
-    def tie(self, player, bet):
-        """Player ties."""
-
-    @abstractmethod
-    def ties_split(self, player, bet):
-        """Player ties on their split hand."""
-
-    @abstractmethod
-    def wins(self, player, bet):
-        """Player wins."""
-
-    @abstractmethod
-    def wins_split(self, player, bet):
-        """Player wins on their split hand."""
-
-
 class BaseUI(EngineUI):
     """A base class for UI classes. It demonstrates the UI API, and it
     serves as a silent UI for use in testing.
@@ -157,6 +51,10 @@ class BaseUI(EngineUI):
         pass
 
     # Input methods.
+    def bet_prompt(self, bet_min: int, bet_max: int) -> Bet:
+        """Ask user to enter a valid bet."""
+        return Bet('0')
+
     def doubledown_prompt(self) -> IsYes:
         """Ask user if they want to double down."""
         return IsYes(True)
@@ -165,9 +63,9 @@ class BaseUI(EngineUI):
         """Ask user if they want to hit."""
         return IsYes(True)
 
-    def insure_prompt(self) -> IsYes:
+    def insure_prompt(self, insure_max: int) -> Bet:
         """Ask user if they want to insure."""
-        return IsYes(True)
+        return Bet(20)
 
     def nextgame_prompt(self) -> IsYes:
         """Ask user if they want to play another round."""
@@ -244,6 +142,10 @@ class BaseUI(EngineUI):
 
     def ties_split(self, player, bet):
         """Player ties on their split hand."""
+        pass
+
+    def update_count(self, value):
+        """Update the running card count in the UI."""
         pass
 
     def wins(self, player, bet):
@@ -269,7 +171,7 @@ ValidUI = valfactory('ValidUI', validate_ui, 'Invalid EngineUI ({}).')
 
 
 # Game engine class.
-class Engine:
+class Engine(BaseEngine):
     """A game engine for blackjack."""
     deck = DeckObj('deck')
     playerlist = ValidPlayers('playerlist')
@@ -277,12 +179,31 @@ class Engine:
     ui = ValidUI('ui')
     buyin = Integer_('buyin')
 
-    def __init__(self, deck: Deck = None,
-                 dealer: Optional[Player] = None,
-                 playerlist: Optional[list] = None,
-                 ui: EngineUI = None,
-                 buyin: float = 0) -> None:
-        """Initialize and instance of the class.
+    @classmethod
+    def load(cls, fname: str = 'save.json') -> 'Engine':
+        """Create a new object from a save file."""
+        with open(fname, 'r') as f:
+            s = f.read()
+        engine = cls()
+        engine._deserialize(s)
+        return engine
+
+    def __init__(
+            self,
+            deck: Deck = None,
+            dealer: Optional[Player] = None,
+            playerlist: Optional[list] = None,
+            ui: EngineUI = None,
+            buyin: float = 0,
+            save_file: str = 'save.json',
+            deck_size: int = 6,
+            deck_cut: bool = False,
+            card_count: int = 0,
+            running_count: bool = False,
+            bet_max: int = 500,
+            bet_min: int = 20
+    ) -> None:
+        """Initialize an instance of the class.
 
         :param casino: Whether the game is using a casino deck.
         :param dealer: The dealer for the game.
@@ -291,8 +212,12 @@ class Engine:
         :return: None.
         :rtype: None.
         """
+        self.deck_cut = deck_cut
         if not deck:
-            deck = Deck.build(6)
+            self.deck_size = deck_size
+            deck = self._build_deck()
+        else:
+            self.deck_size = deck.size
         self.deck = deck
 
         if not playerlist:
@@ -308,8 +233,12 @@ class Engine:
         self.ui = ui
 
         self.buyin = buyin
-
+        self.card_count = card_count
+        self.running_count = running_count
         self.seats = len(playerlist)
+        self.save_file = save_file
+        self.bet_max = bet_max
+        self.bet_min = bet_min
 
     def __repr__(self):
         cls = self.__class__
@@ -347,11 +276,27 @@ class Engine:
         """Return the object serialized as a dictionary."""
         return {
             'class': self.__class__.__name__,
+            'bet_max': self.bet_max,
+            'bet_min': self.bet_min,
+            'buyin': self.buyin,
+            'card_count': self.card_count,
             'deck': self.deck,
+            'deck_cut': self.deck_cut,
+            'deck_size': self.deck_size,
             'dealer': self.dealer,
             'playerlist': self.playerlist,
-            'buyin': self.buyin,
+            'running_count': self.running_count,
+            'save_file': self.save_file,
         }
+
+    def _build_deck(self):
+        """Build a blackjack deck."""
+        deck = Deck.build(self.deck_size)
+        deck.shuffle()
+        if self.deck_cut:
+            deck.random_cut()
+        self.card_count = 0
+        return deck
 
     def _build_hand(self):
         """create the initial hand and deal a card into it."""
@@ -391,11 +336,17 @@ class Engine:
         """
         serial = loads(s)
         if serial['class'] == self.__class__.__name__:
+            self.bet_max = serial['bet_max']
+            self.bet_min = serial['bet_min']
+            self.buyin = serial['buyin']
+            self.card_count = serial['card_count']
             self.deck = Deck.deserialize(serial['deck'])
+            self.deck_cut = serial['deck_cut']
             self.dealer = Dealer.deserialize(serial['dealer'])
             self.playerlist = [restore_player(player)
                                for player in serial['playerlist']]
-            self.buyin = serial['buyin']
+            self.running_count = serial['running_count']
+            self.save_file = serial['save_file']
 
     def _double_down(self, player: Player, hand: Hand) -> None:
         """Handle the double down decision on a hand.
@@ -415,14 +366,27 @@ class Engine:
 
     def _draw(self):
         """Draw a card from the game deck."""
+        # If there are no cards left in the shoe, create a new deck.
         if not self.deck:
-            deck = Deck.build(self.deck.size)
-            deck.shuffle()
-            if deck.size > 3:
-                deck.random_cut()
-            self.deck = deck
+            self.deck = self._build_deck()
             self.ui.shuffles(self.dealer)
-        return self.deck.draw()
+
+        # Draw the card.
+        card = self.deck.draw()
+
+        # Maintain card count.
+        pre_count = self.card_count
+        if card.rank == 1:
+            self.card_count -= 1
+        elif card.rank <= 6:
+            self.card_count += 1
+        elif card.rank >= 10:
+            self.card_count -= 1
+        if self.running_count and self.card_count - pre_count:
+            self.ui.update_count(self.card_count)
+
+        # Return the drawn card.
+        return card
 
     def _hit(self, player, hand=None):
         """Handle the player's hitting and standing."""
@@ -459,6 +423,14 @@ class Engine:
         playerlist[index] = None
         self.playerlist = playerlist
 
+    def _replace_player(self, player: Player) -> Player:
+        """The given player leaves and is replaced by a new player."""
+        self.ui.leaves(player)
+        new_player = make_player(bet=self.bet_max)
+        new_player.bet = self.bet_min
+        self.ui.joins(new_player)
+        return new_player
+
     def _split(self, hand: Hand, player: Player) -> bool:
         """Handle the splitting decision on a hand.
 
@@ -477,6 +449,34 @@ class Engine:
             self.ui.splits(player, 20)
             return True
         return False
+
+    def _take_bet(self, player: Player) -> Player:
+        """Take the bet from the player, replacing them if they
+        can't cover the bet.
+        """
+        player.bet = player.will_bet(self)
+
+        # Players who can't cover their bet are replaced.
+        if (
+                player.chips < self.bet_min
+                or player.bet < self.bet_min
+                or player.bet > player.chips
+        ):
+            player = self._replace_player(player)
+
+        # Players who bet more than maximum are capped.
+        elif player.bet > self.bet_max:
+            player.bet = self.bet_max
+
+        # Take their chips and return the player.
+        player.chips -= player.bet
+        self.ui.bet(player, player.bet)
+        return player
+
+    # Public interface.
+    def bet(self):
+        """Get the bets from each player."""
+        self.playerlist = [self._take_bet(p) for p in self.playerlist]
 
     def deal(self):
         """Deal a round of blackjack."""
@@ -562,7 +562,7 @@ class Engine:
                     else:
                         mod = 1
 
-                payout = mod * self.buyin
+                payout = mod * player.bet
                 player.chips += payout
                 if event == self.ui.loses or event == self.ui.loses_split:
                     event(player)
@@ -629,20 +629,6 @@ class Engine:
                                 for player in serial['playerlist']]
         return dumps(serial)
 
-    def start(self):
-        """Start a round of blackjack."""
-        for player in self.playerlist:
-            if player.chips >= self.buyin and player.will_buyin(self):
-                player.chips -= self.buyin
-                self.ui.bet(player, self.buyin)
-            else:
-                self._remove_player(player)
-                self.ui.leaves(player)
-                player = make_player(bet=self.buyin)
-                self._add_player(player)
-                self.ui.joins(player)
-                self.ui.bet(player, self.buyin)
-
 
 # The main game loop for blackjack.
 def main(engine: Engine, is_interactive: bool = True) -> Generator:
@@ -656,10 +642,11 @@ def main(engine: Engine, is_interactive: bool = True) -> Generator:
     engine.new_game()
     play = yield True
     while play:
-        engine.start()
+        engine.bet()
         engine.deal()
         engine.play()
         engine.end()
+        engine.save(engine.save_file)
         play = yield engine.ui.nextgame_prompt().value
         engine.ui.cleanup()
     engine.ui.end()

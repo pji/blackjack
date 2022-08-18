@@ -11,9 +11,10 @@ data model.
 from abc import ABC, abstractmethod
 from typing import Union
 from unicodedata import normalize
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Optional, Sequence
 
 
+# Base validation classes.
 class _BaseDescriptor:
     """A basic data descriptor."""
 
@@ -252,6 +253,52 @@ TextTuple = valtupfactory(
 
 
 # Common trusted objects.
+class Bet:
+    msg = 'Invalid ({}).'
+
+    """User input that is a valid bet."""
+    def __init__(
+            self,
+            value: str | int,
+            value_max: Optional[int] = None,
+            value_min: Optional[int] = None
+    ):
+        """Initialize and instance of the class.
+
+        :param value: The bet.
+        :return: None.
+        :rtype: None.
+        """
+        self.value_max = value_max
+        self.value_min = value_min
+
+        # Setting this before the max and min will break the validation
+        # built into the value property.
+        self.value = validate_positive_int(self, value)
+
+    def __eq__(self, other):
+        cls = self.__class__
+        if not isinstance(other, cls):
+            return NotImplemented
+        return self.value == other.value
+
+    @property
+    def value(self) -> int:
+        """The value of the bet."""
+        return self._value
+
+    @value.setter
+    def value(self, value: int) -> None:
+        """Setter and validation for the bet value."""
+        if self.value_max is not None and value > self.value_max:
+            reason = f'Invalid: value is greater than {self.value_max}.'
+            raise ValueError(reason)
+        if self.value_min is not None and value < self.value_min:
+            reason = f'Invalid: value is less than {self.value_min}.'
+            raise ValueError(reason)
+        self._value = value
+
+
 class IsYes:
     """User input that is either yes or no."""
     value = YesNo('value')
@@ -270,3 +317,165 @@ class IsYes:
         if not isinstance(other, cls):
             return NotImplemented
         return self.value == other.value
+
+
+# Base classes.
+class EngineUI(ABC):
+    # General operation methods.
+    @abstractmethod
+    def end(self):
+        """End the UI."""
+
+    @abstractmethod
+    def reset(self):
+        """Restart the UI."""
+
+    @abstractmethod
+    def start(self):
+        """Start the UI."""
+
+    # Input methods.
+    @abstractmethod
+    def bet_prompt(self, bet_min: int, bet_max: int) -> Bet:
+        """Ask user for a bet.."""
+
+    @abstractmethod
+    def doubledown_prompt(self) -> IsYes:
+        """Ask user if they want to double down."""
+
+    @abstractmethod
+    def hit_prompt(self) -> IsYes:
+        """Ask user if they want to hit."""
+
+    @abstractmethod
+    def insure_prompt(self, insure_max: int) -> Bet:
+        """Ask user if they want to insure."""
+
+    @abstractmethod
+    def nextgame_prompt(self) -> IsYes:
+        """Ask user if they want to play another round."""
+
+    @abstractmethod
+    def split_prompt(self) -> IsYes:
+        """Ask user if they want to split."""
+
+    # Update methods.
+    @abstractmethod
+    def bet(self, player, bet):
+        """Player places initial bet."""
+
+    @abstractmethod
+    def cleanup(self):
+        """Clean up after the round ends."""
+
+    @abstractmethod
+    def deal(self, player, hand):
+        """Player receives initial hand."""
+
+    @abstractmethod
+    def doubledown(self, player, bet):
+        """Player doubles down."""
+
+    @abstractmethod
+    def flip(self, player, hand):
+        """Player flips a card."""
+
+    @abstractmethod
+    def hit(self, player, hand):
+        """Player hits."""
+
+    @abstractmethod
+    def insures(self, player, bet):
+        """Player insures their hand."""
+
+    @abstractmethod
+    def insurepay(self, player, bet):
+        """Insurance is paid to player."""
+
+    @abstractmethod
+    def joins(self, player):
+        """Player joins the game."""
+
+    @abstractmethod
+    def leaves(self, player):
+        """Player leaves the game."""
+
+    @abstractmethod
+    def loses(self, player):
+        """Player loses."""
+
+    @abstractmethod
+    def loses_split(self, player):
+        """Player loses on their split hand."""
+
+    @abstractmethod
+    def shuffles(self, player):
+        """The deck is shuffled."""
+
+    @abstractmethod
+    def splits(self, player, bet):
+        """Player splits their hand."""
+
+    @abstractmethod
+    def stand(self, player, hand):
+        """Player stands."""
+
+    @abstractmethod
+    def tie(self, player, bet):
+        """Player ties."""
+
+    @abstractmethod
+    def ties_split(self, player, bet):
+        """Player ties on their split hand."""
+
+    @abstractmethod
+    def update_count(self, count):
+        """Update the running card count in the UI."""
+
+    @abstractmethod
+    def wins(self, player, bet):
+        """Player wins."""
+
+    @abstractmethod
+    def wins_split(self, player, bet):
+        """Player wins on their split hand."""
+
+
+class BaseEngine(ABC):
+    bet_max: int
+    bet_min: int
+    card_count: int
+    ui: EngineUI
+
+    """The base class for the game engine."""
+    @abstractmethod
+    def bet(self) -> None:
+        """Betting phase."""
+
+    @abstractmethod
+    def deal(self) -> None:
+        """Dealing phase."""
+
+    @abstractmethod
+    def end(self) -> None:
+        """End of the hand."""
+
+    @abstractmethod
+    def new_game(self) -> None:
+        """Start a new game."""
+
+    @abstractmethod
+    def play(self) -> None:
+        """Play the hand."""
+
+    @abstractmethod
+    def restore(self, fname: str) -> None:
+        """Restore a game from a save."""
+
+    @abstractmethod
+    def save(self, fname: str) -> None:
+        """Save a game."""
+
+    @abstractmethod
+    def serialize(self) -> None:
+        """Serialize the game."""

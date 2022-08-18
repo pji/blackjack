@@ -83,7 +83,7 @@ class BoxTestCase(ut.TestCase):
 
 
 class TableTestCase(ut.TestCase):
-    topleft = '\x1b[1;1H'
+    topleft = '\x1b[1;2H'
     bold = '\x1b[1m'
     loc = '\x1b[{};{}H'
 
@@ -105,6 +105,30 @@ class TableTestCase(ut.TestCase):
             actual = getattr(obj, attr)
 
             self.assertEqual(expected[attr], actual)
+
+    def test_init_with_status(self):
+        """When given show_status of True, the Table.show_status
+        attribute should be true.
+        """
+        # Expected value.
+        fields = (
+            ('Eggs', '{}'),
+            ('Baked Beans', '{}')
+        )
+        exp = {
+            'title': 'Spam',
+            'fields': tuple(termui.Field(*args) for args in fields),
+            'show_status': True,
+        }
+
+        # Run test.
+        obj = termui.Table(**exp)
+
+        # Gather actuals.
+        act = {attr: getattr(obj, attr) for attr in exp}
+
+        # Determine test result.
+        self.assertDictEqual(exp, act)
 
     def test_init_no_data(self):
         """When initialized, if data is not passed, an initial empty
@@ -305,8 +329,9 @@ class TableTestCase(ut.TestCase):
         frame = '\u2500' * 23
         expected = [
             call(self.topleft + self.bold + title),
-            call(self.loc.format(3, 1) + head),
-            call(self.loc.format(4, 1) + frame),
+            call(self.loc.format(2, 2) + ''),
+            call(self.loc.format(3, 2) + head),
+            call(self.loc.format(4, 2) + frame),
             call(self.loc.format(5, 1) + row.format(*data[0])),
             call(self.loc.format(6, 1) + row.format(*data[1])),
             call(self.loc.format(7, 1) + frame),
@@ -320,7 +345,79 @@ class TableTestCase(ut.TestCase):
         del main
         actual = mock_print.mock_calls
 
-        self.assertEqual(expected, actual)
+        self.assertListEqual(expected, actual)
+
+    @patch('blackjack.termui.print')
+    def test_draw_with_status(self, mock_print):
+        """If the Table.show_status attribute is True, the status
+        information should be included in the draw.
+        """
+        title = 'Spam'
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        head = ' ' + ' '.join('{:<10}'.format(f[0]) for f in fields)
+        data = [[1, 2], [3, 4]]
+        row = ' ' + ' '.join(field[1] for field in fields) + ' '
+        frame = '\u2500' * 23
+        status = 'Count: 0'
+        expected = [
+            call(self.topleft + self.bold + title),
+            call(self.loc.format(2, 2) + ''),
+            call(self.loc.format(3, 2) + head),
+            call(self.loc.format(4, 2) + frame),
+            call(self.loc.format(5, 1) + row.format(*data[0])),
+            call(self.loc.format(6, 1) + row.format(*data[1])),
+            call(self.loc.format(7, 1) + frame),
+            call(self.loc.format(8, 1) + ' ' * 80),
+            call(self.loc.format(8, 2) + status),
+            call(self.loc.format(9, 1) + frame),
+        ]
+
+        box = termui.Box(custom='──   ───   ───')
+        ctlr = termui.Table(title, fields, data=data, show_status=True)
+        main = termui.main(ctlr)
+        next(main)
+        main.send(('draw',))
+        del main
+        actual = mock_print.mock_calls
+
+        self.assertListEqual(expected, actual)
+
+    # Table.error() tests.
+    @patch('blackjack.termui.print')
+    def test_error(self, mock_print):
+        """When called with a message, error() should write the error
+        to the UI.
+        """
+        # Set up for expected value.
+        msg = 'spam'
+        fmt = '{:<80}'
+
+        # Expected value.
+        exp = [
+            call(self.loc.format(8, 2) + fmt.format(msg)),
+        ]
+
+        # Test data and state.
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields)
+        main = termui.main(ctlr)
+        next(main)
+
+        # Run test.
+        act_resp = main.send(('error', msg))
+
+        # Test tear down and gather actuals.
+        del main
+        act = mock_print.mock_calls[-1:]
+
+        # Determine test result.
+        self.assertEqual(exp, act)
 
     # Table.input() tests.
     @patch('blessed.Terminal.inkey')
@@ -381,6 +478,173 @@ class TableTestCase(ut.TestCase):
         self.assertEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
 
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.termui.print')
+    def test_input_with_show_status(self, mock_print, mock_inkey):
+        """When called with a prompt, input() should write the prompt
+        to the UI and return the response from the user. When
+        Table.show_status is True, the input line should be below the
+        status line.
+        """
+        prompt = 'spam'
+        fmt = '{:<80}'
+        exp_print = [
+            call(self.loc.format(9, 2) + fmt.format(prompt)),
+            call(self.loc.format(9, 2) + fmt.format('')),
+        ]
+        exp_resp = 'n'
+
+        mock_inkey.return_value = 'n'
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields, show_status=True)
+        main = termui.main(ctlr)
+        next(main)
+        act_resp = main.send(('input', prompt))
+        del main
+        act_print = mock_print.mock_calls
+
+        self.assertListEqual(exp_print, act_print)
+        self.assertEqual(exp_resp, act_resp)
+
+    # Table.input_number() tests.
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.termui.print')
+    def test_input_multichar(self, mock_print, mock_inkey):
+        """When called with a prompt, input_number() should write the
+        prompt to the UI and return the response from the user.
+        """
+        prompt = 'spam'
+        fmt = '{:<80}'
+        exp_print = [
+            call(self.loc.format(7, 2) + fmt.format(prompt + ' > ')),
+            call(self.loc.format(7, 7) + '2'),
+            call(self.loc.format(7, 8) + '0'),
+            call(self.loc.format(7, 2) + fmt.format('')),
+        ]
+        exp_resp = '20'
+
+        mock_inkey.side_effect = ('2', '0', '\n')
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields)
+        main = termui.main(ctlr)
+        next(main)
+        act_resp = main.send(('input_multichar', prompt))
+        del main
+        act_print = mock_print.mock_calls
+
+        self.assertListEqual(exp_print, act_print)
+        self.assertEqual(exp_resp, act_resp)
+
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.termui.print')
+    def test_input_multichar_default(self, mock_print, mock_inkey):
+        """When called with a prompt and a default, input_number()
+        should write the prompt to the UI and return the response
+        from the user. If the user's response is only a newline,
+        input_number() should return the default.
+        """
+        prompt = 'spam'
+        fmt = '{:<80}'
+        exp_print = [
+            call(self.loc.format(7, 2) + fmt.format(prompt + ' > ')),
+            call(self.loc.format(7, 2) + fmt.format('')),
+        ]
+        exp_resp = '20'
+
+        mock_inkey.side_effect = ('\n', )
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields)
+        main = termui.main(ctlr)
+        next(main)
+        act_resp = main.send(('input_multichar', prompt, exp_resp))
+        del main
+        act_print = mock_print.mock_calls
+
+        self.assertListEqual(exp_print, act_print)
+        self.assertEqual(exp_resp, act_resp)
+
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.termui.print')
+    def test_input_multichar_with_status(self, mock_print, mock_inkey):
+        """When called with a prompt, input_number() should write the
+        prompt to the UI and return the response from the user.
+        """
+        # Set up expected.
+        prompt = 'spam'
+        fmt = '{:<80}'
+
+        # Expected values.
+        exp_print = [
+            call(self.loc.format(9, 2) + fmt.format(prompt + ' > ')),
+            call(self.loc.format(9, 7) + '2'),
+            call(self.loc.format(9, 8) + '0'),
+            call(self.loc.format(9, 2) + fmt.format('')),
+        ]
+        exp_resp = '20'
+
+        # Test data and state.
+        mock_inkey.side_effect = ('2', '0', '\n')
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields, show_status=True)
+        main = termui.main(ctlr)
+        next(main)
+
+        # Run test and gather actuals.
+        act_resp = main.send(('input_multichar', prompt))
+        del main
+        act_print = mock_print.mock_calls
+
+        # Determine test result.
+        self.assertListEqual(exp_print, act_print)
+        self.assertEqual(exp_resp, act_resp)
+
+    # Table.status() tests.
+    @patch('blackjack.termui.print')
+    def test_status(self, mock_print):
+        """When called with a status and its value, Table.status()
+        should update the stored status value and then update the
+        status field in the UI.
+        """
+        exp_status = {
+            'Count': '9',
+        }
+        frame = '\u2500' * 23
+        exp_calls = [
+            call(self.loc.format(8, 1) + ' ' * 80),
+            call(self.loc.format(8, 2) + f'Count: {exp_status["Count"]}'),
+            call(self.loc.format(9, 1) + frame),
+        ]
+
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        data = [[0, 0], [0, 0]]
+        ctlr = termui.Table('eggs', fields, data=data, show_status=True)
+        main = termui.main(ctlr)
+        next(main)
+
+        main.send(('update_status', exp_status))
+
+        main.close()
+        act_status = ctlr.status
+        act_calls = mock_print.mock_calls[-3:]
+
+        self.assertDictEqual(exp_status, act_status)
+        self.assertListEqual(exp_calls, act_calls)
+
     # Table.update() tests.
     @patch('blackjack.termui.Table._draw_cell')
     def test_update(self, mock_draw_cell):
@@ -409,7 +673,6 @@ class TableTestCase(ut.TestCase):
         self.assertEqual(exp_data, act_data)
         self.assertEqual(exp_calls, act_calls)
 
-    # Table.update() tests.
     @patch('blackjack.termui.print')
     def test_update_smaller_table(self, mock_print):
         """When called with a data table that is smaller than the
@@ -439,7 +702,43 @@ class TableTestCase(ut.TestCase):
 
         self.assertListEqual(exp_calls, act_calls)
 
-    # Table.update() tests.
+    @patch('blackjack.termui.print')
+    def test_update_smaller_table_with_status(self, mock_print):
+        """When called with a data table that is smaller than the
+        current table, update() should remove rows from the existing
+        table to allow for the cell comparisons. It should then clear
+        the removed rows from the UI and reprint the table bottom. If
+        the status is displayed, it should be repositioned properly.
+        """
+        new_data = [[0, 0],]
+        frame = '\u2500' * 23
+        status = 'Count: 0'
+        exp_calls = [
+            call(self.loc.format(9, 1) + ' ' * 80),
+            call(self.loc.format(8, 1) + ' ' * 80),
+            call(self.loc.format(7, 1) + ' ' * 80),
+            call(self.loc.format(6, 1) + frame),
+            call(self.loc.format(7, 1) + ' ' * 80),
+            call(self.loc.format(7, 2) + status),
+            call(self.loc.format(8, 1) + frame),
+        ]
+
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        data = [[0, 0], [0, 0]]
+        ctlr = termui.Table('eggs', fields, data=data, show_status=True)
+        main = termui.main(ctlr)
+        next(main)
+
+        main.send(('update', new_data))
+
+        main.close()
+        act_calls = mock_print.mock_calls[-7:]
+
+        self.assertListEqual(exp_calls, act_calls)
+
     @patch('blackjack.termui.print')
     def test_update_bigger_table(self, mock_print):
         """When called with a data table that is bigger than the
@@ -466,6 +765,47 @@ class TableTestCase(ut.TestCase):
         main.send(('update', new_data))
         main.close()
         act_calls = mock_print.mock_calls[:-2]
+
+        self.assertListEqual(exp_calls, act_calls)
+
+    @patch('blackjack.termui.print')
+    def test_update_bigger_table_with_status(self, mock_print):
+        """When called with a data table that is bigger than the
+        current table, update() should add rows to the existing
+        table to allow for the cell comparisons. It should then add
+        the new rows to the UI and reprint the table bottom. It should
+        then clear the removed rows from the UI and reprint the table
+        bottom. If the status is displayed, it should be repositioned
+        properly.
+        """
+        new_data = [[0, 0], [0, 0]]
+        frame = '\u2500' * 23
+        status = 'Count: 0'
+        exp_calls = [
+            call(self.loc.format(8, 1) + ' ' * 80),
+            call(self.loc.format(7, 1) + ' ' * 80),
+            call(self.loc.format(6, 1) + ' ' * 80),
+            call(self.loc.format(7, 1) + frame),
+            call(self.loc.format(8, 1) + ' ' * 80),
+            call(self.loc.format(8, 2) + status),
+            call(self.loc.format(9, 1) + frame),
+            call(self.loc.format(6, 2) + ' ' * 10),
+            call(self.loc.format(6, 13) + ' ' * 10),
+        ]
+
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        data = [[0, 0]]
+        ctlr = termui.Table('eggs', fields, data=data, show_status=True)
+        main = termui.main(ctlr)
+        next(main)
+
+        main.send(('update', new_data))
+
+        act_calls = mock_print.mock_calls[-9:]
+        main.close()
 
         self.assertListEqual(exp_calls, act_calls)
 

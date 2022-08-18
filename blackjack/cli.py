@@ -12,7 +12,7 @@ import argparse
 from collections import namedtuple
 from time import sleep
 import traceback as tb
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Generator, Optional, Sequence, Union
 
 from blessed import Terminal
 
@@ -96,6 +96,16 @@ class LogUI(game.BaseUI):
         """
         self._update_event(player, event, hand)
 
+    def _update_status(self, label: str, value: str) -> None:
+        """Report that the game status has changed.
+
+        :param label: The status that has changed.
+        :param value: The new value of the status.
+        :return: None.
+        :rtype: NoneType
+        """
+        print(self.tmp.format(label, '', value))
+
     def bet(self, player, bet):
         """Player places initial bet."""
         self._update_bet(player, bet, 'Bet.')
@@ -165,6 +175,10 @@ class LogUI(game.BaseUI):
         """Player ties on their split hand."""
         self.tie(player, bet)
 
+    def update_count(self, value):
+        """Update the running card count in the UI."""
+        self._update_status('Running count:', value)
+
     def wins(self, player, bet):
         """Player wins."""
         self._update_bet(player, bet, 'Wins.')
@@ -174,6 +188,18 @@ class LogUI(game.BaseUI):
         self.wins(player, bet)
 
     # Input methods.
+    def _multichar_prompt(
+            self,
+            prompt: str,
+            default: str = ''
+    ) -> str:
+        """Prompt the user for multiple characters."""
+        msg = f'{prompt} > '
+        resp = input(prompt)
+        if not resp:
+            resp = default
+        return resp
+
     def _yesno_prompt(self, prompt:str,
                       default: Union[str, bool] = True) -> model.IsYes:
         """Prompt the user for a yes/no answer."""
@@ -195,9 +221,27 @@ class LogUI(game.BaseUI):
 
             # If it's not valid, the ValueError will be caught,
             # response won't be set, so the prompt will be repeated.
-            except ValueError:
-                pass
+            except (ValueError, AttributeError):
+                print('Invalid input.')
 
+        return response
+
+    def bet_prompt(self, bet_min: int, bet_max: int) -> model.Bet:
+        """Ask user for a bet.."""
+        # Set up prompt for input.
+        prompt = f'How much do you wish to bet? [{bet_min}-{bet_max}]'
+        default = str(bet_min)
+        response: Optional[model.Bet] = None
+
+        # Prompt for input until a valid input is received.
+        while response is None:
+            untrusted = self._multichar_prompt(prompt, default)
+            try:
+                response = model.Bet(untrusted, bet_max, bet_min)
+            except ValueError:
+                print('Invalid input.')
+
+        # Validate and return.
         return response
 
     def doubledown_prompt(self) -> model.IsYes:
@@ -208,9 +252,23 @@ class LogUI(game.BaseUI):
         """Ask user if they want to hit."""
         return self._yesno_prompt('Hit?', 'y')
 
-    def insure_prompt(self) -> model.IsYes:
-        """Ask user if they want to insure."""
-        return self._yesno_prompt('Insure?', 'y')
+    def insure_prompt(self, insure_max: int) -> model.Bet:
+        """Ask user how much they want to insure."""
+        # Set up prompt for input.
+        prompt = f'How much insurance do you want? [0–{insure_max}]'
+        default = '0'
+        response: Optional[model.Bet] = None
+
+        # Prompt for input until a valid input is received.
+        while response is None:
+            untrusted = self._multichar_prompt(prompt, default)
+            try:
+                response = model.Bet(untrusted, insure_max, 0)
+            except ValueError:
+                print('Invalid input.')
+
+        # Validate and return.
+        return response
 
     def nextgame_prompt(self) -> model.IsYes:
         """Ask user if they want to play another round."""
@@ -223,9 +281,12 @@ class LogUI(game.BaseUI):
 
 class TableUI(game.EngineUI):
     """A table-based terminal UI for blackjack."""
+    loop: Generator
+
     # General operation methods.
     def __init__(self, ctlr: Optional[termui.TerminalController] = None,
-                 seats: int = 1) -> None:
+                 seats: int = 1,
+                 show_status: bool = False) -> None:
         """Initialize and instance of the class.
 
         :param ctlr: (Optional.) The TerminalController object running
@@ -234,11 +295,11 @@ class TableUI(game.EngineUI):
             available for the game.
         """
         self.seats = seats
+        self.show_status = show_status
         if not ctlr:
             ctlr = self._make_ctlr()
         self.ctlr = ctlr
         self.is_interactive = False
-        self.loop = None
 
     def _make_ctlr(self):
         """Returns a termui.Table object for blackjack."""
@@ -249,7 +310,12 @@ class TableUI(game.EngineUI):
             ('Hand', '{:<27}'),
             ('Event', '{:<23}'),
         )
-        return termui.Table('Blackjack', fields, rows=self.seats)
+        return termui.Table(
+            'Blackjack',
+            fields,
+            rows=self.seats,
+            show_status=self.show_status
+        )
 
     def end(self):
         """End the UI loop gracefully."""
@@ -275,13 +341,34 @@ class TableUI(game.EngineUI):
 
     def _yesno_prompt(self, prompt, default):
         prompt = f'{prompt} [yn] > '
+        error = False
         valid = None
         while not valid:
             resp = self._prompt(prompt, default)
             try:
                 valid = model.IsYes(resp)
+            except (AttributeError, ValueError):
+                self.loop.send(('error', 'Invalid response.'))
+                error = True
+        if error:
+            self.loop.send(('error', ''))
+        return valid
+
+    def bet_prompt(self, bet_min: int, bet_max: int) -> model.Bet:
+        """Ask user for a bet.."""
+        prompt = f'How much do you wish to bet? [{bet_min}-{bet_max}]'
+        default = str(bet_min)
+        error = False
+        valid = None
+        while not valid:
+            resp = self.loop.send(('input_multichar', prompt, default))
+            try:
+                valid = model.Bet(resp, bet_max, bet_min)
             except ValueError:
-                pass
+                self.loop.send(('error', 'Invalid response.'))
+                error = True
+        if error:
+            self.loop.send(('error', ''))
         return valid
 
     def doubledown_prompt(self) -> model.IsYes:
@@ -296,11 +383,22 @@ class TableUI(game.EngineUI):
         default = 'y'
         return self._yesno_prompt(prompt, default)
 
-    def insure_prompt(self) -> model.IsYes:
+    def insure_prompt(self, insure_max: int) -> model.Bet:
         """Ask user if they want to insure."""
-        prompt = 'Buy insurance?'
-        default = 'y'
-        return self._yesno_prompt(prompt, default)
+        prompt = f'How much insurance do you want? [0-{insure_max}]'
+        default = '0'
+        error = False
+        valid = None
+        while not valid:
+            resp = self.loop.send(('input_multichar', prompt, default))
+            try:
+                valid = model.Bet(resp, insure_max, 0)
+            except ValueError:
+                self.loop.send(('error', 'Invalid response.'))
+                error = True
+        if error:
+            self.loop.send(('error', ''))
+        return valid
 
     def nextgame_prompt(self) -> model.IsYes:
         """Ask user if they want to play another round."""
@@ -521,6 +619,13 @@ class TableUI(game.EngineUI):
         """Player ties."""
         self._update_bet(player, '', f'Ties {bet}.', True)
 
+    def update_count(self, count):
+        """Update the running card count in the UI."""
+        status = {
+            'Count': f'{count}'
+        }
+        self.loop.send(('update_status', status))
+
     def wins(self, player, bet):
         """Player wins."""
         self._update_bet(player, '', f'Wins {bet}.')
@@ -530,94 +635,124 @@ class TableUI(game.EngineUI):
         self._update_bet(player, '', f'Wins {bet}.', True)
 
 
-# Command scripts.
-def dealer_only():
-    ui = LogUI()
-    g = game.Engine(ui=ui)
-    loop = game.main(g)
-    play = next(loop)
-    while play:
-        play = loop.send(play)
+# Command line mainline.
+def parse_cli() -> argparse.Namespace:
+    """Parse the command line options used to invoke the game."""
+    p = argparse.ArgumentParser(
+        prog='blackjack',
+        description='Yet another Python implementation of blackjack.'
+    )
+    p.add_argument(
+        '-a', '--automated_players_only',
+        help='All users will be computer players.',
+        action='store_true',
+    )
+    p.add_argument(
+        '-b', '--buyin',
+        help='The buyin amount for each hand.',
+        action='store',
+        type=int,
+        default=20
+    )
+    p.add_argument(
+        '-c', '--chips',
+        help='Number of starting chips for the user.',
+        action='store',
+        type=int,
+        default=200
+    )
+    p.add_argument(
+        '-C', '--cut_deck',
+        help='Cut cards from bottom of the deck to make counting harder.',
+        action='store_true',
+    )
+    p.add_argument(
+        '-d', '--decks',
+        help='Number of standard decks to build the deck from.',
+        action='store',
+        type=int,
+        default=6
+    )
+    p.add_argument(
+        '-f', '--file',
+        help='Restore the save from the given file.',
+        action='store',
+        type=str
+    )
+    p.add_argument(
+        '-K', '--count_cards',
+        help='Display running count in the UI.',
+        action='store_true'
+    )
+    p.add_argument(
+        '-L', '--use_logui',
+        help='Use logging interface rather than table.',
+        action='store_true'
+    )
+    p.add_argument(
+        '-p', '--players',
+        help='Number of computer players.',
+        action='store',
+        type=int,
+        default=4
+    )
+    p.add_argument(
+        '-s', '--save_file',
+        help='Set the name of the save file.',
+        action='store',
+        type=str,
+        default='save.json'
+    )
+    return p.parse_args()
 
 
-def one_player():
-    ui = LogUI()
-    play = True
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    deck.random_cut()
+def build_game(args: argparse.Namespace) -> game.Engine:
+    """Build the game from the given arguments."""
+    # Restore from save file.
+    if args.file:
+        engine = game.Engine.load(args.file.lstrip())
+        seats = 1 + len(engine.playerlist)
+        engine.ui = TableUI(seats=seats, show_status=args.count_cards)
+        return engine
+
+    # Create dealer and players.
     dealer = players.Dealer(name='Dealer')
-    player = players.AutoPlayer(name='Player', chips=200)
-    g = game.Engine(deck, dealer, (player,), ui=ui, buyin=2)
-    loop = game.main(g)
-    play = next(loop)
-    while play:
-        play = loop.send(play)
+    playerlist = [
+        players.make_player(bet=args.buyin)
+        for _ in range(args.players)
+    ]
+    if not args.automated_players_only:
+        user = players.UserPlayer(name='You', chips=args.chips)
+        playerlist.append(user)
+
+    # Build the UI.
+    if args.use_logui:
+        ui: game.EngineUI = LogUI()
+    else:
+        seats = 1 + len(playerlist)
+        ui = TableUI(seats=seats, show_status=args.count_cards)
+
+    # Build and return the game.
+    return game.Engine(
+        dealer=dealer,
+        playerlist=playerlist,
+        ui=ui,
+        buyin=args.buyin,
+        save_file=args.save_file.lstrip(),
+        deck_size=args.decks,
+        deck_cut=args.cut_deck,
+        running_count=args.count_cards
+    )
 
 
-def two_player():
-    p1 = players.AutoPlayer(name='John', chips=200)
-    p2 = players.BetterPlayer(name='Michael', chips=200)
-    ui = LogUI()
-    play = True
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    deck.random_cut()
-    dealer = players.Dealer(name='Dealer')
-    g = game.Engine(deck, dealer, (p1, p2,), ui=ui, buyin=2)
-    loop = game.main(g)
-    play = next(loop)
-    while play:
-        play = loop.send(play)
+def main() -> None:
+    # Build the game.
+    args = parse_cli()
+    engine = build_game(args)
 
-
-def three_player():
-    p1 = players.AutoPlayer(name='John', chips=200)
-    p2 = players.BetterPlayer(name='Michael', chips=200)
-    p3 = players.NeverPlayer(name='Graham', chips=200)
-    ui = TableUI(seats=4)
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    deck.random_cut()
-    dealer = players.Dealer(name='Dealer')
-    g = game.Engine(deck, dealer, (p1, p2, p3,), ui=ui, buyin=2)
-    loop = game.main(g)
-    play = next(loop)
-    while play:
-        play = loop.send(play)
-
-
-def four_player():
-    p1 = players.AutoPlayer(name='John', chips=200)
-    p2 = players.BetterPlayer(name='Michael', chips=200)
-    p3 = players.NeverPlayer(name='Graham', chips=200)
-    p4 = players.RandomPlayer(name='Terry', chips=200)
-    ui = TableUI(seats=5)
-    play = True
-    deck = cards.Deck.build(6)
-    deck.shuffle()
-    deck.random_cut()
-    dealer = players.Dealer(name='Dealer')
-    g = game.Engine(deck, dealer, (p1, p2, p3, p4), ui=ui, buyin=2)
-    loop = game.main(g)
-    play = next(loop)
-    while play:
-        play = loop.send(play)
-
-
-def dui():
+    # Play the game.
     try:
-        ui = TableUI(seats=6)
-        deck = cards.Deck.build(6)
-        deck.shuffle()
-        deck.random_cut()
-        dealer = players.Dealer(name='Dealer')
-        playerlist = []
-        for index in range(4):
-            playerlist.append(players.make_player(bet=20))
-        playerlist.append(players.UserPlayer(name='You', chips=200))
-        g = game.Engine(deck, dealer, playerlist, ui=ui, buyin=20)
-        loop = game.main(g)
+        loop = game.main(engine)
         play = next(loop)
         while play:
             play = loop.send(play)
@@ -627,87 +762,8 @@ def dui():
             fh.write(str(ex.args))
             tb_str = ''.join(tb.format_tb(ex.__traceback__))
             fh.write(tb_str)
-        ui.end()
+        engine.ui.end()
         raise ex
-
-
-def test():
-    player = players.make_player()
-    print(player.asdict())
-
-
-# Command line mainline.
-def main():
-    p = argparse.ArgumentParser(description='Blackjack')
-    p.add_argument('-d', '--dealer_only', help='Just a dealer game.',
-                   action='store_true')
-    p.add_argument('-1', '--one_player', help='One player game.',
-                   action='store_true')
-    p.add_argument('-2', '--two_player', help='Two player game.',
-                   action='store_true')
-    p.add_argument('-3', '--three_player', help='Three player game.',
-                   action='store_true')
-    p.add_argument('-4', '--four_player', help='Four player game.',
-                   action='store_true')
-    p.add_argument('-D', '--dui', help='Dynamic UI game.',
-                   action='store_true')
-    p.add_argument('-p', '--players', help='Number of random players.',
-                   action='store', type=int)
-    p.add_argument('-u', '--user', help='Add a human player.',
-                   action='store_true')
-    p.add_argument('-c', '--chips', help='Number of starting chips.',
-                   action='store', type=int, default=200)
-    p.add_argument('-C', '--cost', help='Hand bet amount.',
-                   action='store', type=int, default=20)
-    p.add_argument('-t', '--test', help='Run current test.',
-                   action='store_true')
-    args = p.parse_args()
-
-    if args.dealer_only:
-        dealer_only()
-    elif args.one_player:
-        one_player()
-    elif args.two_player:
-        two_player()
-    elif args.three_player:
-        three_player()
-    elif args.four_player:
-        four_player()
-    elif args.dui:
-        dui()
-    elif args.test:
-        test()
-    else:
-        if args.chips > 9999999:
-            reason = 'Cannot start with more than 9999999 chips.'
-            raise ValueError(reason)
-        if args.cost > 99999999:
-            reason = 'Bets cannot be more than 99999999.'
-            raise ValueError(reason)
-
-        playerlist = []
-        for _ in range(int(args.players)):
-            playerlist.append(players.make_player(args.cost))
-        if args.user:
-            playerlist.append(players.UserPlayer(name='You', chips=args.chips))
-
-        deck = cards.Deck.build(6)
-        deck.shuffle()
-        deck.random_cut()
-        ui = TableUI(seats=len(playerlist) + 1)
-        g = game.Engine(deck, None, playerlist, ui, args.cost)
-        try:
-            loop = game.main(g)
-            play = next(loop)
-            while play:
-                play = loop.send(play)
-        except Exception as ex:
-            with open('exception.log', 'w') as fh:
-                fh.write(str(ex.args))
-                tb_str = ''.join(tb.format_tb(ex.__traceback__))
-                fh.write(tb_str)
-            ui.end()
-            raise ex
 
 
 if __name__ == '__main__':

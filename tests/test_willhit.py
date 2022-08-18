@@ -17,7 +17,7 @@ from blackjack import cards, cli, players, game, model, willhit
 class will_hit_dealerTestCase(ut.TestCase):
     def test_exists(self):
         """A function named will_hit_dealer() should exist."""
-        names = [item[0] for item in inspect.getmembers(players)]
+        names = [item[0] for item in inspect.getmembers(willhit)]
         self.assertTrue('will_hit_dealer' in names)
 
     def test_is_will_hit(self):
