@@ -116,6 +116,8 @@ class TerminalController:
 
 
 class Table(TerminalController):
+    _header: tuple[str, ...]
+
     """Control a table displayed in the terminal."""
     def __init__(self,
                  title:str,
@@ -146,7 +148,6 @@ class Table(TerminalController):
         """
         self._data: list = []
         self._rows = 0
-        self._header_rows = 4
         self._table_bottom_rows = 1
         self._status_rows = 0
 
@@ -210,6 +211,30 @@ class Table(TerminalController):
         self._data = value
 
     @property
+    def header(self) -> tuple[str, ...]:
+        """Build the header lines for the UI."""
+        try:
+            return self._header
+
+        except AttributeError:
+            # Construct the table column labels.
+            widths_fmt = ['{:<' + str(w) + '}' for w in self._field_widths]
+            label_fmt = ' ' + ' '.join(widths_fmt)
+            names = [field.name for field in self.fields]
+            labels = label_fmt.format(*names)
+
+            # Construct the header table.
+            header = []
+            header.append(self.term.bold + self.title)
+            header.append('')
+            header.append(labels)
+            header.append(self._top)
+
+            # Return the table of header lines.
+            self._header = tuple(header)
+            return self._header
+
+    @property
     def _bot(self):
         """The bottom frame of the data table."""
         fields = [width * self.frame.bot for width in self._field_widths]
@@ -229,12 +254,32 @@ class Table(TerminalController):
         return getattr(self, f'__{cls}_field_widths')
 
     @property
+    def _header_rows(self):
+        return len(self.header)
+
+    @property
     def _top(self):
         """The top frame of the data table."""
         fields = [width * self.frame.top for width in self._field_widths]
         middle = self.frame.mtop.join(fields)
         return self.frame.rtop + middle + self.frame.ltop
 
+    @property
+    def _y_error(self):
+        """The row number for the error field."""
+        return self._y_input + 1
+
+    @property
+    def _y_input(self):
+        """The row number for the input field."""
+        return (
+            self._header_rows
+            + len(self.data)
+            + self._table_bottom_rows
+            + self._status_rows
+        )
+
+    # Private methods.
     def _clear_footer(self) -> None:
         """Clear the bottom of the table and the footer."""
         bottom_table_row = self.rows + self._header_rows
@@ -266,6 +311,11 @@ class Table(TerminalController):
         fmt = self.fields[col].fmt
         print(self.term.move(y, x) + fmt.format(text))
 
+    def _draw_header(self) -> None:
+        """Draw the header lines."""
+        for y, line in enumerate(self.header):
+            print(self.term.move(y, 1) + line)
+
     def _draw_status(self):
         """Draw the status information."""
         y_start = len(self.data) + self._header_rows + self._table_bottom_rows
@@ -281,13 +331,6 @@ class Table(TerminalController):
         y = len(self.data) + self._header_rows
         print(self.term.move(y, 0) + self._bot)
 
-    def _draw_table_headers(self):
-        """Draw the column headers in the UI."""
-        widths_fmt = ['{:<' + str(w) + '}' for w in self._field_widths]
-        head_fmt = ' ' + ' '.join(widths_fmt)
-        headers = [field.name for field in self.fields]
-        print(self.term.move(2, 0) + head_fmt.format(*headers))
-
     def _draw_table(self):
         """Draw a row in the table."""
         fields = self.frame.mver.join(field.fmt for field in self.fields)
@@ -296,15 +339,7 @@ class Table(TerminalController):
             y = index + self._header_rows
             print(self.term.move(y, 0) + row_fmt.format(*self.data[index]))
 
-    def _draw_table_top(self):
-        """Draw the top of the frame for the data table."""
-        top_row = self._header_rows - 1
-        print(self.term.move(top_row, 0) + self._top)
-
-    def _draw_title(self):
-        """Draw the title in the UI."""
-        print(self.term.move(0, 0) + self.term.bold + self.title)
-
+    # Public methods.
     def clear(self):
         """Clear the UI."""
         footer_rows = 2
@@ -314,13 +349,17 @@ class Table(TerminalController):
 
     def draw(self):
         """Draw the entire UI."""
-        self._draw_title()
-        self._draw_table_headers()
-        self._draw_table_top()
+        self._draw_header()
         self._draw_table()
         self._draw_table_bottom()
         if self.show_status:
             self._draw_status()
+
+    def error(self, msg: str) -> None:
+        """Write an error to the UI."""
+        y = self._y_error
+        fmt = '{:<' + str(self.term.width) + '}'
+        print(self.term.move(y, 1) + fmt.format(msg))
 
     def input(
             self,
@@ -335,12 +374,7 @@ class Table(TerminalController):
         :return: The user's input.
         :rtype: str
         """
-        y = (
-            len(self.data)
-            + self._header_rows
-            + self._table_bottom_rows
-            + self._status_rows
-        )
+        y = self._y_input
         fmt = '{:<' + str(self.term.width) + '}'
         print(self.term.move(y, 1) + fmt.format(prompt))
         with self.term.cbreak():

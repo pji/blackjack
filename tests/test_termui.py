@@ -83,7 +83,7 @@ class BoxTestCase(ut.TestCase):
 
 
 class TableTestCase(ut.TestCase):
-    topleft = '\x1b[1;1H'
+    topleft = '\x1b[1;2H'
     bold = '\x1b[1m'
     loc = '\x1b[{};{}H'
 
@@ -329,8 +329,9 @@ class TableTestCase(ut.TestCase):
         frame = '\u2500' * 23
         expected = [
             call(self.topleft + self.bold + title),
-            call(self.loc.format(3, 1) + head),
-            call(self.loc.format(4, 1) + frame),
+            call(self.loc.format(2, 2) + ''),
+            call(self.loc.format(3, 2) + head),
+            call(self.loc.format(4, 2) + frame),
             call(self.loc.format(5, 1) + row.format(*data[0])),
             call(self.loc.format(6, 1) + row.format(*data[1])),
             call(self.loc.format(7, 1) + frame),
@@ -344,7 +345,7 @@ class TableTestCase(ut.TestCase):
         del main
         actual = mock_print.mock_calls
 
-        self.assertEqual(expected, actual)
+        self.assertListEqual(expected, actual)
 
     @patch('blackjack.termui.print')
     def test_draw_with_status(self, mock_print):
@@ -363,8 +364,9 @@ class TableTestCase(ut.TestCase):
         status = 'Count: 0'
         expected = [
             call(self.topleft + self.bold + title),
-            call(self.loc.format(3, 1) + head),
-            call(self.loc.format(4, 1) + frame),
+            call(self.loc.format(2, 2) + ''),
+            call(self.loc.format(3, 2) + head),
+            call(self.loc.format(4, 2) + frame),
             call(self.loc.format(5, 1) + row.format(*data[0])),
             call(self.loc.format(6, 1) + row.format(*data[1])),
             call(self.loc.format(7, 1) + frame),
@@ -382,6 +384,40 @@ class TableTestCase(ut.TestCase):
         actual = mock_print.mock_calls
 
         self.assertListEqual(expected, actual)
+
+    # Table.error() tests.
+    @patch('blackjack.termui.print')
+    def test_error(self, mock_print):
+        """When called with a message, error() should write the error
+        to the UI.
+        """
+        # Set up for expected value.
+        msg = 'spam'
+        fmt = '{:<80}'
+
+        # Expected value.
+        exp = [
+            call(self.loc.format(8, 2) + fmt.format(msg)),
+        ]
+
+        # Test data and state.
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields)
+        main = termui.main(ctlr)
+        next(main)
+
+        # Run test.
+        act_resp = main.send(('error', msg))
+
+        # Test tear down and gather actuals.
+        del main
+        act = mock_print.mock_calls[-1:]
+
+        # Determine test result.
+        self.assertEqual(exp, act)
 
     # Table.input() tests.
     @patch('blessed.Terminal.inkey')
