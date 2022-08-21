@@ -27,7 +27,9 @@ Still To Do
 The following features are planned for the 0.1.0 release:
 
 *   x Allow running as a console script.
-*   Handle the additional bet when splitting the hand.
+*   x Handle the additional bet when splitting the hand.
+    *   x Only allow splitting when player has chips for the bet.
+    *   x Take the chips for the bet from the player.
 *   End round immediately if dealer has natural blackjack.
     *   Dealer checks if face-up card is a 10, J, Q, K, or A.
     *   If dealer has a natural, skip to settlement.

@@ -439,13 +439,15 @@ class Engine(BaseEngine):
         :return: Whether the hand was split.
         :rtype: bool
         """
-        if (hand[0].rank == hand[1].rank
+        if (
+                hand[0].rank == hand[1].rank
                 and player.will_split(hand, self)
-                and player.chips >= self.buyin):
+                and player.chips >= player.bet
+        ):
             new_hand1 = Hand([hand[0],])
             new_hand2 = Hand([hand[1],])
             player.hands = (new_hand1, new_hand2)
-            player.chips -= self.buyin
+            player.chips -= player.bet
             self.ui.splits(player, 20)
             return True
         return False

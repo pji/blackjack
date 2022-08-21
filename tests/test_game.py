@@ -790,53 +790,6 @@ class EngineTestCase(ut.TestCase):
 
         self.assertEqual(expected, actual)
 
-    # Engine._split() tests.
-    def test__split_cannot_split(self):
-        """Given a hand and a player, if the hand cannot be split,
-        _split() should not split it and return false.
-        """
-        expected_h1 = (cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(2, 1),
-        ]),)
-        expected_return = False
-
-        p1 = players.AutoPlayer(copy(expected_h1), name='John')
-        playerlist = [p1,]
-        g = game.Engine(None, None, playerlist)
-        actual_return = g._split(expected_h1[0], p1)
-        actual_h1 = p1.hands
-
-        self.assertEqual(expected_h1, actual_h1)
-        self.assertEqual(expected_return, actual_return)
-
-    def test__split_does_split(self):
-        """Given a hand and a player, if the hand can be split and the
-        player says to split, the hand should be split, and the method
-        should return True.
-        """
-        expected_hands = (
-            cards.Hand([cards.Card(11, 3),]),
-            cards.Hand([cards.Card(11, 1),]),
-        )
-        expected_return = True
-        exp_chips = 0
-
-        h1 = [cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(11, 1),
-        ]),]
-        p1 = players.AutoPlayer(copy(h1), 'John', 20)
-        playerlist = [p1,]
-        g = game.Engine(None, None, playerlist, None, 20)
-        actual_return = g._split(h1[0], p1)
-        actual_hands = p1.hands
-        act_chips = p1.chips
-
-        self.assertEqual(expected_hands, actual_hands)
-        self.assertEqual(expected_return, actual_return)
-        self.assertEqual(exp_chips, act_chips)
-
     @patch('blackjack.game.BaseUI.splits')
     def test__split_with_ui(self, mock_splits):
         """If _split() splits the hand, it should send the event,
@@ -2073,6 +2026,99 @@ class EngineTestCase(ut.TestCase):
             new_player,
             engine
         )
+
+
+class SplittingRulesTestCase(ut.TestCase):
+    """Unit tests for the splitting rule in blackjack."""
+    def setUp(self):
+        self.player = players.AutoPlayer(name='John')
+        playerlist = [self.player,]
+        self.engine = game.Engine(playerlist=playerlist)
+
+    def tearDown(self):
+        self.engine = None
+        self.player = None
+
+    def test__can_split_if_doubles(self):
+        """Given a hand with two cards of the same value and a player
+        who will split the hand, Engine._split() will split the hand,
+        take the bet from the player, and return True.
+        """
+        # Expected values.
+        expected_hands = (
+            cards.Hand([cards.Card(11, 3),]),
+            cards.Hand([cards.Card(11, 1),]),
+        )
+        expected_return = True
+        exp_chips = 0
+
+        # Test data and state.
+        init_hands = [cards.Hand([
+            expected_hands[0][0],
+            expected_hands[1][0],
+        ]),]
+        self.player.bet = 50
+        self.player.chips = self.player.bet
+        self.player.hands = init_hands
+
+        # Run test and gather actuals.
+        actual_return = self.engine._split(init_hands[0], self.player)
+        actual_hands = self.player.hands
+        act_chips = self.player.chips
+
+        # Determine test results.
+        self.assertEqual(expected_hands, actual_hands)
+        self.assertEqual(expected_return, actual_return)
+        self.assertEqual(exp_chips, act_chips)
+
+    def test__cannot_split_if_not_doubles(self):
+        """Given a hand with cards with different values and a player,
+        _split() should not split the hand and return false.
+        """
+        # Expected values.
+        expected_h1 = (cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(2, 1),
+        ]),)
+        expected_return = False
+
+        # Test data and state.
+        self.player.hands = expected_h1
+
+        # Run test and gather actuals.
+        actual_return = self.engine._split(expected_h1[0], self.player)
+        actual_h1 = self.player.hands
+
+        # Determine test result.
+        self.assertEqual(expected_h1, actual_h1)
+        self.assertEqual(expected_return, actual_return)
+
+    def test__cannot_split_if_cannot_cover_bet(self):
+        """Given a hand with cards with different values and a player
+        without enough chips to cover the additional bet, _split()
+        should not split the hand and return false.
+        """
+        # Expected values.
+        expected_hands = (cards.Hand([
+            cards.Card(11, 3),
+            cards.Card(2, 1),
+        ]),)
+        expected_return = False
+        expected_chips = 0
+
+        # Test data and state.
+        self.player.bet = expected_chips + 1
+        self.player.chips = expected_chips
+        self.player.hands = expected_hands[:]
+
+        # Run test and gather actuals.
+        actual_return = self.engine._split(expected_hands[0], self.player)
+        actual_hands = self.player.hands
+        actual_chips = self.player.chips
+
+        # Determine test result.
+        self.assertEqual(expected_hands, actual_hands)
+        self.assertEqual(expected_return, actual_return)
 
 
 class mainTestCase(ut.TestCase):
