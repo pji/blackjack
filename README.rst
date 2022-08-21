@@ -14,8 +14,26 @@ of the repository::
     python3 -m blackjack
 
 
+The Rules
+---------
+The blackjack rules used for a default game of blackjack come from
+`Blackjack—Card Game Rules`_ by Bicycle Cards.
+
+.. _`Blackjack—Card Game Rules`: https://bicyclecards.com/how-to-play/blackjack/
+
+
 Still To Do
 -----------
+The following features are planned for the 0.1.0 release:
+
+*   Allow running as a console script.
+*   Handle the additional bet when splitting the hand.
+*   End round immediately if dealer has natural blackjack.
+    *   Dealer checks if face-up card is a 10, J, Q, K, or A.
+    *   If dealer has a natural, skip to settlement.
+    *   If player has a natural, they get their bet back.
+    *   All other players lose.
+
 The following features are possible for future versions:
 
 * Separate number of seats from number of players.
@@ -31,8 +49,17 @@ The following features are possible for future versions:
 	* Allow casino to react to players.
 	* Add casino catching and removing card counting players.
 	* Allow players to join a table partway through the shoe.
+* Add optional rules.
+    * Allow splitting more than once.
+    * Allow resplitting aces.
+    * Allow early surrender.
+    * Allow dealer hitting soft 17.
+    * Allow 6:5 payout on player blackjack.
+    * Allow doubling only on hard totals of 9, 10, or 11.
+    * Allow side bets.
+    * Add late surrender.
+    * Add doubling after split.
 * Build UI for saving and restoring game state.
-* Allow splitting more than once.
 * Add ability to configure by file.
 * Allow multiple human players to play in single game over network.
 * Add "How-To" to help.
