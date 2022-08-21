@@ -26,7 +26,7 @@ Still To Do
 -----------
 The following features are planned for the 0.1.0 release:
 
-*   Allow running as a console script.
+*   x Allow running as a console script.
 *   Handle the additional bet when splitting the hand.
 *   End round immediately if dealer has natural blackjack.
     *   Dealer checks if face-up card is a 10, J, Q, K, or A.
