@@ -2122,6 +2122,25 @@ class SplittingRulesTestCase(ut.TestCase):
 
 
 class mainTestCase(ut.TestCase):
+    def setUp(self):
+        self.dealer = players.Dealer()
+        self.dealer.hands = [
+            cards.Hand([
+                cards.Card(8, 3),
+                cards.Card(12, 1),
+            ]),
+        ]
+        self.playerlist = [
+            players.AutoPlayer(name='spam'),
+            players.AutoPlayer(name='eggs'),
+        ]
+        self.save = 'bacon'
+
+    def tearDown(self):
+        self.dealer = None
+        self.players = None
+        self.save = None
+
     def test_init_with_params(self):
         """main() should accept the following parameters: engine,
         is_interactive.
@@ -2136,19 +2155,20 @@ class mainTestCase(ut.TestCase):
         """main() should call each phase of a backjack game in the
         Engine object.
         """
-        playerlist = [
-            players.AutoPlayer(name='spam'),
-            players.AutoPlayer(name='eggs'),
-        ]
+        # Expected values.
         exp = [
-            call(playerlist=playerlist, buyin=2, save_file='bacon'),
+            call(
+                dealer=self.dealer,
+                playerlist=self.playerlist,
+                save_file=self.save
+            ),
             call().ui.start(is_interactive=True),
             call().new_game(),
             call().bet(),
             call().deal(),
             call().play(),
             call().end(),
-            call().save('bacon'),
+            call().save(self.save),
             call().ui.nextgame_prompt(),
             call().ui.cleanup(),
             call().ui.nextgame_prompt().value.__bool__(),
@@ -2156,19 +2176,90 @@ class mainTestCase(ut.TestCase):
             call().deal(),
             call().play(),
             call().end(),
-            call().save('bacon'),
+            call().save(self.save),
             call().ui.nextgame_prompt(),
         ]
 
-        g = game.Engine(playerlist=playerlist, buyin=2, save_file='bacon')
-        g.save_file = 'bacon'
-        loop = game.main(g)
+        # Test data and state.
+        engine = game.Engine(
+            dealer=self.dealer,
+            playerlist=self.playerlist,
+            save_file=self.save
+        )
+        engine.dealer = self.dealer
+        engine.save_file = self.save
+
+        # Run test.
+        loop = game.main(engine)
         result = next(loop)
         result = loop.send(result)
         _ = loop.send(result)
+
+        # Gather actuals.
         act = mock_engine.mock_calls
 
+        # Determine test results.
         self.assertListEqual(exp, act)
+
+    @patch('blackjack.game.Engine')
+    def test_call_game_phases_with_dealer_blackjack(self, mock_engine):
+        """main() should call each phase of a backjack game in the
+        Engine object.
+        """
+        # Test data and state.
+        self.dealer.hands = [
+            cards.Hand([
+                cards.Card(1, 3, cards.UP),
+                cards.Card(12, 1, cards.DOWN),
+            ]),
+        ]
+        engine = game.Engine(
+            dealer=self.dealer,
+            playerlist=self.playerlist,
+            save_file=self.save
+        )
+        engine.dealer = self.dealer
+        engine.save_file = self.save
+
+        # Expected values.
+        exp = [
+            call(
+                dealer=self.dealer,
+                playerlist=self.playerlist,
+                save_file=self.save
+            ),
+            call().ui.start(is_interactive=True),
+            call().new_game(),
+            call().bet(),
+            call().deal(),
+            call().ui.flip(self.dealer, self.dealer.hands[0]),
+            call().end(),
+            call().save(self.save),
+            call().ui.nextgame_prompt(),
+            call().ui.cleanup(),
+            call().ui.nextgame_prompt().value.__bool__(),
+            call().bet(),
+            call().deal(),
+            call().ui.flip(self.dealer, self.dealer.hands[0]),
+            call().end(),
+            call().save(self.save),
+            call().ui.nextgame_prompt(),
+        ]
+        exp_facing = [cards.UP, cards.UP]
+
+        # Run test.
+        loop = game.main(engine)
+        result = next(loop)
+        result = loop.send(result)
+        _ = loop.send(result)
+
+        # Gather actuals.
+        act = mock_engine.mock_calls
+        act_facing = [c.facing for c in engine.dealer.hands[0]]
+
+        # Determine test results.
+        self.assertListEqual(exp, act)
+        self.assertListEqual(exp_facing, act_facing)
 
 
 class validate_uiTestCase(ut.TestCase):

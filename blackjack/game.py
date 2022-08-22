@@ -646,7 +646,13 @@ def main(engine: Engine, is_interactive: bool = True) -> Generator:
     while play:
         engine.bet()
         engine.deal()
-        engine.play()
+        if not engine.dealer.hands[0].is_blackjack():
+            engine.play()
+        else:
+            for card in engine.dealer.hands[0]:
+                if card.facing == DOWN:
+                    card.flip()
+            engine.ui.flip(engine.dealer, engine.dealer.hands[0])
         engine.end()
         engine.save(engine.save_file)
         play = yield engine.ui.nextgame_prompt().value

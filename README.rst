@@ -30,11 +30,11 @@ The following features are planned for the 0.1.0 release:
 *   x Handle the additional bet when splitting the hand.
     *   x Only allow splitting when player has chips for the bet.
     *   x Take the chips for the bet from the player.
-*   End round immediately if dealer has natural blackjack.
-    *   Dealer checks if face-up card is a 10, J, Q, K, or A.
-    *   If dealer has a natural, skip to settlement.
-    *   If player has a natural, they get their bet back.
-    *   All other players lose.
+*   x End round immediately if dealer has natural blackjack.
+    *   x Dealer checks if face-up card is a 10, J, Q, K, or A.
+    *   x If dealer has a natural, skip to settlement.
+    *   x If player has a natural, they get their bet back.
+    *   x All other players lose.
 
 The following features are possible for future versions:
 
