@@ -26,23 +26,22 @@ def loopback(value):
 
 
 # Test cases.
-class EngineTestCase(ut.TestCase):
-    def test_exists(self):
-        """The class Game should exist in the game module."""
-        names = [item[0] for item in inspect.getmembers(game)]
-        self.assertTrue('Engine' in names)
+class EngineInitTestCase(ut.TestCase):
+    def assertDictEqual(self, exp, act):
+        try:
+            super().assertDictEqual(exp, act)
+        except AssertionError:
+            self.assertSetEqual(set(exp.keys()), set(act.keys()))
+            for key in exp:
+                e = (key, exp[key])
+                a = (key, act[key])
+                self.assertEqual(e, a)
 
-    # Engine.__init__() tests.
-    @patch('blackjack.cards.shuffle', side_effect=loopback)
-    def test_default_attrs(self, _):
-        """When given no parameters, use the default parameters for
-        the new object.
-        """
-        # Expected values.
-        exp = {
-            'buyin': 0,
+    def setUp(self):
+        self.default_attrs = {
             'bet_max': 500,
             'bet_min': 20,
+            'buyin': 0,
             'card_count': 0,
             'deck': cards.Deck.build(6),
             'deck_cut': False,
@@ -51,169 +50,125 @@ class EngineTestCase(ut.TestCase):
             'playerlist': (),
             'running_count': False,
             'save_file': 'save.json',
+            'ui': game.BaseUI(),
         }
-        exp_ui_type = game.BaseUI
 
-        # Run test.
-        engine = game.Engine()
+    def tearDown(self):
+        self.default_attrs = None
 
-        # Extract actuals.
+    @patch('blackjack.cards.randrange', return_value=65)
+    @patch('blackjack.cards.shuffle', side_effect=loopback)
+    def attr_test(self, params, mock_shuffle, mock_rand):
+        """Test to ensure the game.Engine's attributes match
+        expectations.
+        """
+        exp = self.default_attrs
+        for key in params:
+            exp[key] = params[key]
+
+        # Some adjustments to the expectations to account for behavior
+        # within __init__().
+        if 'deck' in params:
+            exp['deck_size'] = params['deck'].size
+        if 'deck_size' in params and 'deck' not in params:
+            exp['deck'] = cards.Deck.build(params['deck_size'])
+        if 'deck_cut' in params:
+            exp['deck'] = cards.Deck.build(exp['deck_size'])
+            exp['deck'].random_cut()
+
+        engine = game.Engine(**params)
         act = engine._asdict()
-        del act['class']
-        act_ui = engine.ui
-
-        # Determine test result.
-        for key in exp:
-            exp_key = (key, exp[key])
-            act_key = (key, act[key])
-            self.assertEqual(exp_key, act_key)
         self.assertDictEqual(exp, act)
-        self.assertIsInstance(act_ui, exp_ui_type)
+
+    def test_exists(self):
+        """The class Game should exist in the game module."""
+        names = [item[0] for item in inspect.getmembers(game)]
+        self.assertTrue('Engine' in names)
+
+    # Engine.__init__() tests.
+    def test_default_attrs(self):
+        """When given no parameters, use the default parameters for
+        the new object.
+        """
+        params = {}
+        self.attr_test(params)
 
     def test_deck_given(self):
         """If a deck is given, it should be stored in the deck
         attribute.
         """
-        expected = cards.Deck.build()
-
-        g = game.Engine(expected)
-        actual = g.deck
-
-        self.assertTrue(expected is actual)
+        params = {
+            'deck': cards.Deck.build(),
+        }
+        self.attr_test(params)
 
     def test_deck_size_given(self):
         """Given a deck size and no deck and no random cut, game.Engine
         should construct a deck of the given size.
         """
-        # Expected values.
-        expected_cls = cards.Deck
-        expected_len = 52 * 3
+        params = {
+            'deck_size': 3,
+        }
+        self.attr_test(params)
 
-        # Test data and state.
-        deck_size = 3
-
-        # Run test.
-        g = game.Engine(deck_size=deck_size)
-
-        # Gather actual data.
-        actual_cls = g.deck
-        actual_len = len(g.deck)
-
-        # Determine test results
-        self.assertTrue(isinstance(actual_cls, expected_cls))
-        self.assertEqual(expected_len, actual_len)
-
-    @patch('blackjack.cards.randrange', return_value=65)
-    def test_deck_cut_given(self, _):
+    def test_deck_cut_given(self):
         """If the deck_cut parameter is true, the deck should
         be cut.
         """
-        # Expected values.
-        expected_cls = cards.Deck
-        expected_len = 52 * 6 - 65
-
-        # Test data and state.
-        deck_cut = True
-
-        # Run test.
-        g = game.Engine(deck_cut=deck_cut)
-
-        # Get actuals.
-        actual_cls = g.deck
-        actual_len = len(g.deck)
-
-        # Determine test results.
-        self.assertIsInstance(actual_cls, expected_cls)
-        self.assertEqual(expected_len, actual_len)
+        params = {
+            'deck_cut': True,
+        }
+        self.attr_test(params)
 
     def test_dealer_given(self):
         """If given a dealer, the game should use it."""
-        expected = 'Eric'
-
-        dealer = players.Dealer(name=expected)
-        g = game.Engine(dealer=dealer)
-        actual = g.dealer.name
-
-        self.assertEqual(expected, actual)
-
-    def test_ui_default(self):
-        """If no UI is given, the game should create a _BaseUI
-        object.
-        """
-        expected = game.BaseUI
-
-        g = game.Engine()
-        actual = g.ui
-
-        self.assertTrue(isinstance(actual, expected))
+        params = {
+            'dealer': players.Dealer(name='Eric'),
+        }
+        self.attr_test(params)
 
     def test_ui_given(self):
         """If a UI is given, the game should use it."""
         class Spam(game.BaseUI):
             pass
-        expected = Spam
-
-        g = game.Engine(ui=Spam())
-        actual = g.ui
-
-        self.assertTrue(isinstance(actual, expected))
+        params = {
+            'ui': Spam()
+        }
+        self.attr_test(params)
 
     def test_playerlist_given(self):
         """If given a list of players, that list should be stored in
         the playerlist attribute.
         """
-        expecteds = (
-            players.Player(name='John'),
-            players.Player(name='Michael'),
-            players.Player(name='Graham'),
-        )
-
-        g = game.Engine(playerlist=expecteds)
-        actuals = g.playerlist
-
-        for expected, actual in zip_longest(expecteds, actuals):
-            self.assertTrue(expected is actual)
+        params = {
+            'playerlist': (
+                players.Player(name='John'),
+                players.Player(name='Michael'),
+                players.Player(name='Graham'),
+            ),
+        }
+        self.attr_test(params)
 
     def test_buyin_given(self):
         """If given a value for buyin, that value should be stored in
         the buyin attribute.
         """
-        expected = 500.00
-
-        g = game.Engine(buyin=expected)
-        actual = g.buyin
-
-        self.assertEqual(expected, actual)
-
-    def test_seats(self):
-        """On initiation of a Engine object, the value of the seats
-        attribute should be the length of the playerlist. This will
-        be used as the maximum number of players that can join the
-        game.
-        """
-        expected = 3
-
-        playerlist = [
-            players.Player(),
-            players.Player(),
-            players.Player(),
-        ]
-        g = game.Engine(playerlist=playerlist)
-        actual = g.seats
-
-        self.assertEqual(expected, actual)
+        params = {
+            'buyin': 500.00,
+        }
+        self.attr_test(params)
 
     def test_running_count_given(self):
         """If given a value for running_count, that value should be
         stored in the running_count attribute.
         """
-        expected = True
+        params = {
+            'running_count': True,
+        }
+        self.attr_test(params)
 
-        g = game.Engine(running_count=expected)
-        actual = g.running_count
 
-        self.assertEqual(expected, actual)
-
+class EngineTestCase(ut.TestCase):
     # Test Engine._ace_split_hit()
     def test__ace_split_hit(self):
         """Given a hand with an ace that had been split,

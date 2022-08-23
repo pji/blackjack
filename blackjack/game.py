@@ -37,6 +37,13 @@ class BaseUI(EngineUI):
     """A base class for UI classes. It demonstrates the UI API, and it
     serves as a silent UI for use in testing.
     """
+    def __eq__(self, other) -> bool:
+        # Since BaseUI doesn't have attributes, this is just an
+        # isinstance check.
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        return True
+
     # General operation methods.
     def end(self):
         """End the UI."""
@@ -275,7 +282,6 @@ class Engine(BaseEngine):
     def _asdict(self):
         """Return the object serialized as a dictionary."""
         return {
-            'class': self.__class__.__name__,
             'bet_max': self.bet_max,
             'bet_min': self.bet_min,
             'buyin': self.buyin,
@@ -287,6 +293,7 @@ class Engine(BaseEngine):
             'playerlist': self.playerlist,
             'running_count': self.running_count,
             'save_file': self.save_file,
+            'ui': self.ui,
         }
 
     def _build_deck(self):
@@ -625,10 +632,14 @@ class Engine(BaseEngine):
     def serialize(self):
         """Return the object serialized as a JSON string."""
         serial = self._asdict()
+        serial['class'] = self.__class__.__name__
         serial['deck'] = serial['deck'].serialize()
         serial['dealer'] = serial['dealer'].serialize()
-        serial['playerlist'] = [player.serialize()
-                                for player in serial['playerlist']]
+        serial['playerlist'] = [
+            player.serialize()
+            for player in serial['playerlist']
+        ]
+        del serial['ui']
         return dumps(serial)
 
 

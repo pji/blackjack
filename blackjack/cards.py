@@ -282,7 +282,11 @@ class Pile(MutableSequence):
 
     # Sequence protocol.
     def __getitem__(self, key):
-        return self.cards.__getitem__(key)
+        if isinstance(key, int):
+            return self.cards.__getitem__(key)
+        elif isinstance(key, slice):
+            cards = self.cards[key]
+            return self.__class__(cards)
 
     # MutableSequence protocol.
     def __setitem__(self, key, value):

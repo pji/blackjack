@@ -19,6 +19,22 @@ from blessed import Terminal
 from blackjack import cards, game, model, players, termui
 
 
+# Splash text.
+splash_title = (
+    '╔╗  ║   ╔═╗ ╔═╗ ║ ║',
+    '║║  ║   ║ ║ ║   ╠═╝',
+    '╠╩╗ ║   ╠═╣ ║   ╠═╗',
+    '║ ║ ║   ║ ║ ║   ║ ║',
+    '╚═╝ ╚══ ║ ║ ╚═╝ ║ ║',
+    '',
+    '    ║ ╔═╗ ╔═╗ ║ ║  ',
+    '    ║ ║ ║ ║   ╠═╝  ',
+    '    ║ ╠═╣ ║   ╠═╗  ',
+    '    ║ ║ ║ ║   ║ ║  ',
+    '  ╚═╝ ║ ║ ╚═╝ ║ ║  ',
+)
+
+
 # UI objects.
 class LogUI(game.BaseUI):
     tmp = '{:<15} {:<15} {:<}'

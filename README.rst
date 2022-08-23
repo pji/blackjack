@@ -35,6 +35,7 @@ The following features are planned for the 0.1.0 release:
     *   x If dealer has a natural, skip to settlement.
     *   x If player has a natural, they get their bet back.
     *   x All other players lose.
+*   Add opening splash screen.
 
 The following features are possible for future versions:
 
