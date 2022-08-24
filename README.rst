@@ -36,6 +36,8 @@ The following features are planned for the 0.1.0 release:
     *   x If player has a natural, they get their bet back.
     *   x All other players lose.
 *   Add opening splash screen.
+    *   Display splash screen.
+    *   Clear splash screen from TableUI before play begins.
 
 The following features are possible for future versions:
 

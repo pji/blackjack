@@ -97,6 +97,19 @@ class Box:
             raise ValueError(reason)
 
 
+# Terminal functions.
+def splash(text: Sequence[str]) -> None:
+    """Draw a splash screen in the terminal."""
+    term = Terminal()
+    y = term.height // 2 - len(text) // 2
+    for line in text:
+        x = term.width // 2 - len(line) // 2
+        print(term.move(y, x) + line)
+        y += 1
+    with term.cbreak():
+        term.inkey()
+
+
 # TerminalController classes.
 class TerminalController:
     data: Any = None
@@ -465,7 +478,11 @@ class Table(TerminalController):
 
 
 # Main UI loop.
-def main(ctlr: TerminalController = None, is_interactive=False) -> Generator:
+def main(
+        ctlr: TerminalController = None,
+        is_interactive=False,
+        splash_text: Sequence[str] = ''
+) -> Generator:
     """The main UI loop as a generator.
 
     Calling Parameters
@@ -491,6 +508,9 @@ def main(ctlr: TerminalController = None, is_interactive=False) -> Generator:
         ctlr = TerminalController()
 
     with ctlr.term.fullscreen(), ctlr.term.hidden_cursor():
+        if splash_text:
+            splash(splash_text)
+
         resp = None
         while True:
             event, *args = yield resp

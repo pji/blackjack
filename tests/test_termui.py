@@ -82,6 +82,44 @@ class BoxTestCase(ut.TestCase):
             box = termui.Box(custom='bad')
 
 
+class SplashTestCase(ut.TestCase):
+    topleft = '\x1b[1;2H'
+    bold = '\x1b[1m'
+    loc = '\x1b[{};{}H'
+
+    def setUp(self):
+        self.text = ['spam', 'eggs',]
+        term = Terminal()
+        self.ys = [
+            term.height // 2 - len(self.text) // 2 + 1,
+            term.height // 2 - len(self.text) // 2 + 2,
+        ]
+        self.xs = [
+            term.width // 2 - len(self.text[0]) // 2 + 1,
+            term.width // 2 - len(self.text[1]) // 2 + 1,
+        ]
+
+    @patch('blessed.Terminal.inkey', return_value='\n')
+    @patch('blackjack.termui.print')
+    def test_draw(self, mock_print, mock_inkey):
+        """When called with a sequence of strings, splash() should
+        draw those strings in the middle of the terminal and wait
+        until any key is pressed.
+        """
+        # Expected values.
+        exp = [
+            call(self.loc.format(self.ys[0], self.xs[0]) + self.text[0]),
+            call(self.loc.format(self.ys[1], self.xs[1]) + self.text[1]),
+        ]
+
+        # Run test and gather actuals.
+        termui.splash(self.text)
+        act = mock_print.mock_calls
+
+        # Determine test result.
+        self.assertListEqual(exp, act)
+
+
 class TableTestCase(ut.TestCase):
     topleft = '\x1b[1;2H'
     bold = '\x1b[1m'
@@ -509,11 +547,11 @@ class TableTestCase(ut.TestCase):
         self.assertListEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
 
-    # Table.input_number() tests.
+    # Table.input_multichar() tests.
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.termui.print')
     def test_input_multichar(self, mock_print, mock_inkey):
-        """When called with a prompt, input_number() should write the
+        """When called with a prompt, input_multichar() should write the
         prompt to the UI and return the response from the user.
         """
         prompt = 'spam'
@@ -609,6 +647,15 @@ class TableTestCase(ut.TestCase):
         # Determine test result.
         self.assertListEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
+
+    # Table.splash() tests.
+    @ut.skip
+    @patch('blackjack.termui.print')
+    def test_splash(self, mock_print):
+        """When called with a collection of strings, Table.splash()
+        should clear the screen and display the string as a splash
+        screen.
+        """
 
     # Table.status() tests.
     @patch('blackjack.termui.print')
