@@ -67,7 +67,8 @@ class LogUI(game.BaseUI):
         self.is_interactive = is_interactive
         if self.is_interactive:
             print()
-            print('BLACKJACK!')
+            for line in splash_title:
+                print(line)
             print()
             print(self.tmp.format('Player', 'Action', 'Hand'))
             print('\u2500' * 50)

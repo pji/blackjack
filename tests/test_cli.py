@@ -44,9 +44,10 @@ class LogUITestCase(ut.TestCase):
     # Test start().
     def test_start(self):
         """start() should print the headers for the game output."""
+        title_ = [f'{line}\n' for line in cli.splash_title]
         lines = [
             '\n',
-            'BLACKJACK!\n',
+            *title_,
             '\n',
             self.tmp.format('Player', 'Action', 'Hand'),
             '\u2500' * 50 + '\n',
@@ -225,11 +226,12 @@ class LogUITestCase(ut.TestCase):
         """When called, cleanup() should print the footer and the
         header to the UI.
         """
+        title_ = [f'{line}\n' for line in cli.splash_title]
         lines = [
             '\u2500' * 50 + '\n',
             '\n',
             '\n',
-            'BLACKJACK!\n',
+            *title_,
             '\n',
             self.tmp.format('Player', 'Action', 'Hand'),
             '\u2500' * 50 + '\n',
