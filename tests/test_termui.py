@@ -8,7 +8,7 @@ This module contains the unit tests for the blackjack.termui module.
 :license: MIT, see LICENSE for more details.
 """
 import unittest as ut
-from unittest.mock import call, patch
+from unittest.mock import call, patch, PropertyMock
 
 from blessed import Terminal
 
@@ -80,6 +80,90 @@ class BoxTestCase(ut.TestCase):
 
         with self.assertRaises(expected):
             box = termui.Box(custom='bad')
+
+
+class PageTestCase(ut.TestCase):
+    topleft = '\x1b[1;2H'
+    bold = '\x1b[1m'
+    loc = '\x1b[{};{}H'
+
+    """A UI for paging through text."""
+    def setUp(self):
+        self.term = Terminal()
+        self.title = 'spam'
+        self.short_text = 'Eggs.'
+
+    # Test Page.__init__().
+    def test_init(self):
+        """When called, a Page() object is properly initialized and
+        returned.
+        """
+        exp_class = termui.Page
+        exp_text = 'spam'
+        act_obj = termui.Page(exp_text)
+        act_text = act_obj.text
+        self.assertIsInstance(act_obj, exp_class)
+        self.assertEqual(exp_text, act_text)
+
+    def test_set_frame(self):
+        """When initialized with a frame parameter, the page will store
+        the appropriate frame to use when drawing the page.
+        """
+        exp = 'heavy'
+        page = termui.Page('spam', frame=exp)
+        act = page.frame.kind
+        self.assertEqual(exp, act)
+
+    def test_set_title(self):
+        """When initialized with a title parameter, the page will store
+        the title to use when displaying the page.
+        """
+        exp = 'eggs'
+        page = termui.Page('spam', title=exp)
+        act = page.title
+        self.assertEqual(exp, act)
+
+    def test_set_padding(self):
+        """When initialized with a padding parameter, the page will store
+        the padding to use around the text when displaying the page.
+        """
+        exp = 2
+        page = termui.Page('spam', padding=exp)
+        act = page.padding
+        self.assertEqual(exp, act)
+
+    # Test Page.draw()
+    @patch('blackjack.termui.Terminal.width', new_callable=PropertyMock)
+    @patch('blackjack.termui.Terminal.height', new_callable=PropertyMock)
+    @patch('blackjack.termui.print')
+    def test_draw(self, mock_print, mock_height, mock_width):
+        """When called, Page.draw() should draw the page in the terminal.
+        """
+        # Expected value.
+        exp = [
+            call(self.loc.format(1, 1) + '┌─spam────┐'),
+            call(self.loc.format(2, 1) + '│         │'),
+            call(self.loc.format(3, 1) + '│ Eggs.   │'),
+            call(self.loc.format(4, 1) + '│         │'),
+            call(self.loc.format(5, 1) + '│         │'),
+            call(self.loc.format(6, 1) + '└─────────┘'),
+        ]
+
+        # Test data and state.
+        mock_height.return_value = len(exp)
+        mock_width.return_value = 11
+        page = termui.Page(
+            self.short_text,
+            title=self.title,
+            frame='light'
+        )
+
+        # Run test and gather actuals.
+        page.draw()
+        act = mock_print.mock_calls
+
+        # Determine test result.
+        self.assertListEqual(exp, act)
 
 
 class SplashTestCase(ut.TestCase):

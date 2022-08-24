@@ -38,6 +38,7 @@ The following features are planned for the 0.1.0 release:
 *   x Add opening splash screen.
     *   x Display splash screen.
     *   x Clear splash screen from TableUI before play begins.
+*   Add "How-To" to Table interface.
 
 The following features are possible for future versions:
 
@@ -68,7 +69,6 @@ The following features are possible for future versions:
 * Add ability to configure by file.
 * Allow multiple human players to play in single game over network.
 * Add "How-To" to help.
-* Add "How-To" to Table interface.
 
 
 Testing

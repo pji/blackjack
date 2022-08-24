@@ -136,12 +136,63 @@ class TerminalController:
         self.term = term
 
 
+class Page(TerminalController):
+    """View pages of text in a terminal."""
+    def __init__(
+            self,
+            text: str,
+            title: str = '',
+            frame: str = 'light',
+            padding: int = 1,
+            term: Optional[Terminal] = None
+    ) -> None:
+        self.frame = Box(kind=frame)
+        self.padding = padding
+        self.text = text
+        self.title = title
+        super().__init__(term)
+
+    def draw(self) -> None:
+        """Draw the page of text."""
+        top = (
+            self.frame.ltop
+            + self.frame.top
+            + self.title
+            + self.frame.top * (self.term.width - len(self.title) - 3)
+            + self.frame.rtop
+        )
+        space = str(self.term.width - 2 - 2)
+        tmp = self.frame.mver + ' {:<' + space + '} ' + self.frame.mver
+        blank = tmp.format('')
+        bot = (
+            self.frame.lbot
+            + (self.frame.bot * (self.term.width - 2))
+            + self.frame.rbot
+        )
+
+        lines = [top, ]
+        for i in range(self.padding):
+            lines.append(blank)
+        for line in self.text.split('\n'):
+            lines.append(tmp.format(line))
+        for i in range(self.padding):
+            lines.append(blank)
+        filler = self.term.height - len(lines) - 1
+        if filler:
+            for i in range(filler):
+                lines.append(blank)
+        lines.append(bot)
+
+        for y, line in enumerate(lines):
+            print(self.term.move(y, 0) + line)
+
+
 class Table(TerminalController):
     _header: tuple[str, ...]
 
     """Control a table displayed in the terminal."""
     def __init__(self,
-                 title:str,
+                 title: str,
                  fields: abc.Sequence,
                  frame: Box = None,
                  data: abc.Sequence = None,
