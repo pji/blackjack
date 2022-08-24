@@ -20,8 +20,15 @@ from blackjack.model import (
     IsYes,
     valfactory
 )
-from blackjack.players import (Dealer, Player, make_player, restore_player,
-                               ValidPlayers, ValidPlayer)
+from blackjack.players import (
+    Dealer,
+    Player,
+    make_player,
+    restore_player,
+    ValidPlayers,
+    ValidPlayer
+)
+from blackjack.utility import splash_title
 
 
 # Internal utility functions.
@@ -651,7 +658,7 @@ def main(engine: Engine, is_interactive: bool = True) -> Generator:
     :return: The game as a generator.
     :rtype: Generator.
     """
-    engine.ui.start(is_interactive=is_interactive)
+    engine.ui.start(is_interactive=is_interactive, splash_title=splash_title)
     engine.new_game()
     play = yield True
     while play:

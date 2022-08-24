@@ -16,7 +16,7 @@ from unittest.mock import patch, call, MagicMock
 
 from blessed import Terminal
 
-from blackjack import cards, cli, game, model, players, termui
+from blackjack import cards, cli, game, model, players, termui, utility
 
 
 # Utility functions.
@@ -44,7 +44,7 @@ class LogUITestCase(ut.TestCase):
     # Test start().
     def test_start(self):
         """start() should print the headers for the game output."""
-        title_ = [f'{line}\n' for line in cli.splash_title]
+        title_ = [f'{line}\n' for line in utility.splash_title]
         lines = [
             '\n',
             *title_,
@@ -56,7 +56,7 @@ class LogUITestCase(ut.TestCase):
 
         with capture() as (out, err):
             ui = cli.LogUI(True)
-            ui.start()
+            ui.start(splash_title=utility.splash_title)
         act = out.getvalue()
 
         self.assertEqual(exp, act)
@@ -226,7 +226,7 @@ class LogUITestCase(ut.TestCase):
         """When called, cleanup() should print the footer and the
         header to the UI.
         """
-        title_ = [f'{line}\n' for line in cli.splash_title]
+        title_ = [f'{line}\n' for line in utility.splash_title]
         lines = [
             '\u2500' * 50 + '\n',
             '\n',
@@ -240,7 +240,7 @@ class LogUITestCase(ut.TestCase):
 
         with capture() as (out, err):
             ui = cli.LogUI(True)
-            ui.cleanup()
+            ui.cleanup(splash_title=utility.splash_title)
         act = out.getvalue()
 
         self.assertEqual(exp, act)
@@ -911,7 +911,7 @@ class TableUITestCase(ut.TestCase):
         reset_ctlr = ui.ctlr
         exp = [
             call().close(),
-            call(reset_ctlr, False),
+            call(reset_ctlr, False, ''),
             call().__next__(),
             call().send(('draw',)),
         ]
@@ -929,7 +929,7 @@ class TableUITestCase(ut.TestCase):
         ui = cli.TableUI()
         term = ui.ctlr
         exp = [
-            call(ui.ctlr, False),
+            call(ui.ctlr, False, ''),
             call().__next__(),
             call().send(('draw',))
         ]
@@ -937,7 +937,7 @@ class TableUITestCase(ut.TestCase):
         ui.start()
         act = mock_main.mock_calls
 
-        self.assertEqual(exp, act)
+        self.assertListEqual(exp, act)
 
     # Update method tests.
     @patch('blackjack.termui.main')

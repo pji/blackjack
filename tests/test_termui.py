@@ -88,16 +88,9 @@ class SplashTestCase(ut.TestCase):
     loc = '\x1b[{};{}H'
 
     def setUp(self):
+        self.prompt = 'Press any key to continue.'
         self.text = ['spam', 'eggs',]
-        term = Terminal()
-        self.ys = [
-            term.height // 2 - len(self.text) // 2 + 1,
-            term.height // 2 - len(self.text) // 2 + 2,
-        ]
-        self.xs = [
-            term.width // 2 - len(self.text[0]) // 2 + 1,
-            term.width // 2 - len(self.text[1]) // 2 + 1,
-        ]
+        self.term = Terminal()
 
     @patch('blessed.Terminal.inkey', return_value='\n')
     @patch('blackjack.termui.print')
@@ -108,8 +101,27 @@ class SplashTestCase(ut.TestCase):
         """
         # Expected values.
         exp = [
-            call(self.loc.format(self.ys[0], self.xs[0]) + self.text[0]),
-            call(self.loc.format(self.ys[1], self.xs[1]) + self.text[1]),
+            call(
+                self.loc.format(
+                    self.term.height // 2 - len(self.text) // 2 + 1,
+                    self.term.width // 2 - len(self.text[0]) // 2 + 1
+                )
+                + self.text[0]
+            ),
+            call(
+                self.loc.format(
+                    self.term.height // 2 - len(self.text) // 2 + 2,
+                    self.term.width // 2 - len(self.text[1]) // 2 + 1
+                )
+                + self.text[1]
+            ),
+            call(
+                self.loc.format(
+                    self.term.height,
+                    self.term.width // 2 - len(self.prompt) // 2 + 1
+                )
+                + self.prompt
+            ),
         ]
 
         # Run test and gather actuals.
@@ -647,15 +659,6 @@ class TableTestCase(ut.TestCase):
         # Determine test result.
         self.assertListEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
-
-    # Table.splash() tests.
-    @ut.skip
-    @patch('blackjack.termui.print')
-    def test_splash(self, mock_print):
-        """When called with a collection of strings, Table.splash()
-        should clear the screen and display the string as a splash
-        screen.
-        """
 
     # Table.status() tests.
     @patch('blackjack.termui.print')

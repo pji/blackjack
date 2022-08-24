@@ -100,13 +100,21 @@ class Box:
 # Terminal functions.
 def splash(text: Sequence[str]) -> None:
     """Draw a splash screen in the terminal."""
+    prompt = 'Press any key to continue.'
     term = Terminal()
     y = term.height // 2 - len(text) // 2
-    for line in text:
-        x = term.width // 2 - len(line) // 2
-        print(term.move(y, x) + line)
-        y += 1
-    with term.cbreak():
+    with term.fullscreen(), term.cbreak():
+        for line in text:
+            x = term.width // 2 - len(line) // 2
+            print(term.move(y, x) + line)
+            y += 1
+        print(
+            term.move(
+                term.height - 1,
+                term.width // 2 - len(prompt) // 2
+            )
+            + prompt
+        )
         term.inkey()
 
 
@@ -507,10 +515,10 @@ def main(
     if not ctlr:
         ctlr = TerminalController()
 
-    with ctlr.term.fullscreen(), ctlr.term.hidden_cursor():
-        if splash_text:
-            splash(splash_text)
+    if splash_text:
+        splash(splash_text)
 
+    with ctlr.term.fullscreen(), ctlr.term.hidden_cursor():
         resp = None
         while True:
             event, *args = yield resp

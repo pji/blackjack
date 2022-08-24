@@ -2117,7 +2117,10 @@ class mainTestCase(ut.TestCase):
                 playerlist=self.playerlist,
                 save_file=self.save
             ),
-            call().ui.start(is_interactive=True),
+            call().ui.start(
+                is_interactive=True,
+                splash_title=game.splash_title
+            ),
             call().new_game(),
             call().bet(),
             call().deal(),
@@ -2183,7 +2186,10 @@ class mainTestCase(ut.TestCase):
                 playerlist=self.playerlist,
                 save_file=self.save
             ),
-            call().ui.start(is_interactive=True),
+            call().ui.start(
+                is_interactive=True,
+                splash_title=game.splash_title
+            ),
             call().new_game(),
             call().bet(),
             call().deal(),

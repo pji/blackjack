@@ -19,22 +19,6 @@ from blessed import Terminal
 from blackjack import cards, game, model, players, termui
 
 
-# Splash text.
-splash_title = (
-    '╔╗  ║   ╔═╗ ╔═╗ ║ ║',
-    '║║  ║   ║ ║ ║   ╠═╝',
-    '╠╩╗ ║   ╠═╣ ║   ╠═╗',
-    '║ ║ ║   ║ ║ ║   ║ ║',
-    '╚═╝ ╚══ ║ ║ ╚═╝ ║ ║',
-    '',
-    '    ║ ╔═╗ ╔═╗ ║ ║  ',
-    '    ║ ║ ║ ║   ╠═╝  ',
-    '    ║ ╠═╣ ║   ╠═╗  ',
-    '    ║ ║ ║ ║   ║ ║  ',
-    '  ╚═╝ ║ ║ ╚═╝ ║ ║  ',
-)
-
-
 # UI objects.
 class LogUI(game.BaseUI):
     tmp = '{:<15} {:<15} {:<}'
@@ -56,7 +40,11 @@ class LogUI(game.BaseUI):
             print('\u2500' * 50)
             print()
 
-    def start(self, is_interactive: bool = True) -> None:
+    def start(
+            self,
+            is_interactive: bool = True,
+            splash_title: Optional[Sequence[str]] = None
+    ) -> None:
         """Print the initial banners for the game.
 
         :param is_interactive: Whether the session is viewed by a
@@ -67,9 +55,10 @@ class LogUI(game.BaseUI):
         self.is_interactive = is_interactive
         if self.is_interactive:
             print()
-            for line in splash_title:
-                print(line)
-            print()
+            if splash_title:
+                for line in splash_title:
+                    print(line)
+                print()
             print(self.tmp.format('Player', 'Action', 'Hand'))
             print('\u2500' * 50)
 
@@ -127,10 +116,10 @@ class LogUI(game.BaseUI):
         """Player places initial bet."""
         self._update_bet(player, bet, 'Bet.')
 
-    def cleanup(self):
+    def cleanup(self, splash_title: Optional[Sequence[str]] = None) -> None:
         """Clean up after the round ends."""
         self.end()
-        self.start()
+        self.start(splash_title=splash_title)
 
     def deal(self, player, hand):
         """Player receives initial hand."""
@@ -344,10 +333,10 @@ class TableUI(game.EngineUI):
         self.ctlr = self._make_ctlr()
         self.start(self.is_interactive)
 
-    def start(self, is_interactive=False):
+    def start(self, is_interactive=False, splash_title=''):
         """Start the UI."""
         self.is_interactive = is_interactive
-        self.loop = termui.main(self.ctlr, is_interactive)
+        self.loop = termui.main(self.ctlr, is_interactive, splash_title)
         next(self.loop)
         self.loop.send(('draw',))
 
