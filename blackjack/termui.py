@@ -151,7 +151,30 @@ class Page(TerminalController):
         self.padding = padding
         self.text = text
         self.title = title
+        self.current_page = 0
         super().__init__(term)
+
+    @property
+    def pages(self) -> list[list[str]]:
+        if '_pages' not in self.__dict__:
+            width = self.term.width + 1 - 2 - self.padding * 2
+            lines_per_page = self.term.height + 1 - 2 - self.padding * 2
+            wrapped = wrap(self.text, width)
+            self._pages = []
+            for i in range(0, len(wrapped), lines_per_page):
+                self._pages.append(wrapped[i: i + lines_per_page])
+        return self._pages
+
+    def _draw_command_hints(self) -> None:
+        hints = []
+        if len(self.pages) > 1:
+            hints.append('>Next')
+        if len(self.pages) > 1 and self.current_page != 0:
+            hints.append('<Back')
+        for i, hint in enumerate(hints):
+            y = self.term.height
+            x = self.term.width - len(hint) - 3 - 6 * i
+            print(self.term.move(y, x) + hint)
 
     def _draw_frame(self) -> None:
         """Draw the frame around the page."""
@@ -182,16 +205,13 @@ class Page(TerminalController):
         """Draw the page of text."""
         # Draw the frame.
         self._draw_frame()
-
-        # Wrap the text.
-        width = self.term.width + 1 - 2 - self.padding * 2
-        max_lines = self.term.height + 1 - 2 - self.padding * 2
-        wrapped = wrap(self.text, width, max_lines=max_lines)
+        self._draw_command_hints()
 
         # Draw the text.
+        text = self.pages[self.current_page]
         y = self.padding + 1
         x = self.padding + 1
-        for line in wrapped:
+        for line in text:
             print(self.term.move(y, x) + line)
             y += 1
 
