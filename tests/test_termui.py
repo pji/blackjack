@@ -85,6 +85,7 @@ class BoxTestCase(ut.TestCase):
 class PageTestCase(ut.TestCase):
     topleft = '\x1b[1;2H'
     bold = '\x1b[1m'
+    rev = '\x1b[7m'
     loc = '\x1b[{};{}H'
 
     """A UI for paging through text."""
@@ -139,6 +140,55 @@ class PageTestCase(ut.TestCase):
         page = termui.Page('spam', padding=exp)
         act = page.padding
         self.assertEqual(exp, act)
+
+    # Test Page.back()
+    @patch('blackjack.termui.Terminal.width', new_callable=PropertyMock)
+    @patch('blackjack.termui.Terminal.height', new_callable=PropertyMock)
+    @patch('blackjack.termui.print')
+    def test_back(
+        self,
+        mock_print,
+        mock_height,
+        mock_width
+    ):
+        """When called, Page.back() should decrement the current page
+        and draw the page in the terminal.
+        """
+        # Expected value.
+        exp = [
+            call(self.loc.format(1, 1) + '┌─spam───────┐'),
+            call(self.loc.format(2, 1) + '│            │'),
+            call(self.loc.format(3, 1) + '│            │'),
+            call(self.loc.format(4, 1) + '│            │'),
+            call(self.loc.format(5, 1) + '│            │'),
+            call(self.loc.format(6, 1) + '│            │'),
+            call(self.loc.format(7, 1) + '│            │'),
+            call(self.loc.format(8, 1) + '│            │'),
+            call(self.loc.format(9, 1) + '└────────────┘'),
+            call(self.loc.format(9, 7) + self.rev + '>' + self.rev + 'Next'),
+            call(self.loc.format(3, 3) + 'This text'),
+            call(self.loc.format(4, 3) + 'should over'),
+            call(self.loc.format(5, 3) + 'flow the'),
+            call(self.loc.format(6, 3) + 'very small'),
+            call(self.loc.format(7, 3) + 'box used'),
+        ]
+
+        # Test data and state.
+        mock_height.return_value = self.term_h
+        mock_width.return_value = self.term_w
+        page = termui.Page(
+            self.text_overflow,
+            title=self.title,
+            frame='light'
+        )
+        page.current_page = 1
+
+        # Run test and gather actuals.
+        page.back()
+        act = mock_print.mock_calls
+
+        # Determine test result.
+        self.assertListEqual(exp, act)
 
     # Test Page.draw()
     @patch('blackjack.termui.Terminal.width', new_callable=PropertyMock)
@@ -237,7 +287,7 @@ class PageTestCase(ut.TestCase):
             call(self.loc.format(7, 1) + '│            │'),
             call(self.loc.format(8, 1) + '│            │'),
             call(self.loc.format(9, 1) + '└────────────┘'),
-            call(self.loc.format(9, 7) + '>Next'),
+            call(self.loc.format(9, 7) + self.rev + '>' + self.rev + 'Next'),
             call(self.loc.format(3, 3) + 'This text'),
             call(self.loc.format(4, 3) + 'should over'),
             call(self.loc.format(5, 3) + 'flow the'),
@@ -283,8 +333,8 @@ class PageTestCase(ut.TestCase):
             call(self.loc.format(7, 1) + '│            │'),
             call(self.loc.format(8, 1) + '│            │'),
             call(self.loc.format(9, 1) + '└────────────┘'),
-            call(self.loc.format(9, 7) + '>Next'),
-            call(self.loc.format(9, 1) + '<Back'),
+            call(self.loc.format(9, 7) + self.rev + '>' + self.rev + 'Next'),
+            call(self.loc.format(9, 1) + self.rev + '<' + self.rev + 'Back'),
             call(self.loc.format(3, 3) + 'for'),
             call(self.loc.format(4, 3) + 'testing.'),
             call(self.loc.format(5, 3) + 'That is'),
@@ -304,6 +354,56 @@ class PageTestCase(ut.TestCase):
 
         # Run test and gather actuals.
         page.draw()
+        act = mock_print.mock_calls
+
+        # Determine test result.
+        self.assertListEqual(exp, act)
+
+    # Test Page.next()
+    @patch('blackjack.termui.Terminal.width', new_callable=PropertyMock)
+    @patch('blackjack.termui.Terminal.height', new_callable=PropertyMock)
+    @patch('blackjack.termui.print')
+    def test_next(
+        self,
+        mock_print,
+        mock_height,
+        mock_width
+    ):
+        """When called, Page.next() should increment the current page
+        and draw the page in the terminal.
+        """
+        # Expected value.
+        exp = [
+            call(self.loc.format(1, 1) + '┌─spam───────┐'),
+            call(self.loc.format(2, 1) + '│            │'),
+            call(self.loc.format(3, 1) + '│            │'),
+            call(self.loc.format(4, 1) + '│            │'),
+            call(self.loc.format(5, 1) + '│            │'),
+            call(self.loc.format(6, 1) + '│            │'),
+            call(self.loc.format(7, 1) + '│            │'),
+            call(self.loc.format(8, 1) + '│            │'),
+            call(self.loc.format(9, 1) + '└────────────┘'),
+            call(self.loc.format(9, 7) + self.rev + '>' + self.rev + 'Next'),
+            call(self.loc.format(9, 1) + self.rev + '<' + self.rev + 'Back'),
+            call(self.loc.format(3, 3) + 'for'),
+            call(self.loc.format(4, 3) + 'testing.'),
+            call(self.loc.format(5, 3) + 'That is'),
+            call(self.loc.format(6, 3) + 'good. We'),
+            call(self.loc.format(7, 3) + 'want to use'),
+        ]
+
+        # Test data and state.
+        mock_height.return_value = self.term_h
+        mock_width.return_value = self.term_w
+        page = termui.Page(
+            self.text_overflow,
+            title=self.title,
+            frame='light'
+        )
+        page.current_page = 0
+
+        # Run test and gather actuals.
+        page.next()
         act = mock_print.mock_calls
 
         # Determine test result.

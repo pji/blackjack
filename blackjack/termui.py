@@ -168,12 +168,12 @@ class Page(TerminalController):
     def _draw_command_hints(self) -> None:
         hints = []
         if len(self.pages) > 1:
-            hints.append('>Next')
+            hints.append(self.term.reverse + '>' + self.term.reverse + 'Next')
         if len(self.pages) > 1 and self.current_page != 0:
-            hints.append('<Back')
+            hints.append(self.term.reverse + '<' + self.term.reverse + 'Back')
         for i, hint in enumerate(hints):
             y = self.term.height
-            x = self.term.width - len(hint) - 3 - 6 * i
+            x = self.term.width - 5 - 3 - 6 * i
             print(self.term.move(y, x) + hint)
 
     def _draw_frame(self) -> None:
@@ -201,6 +201,11 @@ class Page(TerminalController):
             print(self.term.move(y, 0) + mid)
         print(self.term.move(self.term.height, 0) + bot)
 
+    def back(self) -> None:
+        """Go back to the previous page of text."""
+        self.current_page -= 1
+        self.draw()
+
     def draw(self) -> None:
         """Draw the page of text."""
         # Draw the frame.
@@ -214,6 +219,11 @@ class Page(TerminalController):
         for line in text:
             print(self.term.move(y, x) + line)
             y += 1
+
+    def next(self) -> None:
+        """Advance to the next page of text."""
+        self.current_page += 1
+        self.draw()
 
 
 class Table(TerminalController):
