@@ -10,6 +10,7 @@ This module manages a user interface run through a terminal.
 from collections import namedtuple
 import collections.abc as abc
 from time import sleep
+from textwrap import wrap
 from typing import Any, Generator, Optional, Sequence
 
 from blessed import Terminal
@@ -152,8 +153,8 @@ class Page(TerminalController):
         self.title = title
         super().__init__(term)
 
-    def draw(self) -> None:
-        """Draw the page of text."""
+    def _draw_frame(self) -> None:
+        """Draw the frame around the page."""
         top = (
             self.frame.ltop
             + self.frame.top
@@ -161,30 +162,37 @@ class Page(TerminalController):
             + self.frame.top * (self.term.width - len(self.title) - 3)
             + self.frame.rtop
         )
-        space = str(self.term.width - 2 - 2)
-        tmp = self.frame.mver + ' {:<' + space + '} ' + self.frame.mver
-        blank = tmp.format('')
+        mid = (
+            self.frame.mver
+            + (' ' * (self.term.width - 2))
+            + self.frame.mver
+        )
         bot = (
             self.frame.lbot
             + (self.frame.bot * (self.term.width - 2))
             + self.frame.rbot
         )
 
-        lines = [top, ]
-        for i in range(self.padding):
-            lines.append(blank)
-        for line in self.text.split('\n'):
-            lines.append(tmp.format(line))
-        for i in range(self.padding):
-            lines.append(blank)
-        filler = self.term.height - len(lines) - 1
-        if filler:
-            for i in range(filler):
-                lines.append(blank)
-        lines.append(bot)
+        print(self.term.move(0, 0) + top)
+        for y in range(1, self.term.height):
+            print(self.term.move(y, 0) + mid)
+        print(self.term.move(self.term.height, 0) + bot)
 
-        for y, line in enumerate(lines):
-            print(self.term.move(y, 0) + line)
+    def draw(self) -> None:
+        """Draw the page of text."""
+        # Draw the frame.
+        self._draw_frame()
+
+        # Wrap the text.
+        width = self.term.width - 2 - self.padding * 2
+        wrapped = wrap(self.text, width)
+
+        # Draw the text.
+        y = self.padding
+        x = self.padding
+        for line in wrapped:
+            print(self.term.move(y, x) + line)
+            y += 1
 
 
 class Table(TerminalController):

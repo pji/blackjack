@@ -90,8 +90,11 @@ class PageTestCase(ut.TestCase):
     """A UI for paging through text."""
     def setUp(self):
         self.term = Terminal()
+        self.term_h = 5
+        self.term_w = 11
+        self.text_long = 'This is longer text.'
+        self.text_short = 'Eggs.'
         self.title = 'spam'
-        self.short_text = 'Eggs.'
 
     # Test Page.__init__().
     def test_init(self):
@@ -143,17 +146,53 @@ class PageTestCase(ut.TestCase):
         exp = [
             call(self.loc.format(1, 1) + '┌─spam────┐'),
             call(self.loc.format(2, 1) + '│         │'),
-            call(self.loc.format(3, 1) + '│ Eggs.   │'),
+            call(self.loc.format(3, 1) + '│         │'),
             call(self.loc.format(4, 1) + '│         │'),
             call(self.loc.format(5, 1) + '│         │'),
             call(self.loc.format(6, 1) + '└─────────┘'),
+            call(self.loc.format(2, 2) + self.text_short),
         ]
 
         # Test data and state.
-        mock_height.return_value = len(exp)
-        mock_width.return_value = 11
+        mock_height.return_value = self.term_h
+        mock_width.return_value = self.term_w
         page = termui.Page(
-            self.short_text,
+            self.text_short,
+            title=self.title,
+            frame='light'
+        )
+
+        # Run test and gather actuals.
+        page.draw()
+        act = mock_print.mock_calls
+
+        # Determine test result.
+        self.assertListEqual(exp, act)
+
+    @patch('blackjack.termui.Terminal.width', new_callable=PropertyMock)
+    @patch('blackjack.termui.Terminal.height', new_callable=PropertyMock)
+    @patch('blackjack.termui.print')
+    def test_draw_text_wrap(self, mock_print, mock_height, mock_width):
+        """When called, Page.draw() should draw the page in the terminal.
+        """
+        # Expected value.
+        exp = [
+            call(self.loc.format(1, 1) + '┌─spam────┐'),
+            call(self.loc.format(2, 1) + '│         │'),
+            call(self.loc.format(3, 1) + '│         │'),
+            call(self.loc.format(4, 1) + '│         │'),
+            call(self.loc.format(5, 1) + '│         │'),
+            call(self.loc.format(6, 1) + '└─────────┘'),
+            call(self.loc.format(2, 2) + 'This is'),
+            call(self.loc.format(3, 2) + 'longer'),
+            call(self.loc.format(4, 2) + 'text.'),
+        ]
+
+        # Test data and state.
+        mock_height.return_value = self.term_h
+        mock_width.return_value = self.term_w
+        page = termui.Page(
+            self.text_long,
             title=self.title,
             frame='light'
         )
