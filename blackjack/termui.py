@@ -184,12 +184,13 @@ class Page(TerminalController):
         self._draw_frame()
 
         # Wrap the text.
-        width = self.term.width - 2 - self.padding * 2
-        wrapped = wrap(self.text, width)
+        width = self.term.width + 1 - 2 - self.padding * 2
+        max_lines = self.term.height + 1 - 2 - self.padding * 2
+        wrapped = wrap(self.text, width, max_lines=max_lines)
 
         # Draw the text.
-        y = self.padding
-        x = self.padding
+        y = self.padding + 1
+        x = self.padding + 1
         for line in wrapped:
             print(self.term.move(y, x) + line)
             y += 1

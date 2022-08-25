@@ -90,9 +90,14 @@ class PageTestCase(ut.TestCase):
     """A UI for paging through text."""
     def setUp(self):
         self.term = Terminal()
-        self.term_h = 5
-        self.term_w = 11
+        self.term_h = 8
+        self.term_w = 14
         self.text_long = 'This is longer text.'
+        self.text_overflow = (
+            'This text should over flow the very small box used for '
+            'testing. That is good. We want to use it to test how '
+            'the box handles over-flowing text.'
+        )
         self.text_short = 'Eggs.'
         self.title = 'spam'
 
@@ -144,13 +149,16 @@ class PageTestCase(ut.TestCase):
         """
         # Expected value.
         exp = [
-            call(self.loc.format(1, 1) + '┌─spam────┐'),
-            call(self.loc.format(2, 1) + '│         │'),
-            call(self.loc.format(3, 1) + '│         │'),
-            call(self.loc.format(4, 1) + '│         │'),
-            call(self.loc.format(5, 1) + '│         │'),
-            call(self.loc.format(6, 1) + '└─────────┘'),
-            call(self.loc.format(2, 2) + self.text_short),
+            call(self.loc.format(1, 1) + '┌─spam───────┐'),
+            call(self.loc.format(2, 1) + '│            │'),
+            call(self.loc.format(3, 1) + '│            │'),
+            call(self.loc.format(4, 1) + '│            │'),
+            call(self.loc.format(5, 1) + '│            │'),
+            call(self.loc.format(6, 1) + '│            │'),
+            call(self.loc.format(7, 1) + '│            │'),
+            call(self.loc.format(8, 1) + '│            │'),
+            call(self.loc.format(9, 1) + '└────────────┘'),
+            call(self.loc.format(3, 3) + self.text_short),
         ]
 
         # Test data and state.
@@ -177,15 +185,18 @@ class PageTestCase(ut.TestCase):
         """
         # Expected value.
         exp = [
-            call(self.loc.format(1, 1) + '┌─spam────┐'),
-            call(self.loc.format(2, 1) + '│         │'),
-            call(self.loc.format(3, 1) + '│         │'),
-            call(self.loc.format(4, 1) + '│         │'),
-            call(self.loc.format(5, 1) + '│         │'),
-            call(self.loc.format(6, 1) + '└─────────┘'),
-            call(self.loc.format(2, 2) + 'This is'),
-            call(self.loc.format(3, 2) + 'longer'),
-            call(self.loc.format(4, 2) + 'text.'),
+            call(self.loc.format(1, 1) + '┌─spam───────┐'),
+            call(self.loc.format(2, 1) + '│            │'),
+            call(self.loc.format(3, 1) + '│            │'),
+            call(self.loc.format(4, 1) + '│            │'),
+            call(self.loc.format(5, 1) + '│            │'),
+            call(self.loc.format(6, 1) + '│            │'),
+            call(self.loc.format(7, 1) + '│            │'),
+            call(self.loc.format(8, 1) + '│            │'),
+            call(self.loc.format(9, 1) + '└────────────┘'),
+            call(self.loc.format(3, 3) + 'This is'),
+            call(self.loc.format(4, 3) + 'longer'),
+            call(self.loc.format(5, 3) + 'text.'),
         ]
 
         # Test data and state.
@@ -193,6 +204,46 @@ class PageTestCase(ut.TestCase):
         mock_width.return_value = self.term_w
         page = termui.Page(
             self.text_long,
+            title=self.title,
+            frame='light'
+        )
+
+        # Run test and gather actuals.
+        page.draw()
+        act = mock_print.mock_calls
+
+        # Determine test result.
+        self.assertListEqual(exp, act)
+
+    @patch('blackjack.termui.Terminal.width', new_callable=PropertyMock)
+    @patch('blackjack.termui.Terminal.height', new_callable=PropertyMock)
+    @patch('blackjack.termui.print')
+    def test_draw_text_overflow(self, mock_print, mock_height, mock_width):
+        """When called, Page.draw() should draw the page in the terminal.
+        """
+        # Expected value.
+        exp = [
+            call(self.loc.format(1, 1) + '┌─spam───────┐'),
+            call(self.loc.format(2, 1) + '│            │'),
+            call(self.loc.format(3, 1) + '│            │'),
+            call(self.loc.format(4, 1) + '│            │'),
+            call(self.loc.format(5, 1) + '│            │'),
+            call(self.loc.format(6, 1) + '│            │'),
+            call(self.loc.format(7, 1) + '│            │'),
+            call(self.loc.format(8, 1) + '│            │'),
+            call(self.loc.format(9, 1) + '└────────────┘'),
+            call(self.loc.format(3, 3) + 'This text'),
+            call(self.loc.format(4, 3) + 'should over'),
+            call(self.loc.format(5, 3) + 'flow the'),
+            call(self.loc.format(6, 3) + 'very small'),
+            call(self.loc.format(7, 3) + 'box [...]'),
+        ]
+
+        # Test data and state.
+        mock_height.return_value = self.term_h
+        mock_width.return_value = self.term_w
+        page = termui.Page(
+            self.text_overflow,
             title=self.title,
             frame='light'
         )
