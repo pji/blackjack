@@ -13,6 +13,8 @@ from typing import Union
 from unicodedata import normalize
 from typing import Any, Iterable, Optional, Sequence
 
+from blessed import Terminal
+
 
 # Base validation classes.
 class _BaseDescriptor:
@@ -479,3 +481,20 @@ class BaseEngine(ABC):
     @abstractmethod
     def serialize(self) -> None:
         """Serialize the game."""
+
+
+class TerminalController:
+    data: Any = None
+    fields: Any = None
+
+    def __init__(self, term: Terminal = None) -> None:
+        """Initialize an instance of the class.
+
+        :param term: (Optional.) The blessed.Terminal object that
+            runs the terminal output.
+        :return: None.
+        :rtype: NoneType
+        """
+        if not term:
+            term = Terminal()
+        self.term = term
