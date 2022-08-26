@@ -11,7 +11,7 @@ import inspect
 import unittest as ut
 from unittest.mock import call, Mock, patch
 
-from blackjack import cards, cli, players, game, model, willhit
+from blackjack import cards, cli, players, game, model, termui, willhit
 
 
 class will_hit_dealerTestCase(ut.TestCase):
@@ -281,7 +281,7 @@ class will_hit_userTestCase(ut.TestCase):
         expected = True
 
         mock_input.return_value = model.IsYes(expected)
-        ui = cli.TableUI()
+        ui = termui.TableUI()
         g = game.Engine(None, None, None, None, None)
         actual = willhit.will_hit_user(None, None, g)
 
@@ -296,7 +296,7 @@ class will_hit_userTestCase(ut.TestCase):
         expected = False
 
         mock_input.return_value = model.IsYes(expected)
-        ui = cli.TableUI()
+        ui = termui.TableUI()
         g = game.Engine(None, None, None, None, None)
         actual = willhit.will_hit_user(None, None, g)
 
