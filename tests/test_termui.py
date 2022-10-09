@@ -11,6 +11,7 @@ import unittest as ut
 from unittest.mock import call, patch, PropertyMock
 
 from blessed import Terminal
+from blessed.keyboard import Keystroke
 
 from blackjack import cards, game, model, players, termui
 
@@ -621,6 +622,38 @@ class TableTestCase(ut.TestCase):
 
         self.assertListEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
+
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.termui.print')
+    @patch('blackjack.termui.clireader.main')
+    def test_input_multichar_esc_to_help(
+        self,
+        mock_clir,
+        mock_print,
+        mock_inkey
+    ):
+        """When the user presses the escape key, input_multichar()
+        should invoke the help screen.
+        """
+        prompt = 'spam'
+        fmt = '{:<80}'
+        exp_clir = [
+            call('blackjack/data/rules.man', 'man'),
+        ]
+
+        mock_inkey.side_effect = ('\x1b', 'x', '2', '0', '\n')
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields)
+        main = termui.main(ctlr)
+        next(main)
+        act_resp = main.send(('input_multichar', prompt))
+        act_clir = mock_clir.mock_calls
+        del main
+
+        self.assertListEqual(exp_clir, act_clir)
 
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.termui.print')

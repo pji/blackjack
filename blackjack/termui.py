@@ -14,6 +14,7 @@ from typing import Any, Generator, Optional, Sequence
 
 from blessed import Terminal
 from blessed.keyboard import Keystroke
+import clireader
 
 from blackjack import model, players
 from blackjack.utility import Box
@@ -49,15 +50,17 @@ class Table(model.TerminalController):
     _header: tuple[str, ...]
 
     """Control a table displayed in the terminal."""
-    def __init__(self,
-                 title: str,
-                 fields: abc.Sequence,
-                 frame: Box = None,
-                 data: abc.Sequence = None,
-                 term: Terminal = None,
-                 row_sep: bool = False,
-                 rows: int = 1,
-                 show_status: bool = False) -> None:
+    def __init__(
+        self,
+        title: str,
+        fields: abc.Sequence,
+        frame: Box = None,
+        data: abc.Sequence = None,
+        term: Terminal = None,
+        row_sep: bool = False,
+        rows: int = 1,
+        show_status: bool = False
+    ) -> None:
         """Initialize an instance of the class.
 
         :param title: The title for the table.
@@ -269,6 +272,9 @@ class Table(model.TerminalController):
             y = index + self._header_rows
             print(self.term.move(y, 0) + row_fmt.format(*self.data[index]))
 
+    def _show_help(self):
+        clireader.main('blackjack/data/rules.man', 'man')
+
     # Public methods.
     def clear(self):
         """Clear the UI."""
@@ -344,10 +350,16 @@ class Table(model.TerminalController):
         with self.term.cbreak():
             resp: Optional[Keystroke] = self.term.inkey()
             while resp != '\n':
-                char = str(resp)
-                print(self.term.move(y, x) + char)
-                x += 1
-                text = text + char
+                if resp == '\x1b':
+                    self._show_help()
+                    self.clear()
+                    self.draw()
+                    print(self.term.move(y, 1) + full_prompt)
+                else:
+                    char = str(resp)
+                    print(self.term.move(y, x) + char)
+                    x += 1
+                    text = text + char
                 resp = self.term.inkey()
 
         # Rehome the cursor.

@@ -1,0 +1,66 @@
+.TH Rules   RULES blackjack
+.SH
+GOAL
+No matter how many players are in the game, you are only playing against
+the dealer. After the round ends, you add together the values of the
+cards in your hand, and the dealer does the same.
+
+.RS 4
+.TP
+*
+If your score is over twenty one, you lose.
+
+.TP
+*
+If your score is under twenty one and the dealer's score is over twenty
+one, you win.
+
+.TP
+*
+Otherwise, the one with the score closest to twenty one wins.
+
+.TP
+*
+If both you and the dealer have the same score and neither are over
+twenty one, you tie.
+
+.SH
+THE DECK
+The deck is constructed from standard fifty-two card decks.
+
+.P
+By default, six decks are
+shuffled together at the start of the game. A random number of cards are
+then removed from the deck to make it more difficult to count cards. If
+play continues to the point that deck is exhausted, a new deck is created
+in the same manner.
+
+.SH
+SCORING
+Cards are scored in the following manner:
+
+.RS 4
+.TP
+*
+Cards two through ten are scored equal to their number of pips. For
+example: a seven of hearts is worth seven points, and a two of clubs
+is worth two points.
+
+.TP
+*
+Face cards (the jack, queen, and king) are worth ten points.
+
+.TP
+*
+Aces can be worth one or eleven points. The owner of the hand the ace
+is in chooses which value to use when scoring the ace.
+
+.SH
+BETTING
+Before each hand begins, the player must choose how much to bet and make
+the bet. By default the bet must be at least twenty but no more than 500.
+
+.SH
+DEALING
+Each player is dealt two cards face up. The dealer is dealt two cards
+face down.
