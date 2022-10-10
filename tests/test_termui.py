@@ -625,7 +625,7 @@ class TableTestCase(ut.TestCase):
 
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.termui.print')
-    @patch('blackjack.termui.clireader.main')
+    @patch('blackjack.termui.clireader.view_text')
     def test_input_multichar_esc_to_help(
         self,
         mock_clir,
@@ -637,8 +637,11 @@ class TableTestCase(ut.TestCase):
         """
         prompt = 'spam'
         fmt = '{:<80}'
+        with open('blackjack/data/rules.man') as fh:
+            text = fh.read()
+        title = 'rules.man'
         exp_clir = [
-            call('blackjack/data/rules.man', 'man'),
+            call(text, title, 'man'),
         ]
 
         mock_inkey.side_effect = ('\x1b', 'x', '2', '0', '\n')

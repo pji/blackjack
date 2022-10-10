@@ -62,5 +62,55 @@ the bet. By default the bet must be at least twenty but no more than 500.
 
 .SH
 DEALING
-Each player is dealt two cards face up. The dealer is dealt two cards
-face down.
+Each player is dealt two cards face up. The dealer is dealt two cards.
+One card is face up, and the other card is face down.
+
+.SH
+NATURAL
+If a player is dealt a card worth ten points and an ace, they have a
+"natural." If the dealer also has a natural, they tie. Otherwise the
+player is awarded one and a half times their bet.
+
+.SH
+GAME PLAY
+After the deal, play starts with the first player. They must chose
+whether to "hit" or "stand." If a player hits, the dealer deals them
+the top card from the deck, which is then added to the total of their
+had. While the total is less than twenty-one, the player can choose to
+hit again. If the total is greater than twenty-one, they go "bust."
+
+.IP
+Once a player reaches a score of twenty-one, chooses to stand, or goes
+bust, their turn ends. Play proceeds to the next player.
+
+.SS
+Splitting Pairs
+If the player is dealt two cards with the same denomination (ace, type
+of face card, or number of pips), they may be splitt into two separate
+hands. The player must bet an additional amount equal to their initial
+bet. The player then chooses to hit or stand on each hand separately,
+just as though each was a normal hand.
+
+.IP
+If the player splits a pair of aces, the deal only gives one additional
+card to each hand. The player may not hit to receive additional cards.
+If either hand is given a card with a value of ten, it does not count
+as a natural.
+
+.SS
+Doubling Down
+If the player's initial total after the deal is nine, ten, or eleven,
+the player may choose to "double down." The player places an additional
+bet equal to their initial bet. The player is given one additional card,
+and then play proceeds to the next player.
+
+.IP
+If the player starts with two fives, they may chose to split or double
+down. They cannot do both.
+
+.SH
+DEALER PLAY
+After all of the player's turns are finished, play proceeds to the
+dealer. The dealer's face down card is turned up. While the value of
+the dealer's hand is less than 17, the dealer must hit. Once the value
+of the dealer's hand is 17 or greater, the dealer must stand.

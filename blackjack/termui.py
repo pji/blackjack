@@ -9,6 +9,7 @@ This module manages a user interface run through a terminal.
 """
 from collections import namedtuple
 import collections.abc as abc
+from importlib.resources import open_text
 from time import sleep
 from typing import Any, Generator, Optional, Sequence
 
@@ -273,7 +274,13 @@ class Table(model.TerminalController):
             print(self.term.move(y, 0) + row_fmt.format(*self.data[index]))
 
     def _show_help(self):
-        clireader.main('blackjack/data/rules.man', 'man')
+        title = 'rules.man'
+        default_file = open_text('blackjack.data', title)
+        text = default_file.read()
+        default_file.close()
+        with self.term.fullscreen():
+            clireader.view_text(text, title, 'man')
+        print(self.term.clear)
 
     # Public methods.
     def clear(self):
