@@ -560,6 +560,41 @@ class TableTestCase(ut.TestCase):
         self.assertListEqual(exp_print, act_print)
         self.assertEqual(exp_resp, act_resp)
 
+    @patch('blackjack.termui.clireader.view_text')
+    @patch('blessed.Terminal.inkey')
+    @patch('blackjack.termui.print')
+    def test_input_esc_to_help(self, mock_print, mock_inkey, mock_clir):
+        """When called with a prompt, input() should write the prompt
+        to the UI and return the response from the user.
+        """
+        # Expected values.
+        with open('blackjack/data/rules.man') as fh:
+            text = fh.read()
+        title = 'rules.man'
+        exp_clir = [
+            call(text, title, 'man'),
+        ]
+
+        # Test data and values.
+        term = Terminal()
+        mock_inkey.side_effect = (Keystroke('\x1b'), 'x', 'n',)
+        prompt = 'spam'
+        fields = [
+            ('Name', '{:>10}'),
+            ('Value', '{:>10}'),
+        ]
+        ctlr = termui.Table('Eggs', fields)
+        main = termui.main(ctlr)
+        next(main)
+
+        # Run test and gather actuals.
+        _ = main.send(('input', prompt))
+        act_clir = mock_clir.mock_calls
+        del main
+
+        # Determine test result.
+        self.assertListEqual(exp_clir, act_clir)
+
     # Table.input_multichar() tests.
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.termui.print')
@@ -635,8 +670,7 @@ class TableTestCase(ut.TestCase):
         """When the user presses the escape key, input_multichar()
         should invoke the help screen.
         """
-        prompt = 'spam'
-        fmt = '{:<80}'
+        # Expected values.
         with open('blackjack/data/rules.man') as fh:
             text = fh.read()
         title = 'rules.man'
@@ -644,7 +678,9 @@ class TableTestCase(ut.TestCase):
             call(text, title, 'man'),
         ]
 
-        mock_inkey.side_effect = ('\x1b', 'x', '2', '0', '\n')
+        # Test data and values.
+        mock_inkey.side_effect = ('\x1b', 'x', '2', '0', '\n',)
+        prompt = 'spam'
         fields = [
             ('Name', '{:>10}'),
             ('Value', '{:>10}'),
@@ -652,10 +688,13 @@ class TableTestCase(ut.TestCase):
         ctlr = termui.Table('Eggs', fields)
         main = termui.main(ctlr)
         next(main)
+
+        # Run test and gather actuals.
         act_resp = main.send(('input_multichar', prompt))
         act_clir = mock_clir.mock_calls
         del main
 
+        # Determine test result.
         self.assertListEqual(exp_clir, act_clir)
 
     @patch('blessed.Terminal.inkey')

@@ -108,6 +108,15 @@ and then play proceeds to the next player.
 If the player starts with two fives, they may chose to split or double
 down. They cannot do both.
 
+.SS
+Insurance
+Insurance can be purchased when the dealer's face up card is an ace. It
+is a side bet that the face down card has a value of ten. The amount of
+the bet can be up to half of the player's original bet for the hand. If
+the face down card has a value of ten, the player wins the bet and is
+awarded double the money of the bet. Otherwise, the player loses the
+bet.
+
 .SH
 DEALER PLAY
 After all of the player's turns are finished, play proceeds to the

@@ -525,7 +525,7 @@ class EngineTestCase(ut.TestCase):
 
     # Test Engine._insure().
     def test__insure(self):
-        """Given a dealer hand a player can ensure and a player who
+        """Given a dealer hand a player can insure and a player who
         will insure, _insure() should set the insured attribute on
         the player and take the player's additional bet.
         """

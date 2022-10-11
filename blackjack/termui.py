@@ -274,12 +274,17 @@ class Table(model.TerminalController):
             print(self.term.move(y, 0) + row_fmt.format(*self.data[index]))
 
     def _show_help(self):
+        # Get the text of the rules page.
         title = 'rules.man'
         default_file = open_text('blackjack.data', title)
         text = default_file.read()
         default_file.close()
+
+        # Display the rules help.
         with self.term.fullscreen():
             clireader.view_text(text, title, 'man')
+
+        # Clear the whole screen after the help is closed.
         print(self.term.clear)
 
     # Public methods.
@@ -317,14 +322,28 @@ class Table(model.TerminalController):
         :return: The user's input.
         :rtype: str
         """
+        # Print the input prompt.
         y = self._y_input
         fmt = '{:<' + str(self.term.width) + '}'
         print(self.term.move(y, 1) + fmt.format(prompt))
+
+        # Get the input.
         with self.term.cbreak():
             resp: Optional[Keystroke] = self.term.inkey()
         print(self.term.move(y, 1) + fmt.format(''))
+
+        # Use the default if no input is given.
         if not resp or resp == '\n':
             resp = default
+
+        # If ESC is given, show the help screen. Then prompt again
+        # for input once we leave the help screen.
+        if resp == '\x1b':
+            self._show_help()
+            self.draw()
+            resp = self.input(prompt, default)
+
+        # Return the input.
         return resp
 
     def input_multichar(
