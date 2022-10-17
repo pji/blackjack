@@ -40,6 +40,10 @@ The following features are planned for the 0.1.0 release:
     *   x Clear splash screen from TableUI before play begins.
 *   x Add "How-To" to Table interface.
 *   x Add "How-To" to help.
+* Build UI for saving and restoring game state.
+    *   Create menu interface.
+    *   Select item in menu.
+    *   Escape to menu.
 
 The following features are possible for future versions:
 
@@ -66,7 +70,6 @@ The following features are possible for future versions:
     * Allow side bets.
     * Add late surrender.
     * Add doubling after split.
-* Build UI for saving and restoring game state.
 * Add ability to configure by file.
 * Allow multiple human players to play in single game over network.
 
