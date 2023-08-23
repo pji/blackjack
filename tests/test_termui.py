@@ -10,6 +10,7 @@ This module contains the unit tests for the blackjack.termui module.
 import unittest as ut
 from unittest.mock import call, patch, PropertyMock
 
+import pytest
 from blessed import Terminal
 from blessed.keyboard import Keystroke
 
@@ -131,6 +132,291 @@ class SplashTestCase(ut.TestCase):
 
         # Determine test result.
         self.assertListEqual(exp, act)
+
+
+# Tests for Table.
+bold = '\x1b[1m'
+data = [[1, 2], [3, 4]]
+cls = '\x1b[2J'
+fields = [
+    ('Name', '{:>10}'),
+    ('Value', '{:>10}'),
+]
+fmt = '{:<80}'
+frame = '\u2500' * 23
+head = ' ' + ' '.join('{:<10}'.format(f[0]) for f in fields)
+home = '\x1b[H'
+loc = '\x1b[{};{}H'
+title = 'Eggs'
+row = ' ' + ' '.join(field[1] for field in fields) + ' '
+topleft = '\x1b[1;2H'
+
+
+@pytest.fixture
+def table_main():
+    """A simple Table to test."""
+    ctlr = termui.Table(title, fields, data=data)
+    main = termui.main(ctlr)
+    yield main
+
+
+@pytest.fixture
+def table_main_with_status():
+    """A simple Table to test."""
+    ctlr = termui.Table(title, fields, data=data, show_status=True)
+    main = termui.main(ctlr)
+    yield main
+
+
+@pytest.fixture
+def table_draw_test(request, capsys, table_main):
+    """A basic test of :meth:`blackjack.termui.Table._draw_cell`."""
+    marker = request.node.get_closest_marker('msg')
+
+    next(table_main)
+    table_main.send(marker.args[0])
+    del table_main
+
+    captured = capsys.readouterr()
+    return captured.out
+
+
+@pytest.fixture
+def table_draw_with_status_test(request, capsys, table_main_with_status):
+    """A basic test of :meth:`blackjack.termui.Table._draw_cell`."""
+    next(table_main_with_status)
+    marker = request.node.get_closest_marker('msg')
+    table_main_with_status.send(marker.args[0])
+    del table_main_with_status
+
+    captured = capsys.readouterr()
+    return captured.out
+
+
+@pytest.fixture
+def table_input_test(request, capsys, table_main, mocker):
+    """A basic test of :meth:`blackjack.termui.Table.input`."""
+    marker = request.node.get_closest_marker('msg')
+
+    input_ = marker.args[1]
+    mocker.patch('clireader.view_text', return_value=None)
+    mocker.patch('blessed.Terminal.inkey', side_effect=input_)
+
+    next(table_main)
+    returned = table_main.send(marker.args[0])
+    del table_main
+
+    captured = capsys.readouterr()
+    return captured.out, returned
+
+
+@pytest.fixture
+def table_input_with_status_test(
+    request, capsys, table_main_with_status, mocker
+):
+    """A basic test of :meth:`blackjack.termui.Table.input`."""
+    marker = request.node.get_closest_marker('msg')
+
+    input_ = ['n',]
+    if len(marker.args) > 1:
+        input_ = marker.args[1]
+    mocker.patch('blessed.Terminal.inkey', side_effect=input_)
+
+    next(table_main_with_status)
+    returned = table_main_with_status.send(marker.args[0])
+    del table_main_with_status
+
+    captured = capsys.readouterr()
+    return captured.out, returned
+
+
+# Tests for table._draw_cell.
+@pytest.mark.msg(('_draw_cell', 0, 1, 'spam'))
+def test__draw_cell(table_draw_test):
+    """When given the coordinates of a cell to draw,
+    :meth:`blackjack.termui.Table._draw_cell` should
+    draw that cell in the UI.
+    """
+    assert table_draw_test == (
+        loc.format(5, 13)
+        + fields[1][1].format('spam')
+        + '\n'
+    )
+
+
+@pytest.mark.msg(('_draw_cell', 0, 1, '01234567890123456789'))
+def test__draw_cell_truncate(table_draw_test):
+    """When given the coordinates of a cell to draw,
+    :meth:`blackjack.termui.Table._draw_cell` should
+    draw that cell in the UI. If the text overflows the
+    width of the cell, the text should be truncated to
+    the width of the cell.
+    """
+    assert table_draw_test == (
+        loc.format(5, 13)
+        + fields[1][1].format('01234567890123456789'[:10])
+        + '\n'
+    )
+
+
+@pytest.mark.msg(('_draw_cell', 0, 1, 1234567890123456789))
+def test__draw_cell_truncate_with_int(table_draw_test):
+    """When given the coordinates of a cell to draw,
+    :meth:`blackjack.termui.Table._draw_cell` should
+    draw that cell in the UI. If the text overflows the
+    width of the cell, the text should be truncated to
+    the width of the cell.
+    """
+    assert table_draw_test == (
+        loc.format(5, 13)
+        + fields[1][1].format('1234567890123456789'[:10])
+        + '\n'
+    )
+
+
+# Tests for Table.clear.
+@pytest.mark.msg(('clear',))
+def test_clear(table_draw_test):
+    """When called, :meth:`blackjack.termui.Table.clear` should
+    erase everything on the UI.
+    """
+    assert table_draw_test == ''.join(
+        loc.format(y, 1) + ' ' * 80 + '\n'
+        for y in range(1, 9)
+    )
+
+
+# Tests for Table.draw.
+@pytest.mark.msg(('draw',))
+def test_draw(table_draw_test):
+    """When called, :meth:`blackjack.termui.Table.draw` should
+    draw the entire UI to the terminal.
+    """
+    assert table_draw_test == '\n'.join([
+        topleft + bold + title,
+        loc.format(2, 2) + '',
+        loc.format(3, 2) + head,
+        loc.format(4, 2) + frame,
+        loc.format(5, 1) + row.format(*data[0]),
+        loc.format(6, 1) + row.format(*data[1]),
+        loc.format(7, 1) + frame,
+    ]) + '\n'
+
+
+@pytest.mark.msg(('draw',))
+def test_draw(table_draw_test):
+    """When called, :meth:`blackjack.termui.Table.draw` should
+    draw the entire UI to the terminal.
+    """
+    assert table_draw_test == '\n'.join([
+        topleft + bold + title,
+        loc.format(2, 2) + '',
+        loc.format(3, 2) + head,
+        loc.format(4, 2) + frame,
+        loc.format(5, 1) + row.format(*data[0]),
+        loc.format(6, 1) + row.format(*data[1]),
+        loc.format(7, 1) + frame,
+    ]) + '\n'
+
+
+@pytest.mark.msg(('draw',))
+def test_draw(table_draw_with_status_test):
+    """When called, :meth:`blackjack.termui.Table.draw` should
+    draw the entire UI to the terminal.
+    """
+    assert table_draw_with_status_test == '\n'.join([
+        topleft + bold + title,
+        loc.format(2, 2) + '',
+        loc.format(3, 2) + head,
+        loc.format(4, 2) + frame,
+        loc.format(5, 1) + row.format(*data[0]),
+        loc.format(6, 1) + row.format(*data[1]),
+        loc.format(7, 1) + frame,
+        loc.format(8, 1) + ' ' * 80,
+        loc.format(8, 2) + 'Count: 0',
+        loc.format(9, 1) + frame,
+    ]) + '\n'
+
+
+# Tests for Table.error.
+@pytest.mark.msg(('error', 'spam',))
+def test_error(table_draw_test):
+    """When called with a message, :meth:`blackjack.termui.Table.error`
+    should write the error to the UI.
+    """
+    msg = 'spam'
+    assert table_draw_test == loc.format(9, 2) + fmt.format(msg) + '\n'
+
+
+# Tests for Table.input.
+@pytest.mark.msg(('input', 'spam',), ['n',])
+def test_input(table_input_test):
+    """When called with a prompt, :meth:`blackjack.termui.Table.input`
+    should write the prompt to the UI and return the response from
+    the user.
+    """
+    displayed, returned = table_input_test
+    assert displayed == '\n'.join([
+        loc.format(8, 2) + fmt.format('spam'),
+        loc.format(8, 2) + fmt.format(''),
+    ]) + '\n'
+    assert returned == 'n'
+
+
+@pytest.mark.msg(('input', 'spam', 'n'), ['',])
+def test_input_default(table_input_test):
+    """When called with a prompt, :meth:`blackjack.termui.Table.input`
+    should write the prompt to the UI and return the response from
+    the user.
+    """
+    displayed, returned = table_input_test
+    assert displayed == '\n'.join([
+        loc.format(8, 2) + fmt.format('spam'),
+        loc.format(8, 2) + fmt.format(''),
+    ]) + '\n'
+    assert returned == 'n'
+
+
+@pytest.mark.msg(('input', 'spam',), ['n',])
+def test_input_with_status(table_input_with_status_test):
+    """When called with a prompt, :meth:`blackjack.termui.Table.input`
+    should write the prompt to the UI and return the response from
+    the user.
+    """
+    displayed, returned = table_input_with_status_test
+    assert displayed == '\n'.join([
+        loc.format(10, 2) + fmt.format('spam'),
+        loc.format(10, 2) + fmt.format(''),
+    ]) + '\n'
+    assert returned == 'n'
+
+
+@pytest.mark.msg(('input', 'spam',), [
+    Keystroke('\x1b'),
+    'x',
+    'n',
+])
+def test_input_esc_to_help(table_input_test):
+    """When called with a prompt, :meth:`blackjack.termui.Table.input`
+    should write the prompt to the UI and return the response from
+    the user. The ESC key should send the user to the help screen.
+    """
+    displayed, returned = table_input_test
+    assert displayed == '\n'.join([
+        loc.format(8, 2) + fmt.format('spam'),
+        loc.format(8, 2) + fmt.format(''),
+        home + cls,
+        topleft + bold + title,
+        loc.format(2, 2) + '',
+        loc.format(3, 2) + head,
+        loc.format(4, 2) + frame,
+        loc.format(5, 1) + row.format(*data[0]),
+        loc.format(6, 1) + row.format(*data[1]),
+        loc.format(7, 1) + frame,
+        loc.format(8, 2) + fmt.format('spam'),
+        loc.format(8, 2) + fmt.format(''),
+    ]) + '\n'
+    assert returned == 'x'
 
 
 class TableTestCase(ut.TestCase):
@@ -269,331 +555,6 @@ class TableTestCase(ut.TestCase):
         act = table.rows
 
         self.assertEqual(exp, act)
-
-    # Table._draw_cell() tests.
-    @patch('blackjack.termui.print')
-    def test__draw_cell(self, mock_print):
-        """When given the coordinates of a cell to draw, draw that
-        cell in the UI.
-        """
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        expected = [
-            call(self.loc.format(5, 13) + fields[1][1].format('spam')),
-        ]
-
-        ctlr = termui.Table('Eggs', fields)
-        main = termui.main(ctlr)
-        next(main)
-        main.send(('_draw_cell', 0, 1, 'spam'))
-        del main
-        actual = mock_print.mock_calls
-
-        self.assertEqual(expected, actual)
-
-    @patch('blackjack.termui.print')
-    def test__draw_cell_wrap(self, mock_print):
-        """When given the coordinates of a cell to draw, draw that
-        cell in the UI.
-        """
-        text = '01234567890123456789'
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        expected = [
-            call(self.loc.format(5, 13) + fields[1][1].format(text[10:])),
-        ]
-
-        ctlr = termui.Table('Eggs', fields)
-        main = termui.main(ctlr)
-        next(main)
-        main.send(('_draw_cell', 0, 1, text))
-        del main
-        actual = mock_print.mock_calls
-
-        self.assertEqual(expected, actual)
-
-    @patch('blackjack.termui.print')
-    def test__draw_cell_wrap_with_int(self, mock_print):
-        """If a non-string is passed to _draw_cell, it should coerce
-        the value to a string before trying to wrap it.
-        """
-        val = 12345678901234567890
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        expected = [
-            call(self.loc.format(5, 13) + fields[1][1].format(str(val)[10:])),
-        ]
-
-        ctlr = termui.Table('Eggs', fields)
-        main = termui.main(ctlr)
-        next(main)
-        main.send(('_draw_cell', 0, 1, val))
-        del main
-        actual = mock_print.mock_calls
-
-        self.assertEqual(expected, actual)
-
-    # Table.clear() tests.
-    @patch('blackjack.termui.print')
-    def test_clear(self, mock_print):
-        """When called, clear should erase everything on the UI."""
-        line = ' ' * 80
-        exp = [call(self.loc.format(y, 1) + line)
-               for y in range(1, 9)]
-
-        title = 'Spam'
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        data = [[1, 2], [3, 4]]
-        box = termui.Box(custom='──   ───   ───')
-        ctlr = termui.Table(title, fields, data=data)
-        main = termui.main(ctlr)
-        next(main)
-        main.send(('clear',))
-        del main
-        act = mock_print.mock_calls[-8:]
-
-        self.assertEqual(exp, act)
-
-    # Table.draw() tests.
-    @patch('blackjack.termui.print')
-    def test_draw(self, mock_print):
-        """When called, draw should draw the entire UI to the
-        terminal.
-        """
-        title = 'Spam'
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        head = ' ' + ' '.join('{:<10}'.format(f[0]) for f in fields)
-        data = [[1, 2], [3, 4]]
-        row = ' ' + ' '.join(field[1] for field in fields) + ' '
-        frame = '\u2500' * 23
-        expected = [
-            call(self.topleft + self.bold + title),
-            call(self.loc.format(2, 2) + ''),
-            call(self.loc.format(3, 2) + head),
-            call(self.loc.format(4, 2) + frame),
-            call(self.loc.format(5, 1) + row.format(*data[0])),
-            call(self.loc.format(6, 1) + row.format(*data[1])),
-            call(self.loc.format(7, 1) + frame),
-        ]
-
-        box = termui.Box(custom='──   ───   ───')
-        ctlr = termui.Table(title, fields, data=data)
-        main = termui.main(ctlr)
-        next(main)
-        main.send(('draw',))
-        del main
-        actual = mock_print.mock_calls
-
-        self.assertListEqual(expected, actual)
-
-    @patch('blackjack.termui.print')
-    def test_draw_with_status(self, mock_print):
-        """If the Table.show_status attribute is True, the status
-        information should be included in the draw.
-        """
-        title = 'Spam'
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        head = ' ' + ' '.join('{:<10}'.format(f[0]) for f in fields)
-        data = [[1, 2], [3, 4]]
-        row = ' ' + ' '.join(field[1] for field in fields) + ' '
-        frame = '\u2500' * 23
-        status = 'Count: 0'
-        expected = [
-            call(self.topleft + self.bold + title),
-            call(self.loc.format(2, 2) + ''),
-            call(self.loc.format(3, 2) + head),
-            call(self.loc.format(4, 2) + frame),
-            call(self.loc.format(5, 1) + row.format(*data[0])),
-            call(self.loc.format(6, 1) + row.format(*data[1])),
-            call(self.loc.format(7, 1) + frame),
-            call(self.loc.format(8, 1) + ' ' * 80),
-            call(self.loc.format(8, 2) + status),
-            call(self.loc.format(9, 1) + frame),
-        ]
-
-        box = termui.Box(custom='──   ───   ───')
-        ctlr = termui.Table(title, fields, data=data, show_status=True)
-        main = termui.main(ctlr)
-        next(main)
-        main.send(('draw',))
-        del main
-        actual = mock_print.mock_calls
-
-        self.assertListEqual(expected, actual)
-
-    # Table.error() tests.
-    @patch('blackjack.termui.print')
-    def test_error(self, mock_print):
-        """When called with a message, error() should write the error
-        to the UI.
-        """
-        # Set up for expected value.
-        msg = 'spam'
-        fmt = '{:<80}'
-
-        # Expected value.
-        exp = [
-            call(self.loc.format(8, 2) + fmt.format(msg)),
-        ]
-
-        # Test data and state.
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        ctlr = termui.Table('Eggs', fields)
-        main = termui.main(ctlr)
-        next(main)
-
-        # Run test.
-        act_resp = main.send(('error', msg))
-
-        # Test tear down and gather actuals.
-        del main
-        act = mock_print.mock_calls[-1:]
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-    # Table.input() tests.
-    @patch('blessed.Terminal.inkey')
-    @patch('blackjack.termui.print')
-    def test_input(self, mock_print, mock_inkey):
-        """When called with a prompt, input() should write the prompt
-        to the UI and return the response from the user.
-        """
-        prompt = 'spam'
-        fmt = '{:<80}'
-        exp_print = [
-            call(self.loc.format(7, 2) + fmt.format(prompt)),
-            call(self.loc.format(7, 2) + fmt.format('')),
-        ]
-        exp_resp = 'n'
-
-        mock_inkey.return_value = 'n'
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        ctlr = termui.Table('Eggs', fields)
-        main = termui.main(ctlr)
-        next(main)
-        act_resp = main.send(('input', prompt))
-        del main
-        act_print = mock_print.mock_calls
-
-        self.assertEqual(exp_print, act_print)
-        self.assertEqual(exp_resp, act_resp)
-
-    @patch('blessed.Terminal.inkey')
-    @patch('blackjack.termui.print')
-    def test_input_default(self, mock_print, mock_inkey):
-        """If the user input is empty, return the default value
-        instead.
-        """
-        prompt = 'spam'
-        fmt = '{:<80}'
-        exp_print = [
-            call(self.loc.format(7, 2) + fmt.format(prompt)),
-            call(self.loc.format(7, 2) + fmt.format('')),
-        ]
-        exp_resp = 'n'
-
-        mock_inkey.return_value = ''
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        ctlr = termui.Table('Eggs', fields)
-        main = termui.main(ctlr)
-        next(main)
-        act_resp = main.send(('input', prompt, exp_resp))
-        del main
-        act_print = mock_print.mock_calls
-
-        self.assertEqual(exp_print, act_print)
-        self.assertEqual(exp_resp, act_resp)
-
-    @patch('blessed.Terminal.inkey')
-    @patch('blackjack.termui.print')
-    def test_input_with_show_status(self, mock_print, mock_inkey):
-        """When called with a prompt, input() should write the prompt
-        to the UI and return the response from the user. When
-        Table.show_status is True, the input line should be below the
-        status line.
-        """
-        prompt = 'spam'
-        fmt = '{:<80}'
-        exp_print = [
-            call(self.loc.format(9, 2) + fmt.format(prompt)),
-            call(self.loc.format(9, 2) + fmt.format('')),
-        ]
-        exp_resp = 'n'
-
-        mock_inkey.return_value = 'n'
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        ctlr = termui.Table('Eggs', fields, show_status=True)
-        main = termui.main(ctlr)
-        next(main)
-        act_resp = main.send(('input', prompt))
-        del main
-        act_print = mock_print.mock_calls
-
-        self.assertListEqual(exp_print, act_print)
-        self.assertEqual(exp_resp, act_resp)
-
-    @patch('blackjack.termui.clireader.view_text')
-    @patch('blessed.Terminal.inkey')
-    @patch('blackjack.termui.print')
-    def test_input_esc_to_help(self, mock_print, mock_inkey, mock_clir):
-        """When called with a prompt, input() should write the prompt
-        to the UI and return the response from the user.
-        """
-        # Expected values.
-        with open('blackjack/data/rules.man') as fh:
-            text = fh.read()
-        title = 'rules.man'
-        exp_clir = [
-            call(text, title, 'man'),
-        ]
-
-        # Test data and values.
-        term = Terminal()
-        mock_inkey.side_effect = (Keystroke('\x1b'), 'x', 'n',)
-        prompt = 'spam'
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        ctlr = termui.Table('Eggs', fields)
-        main = termui.main(ctlr)
-        next(main)
-
-        # Run test and gather actuals.
-        _ = main.send(('input', prompt))
-        act_clir = mock_clir.mock_calls
-        del main
-
-        # Determine test result.
-        self.assertListEqual(exp_clir, act_clir)
 
     # Table.input_multichar() tests.
     @patch('blessed.Terminal.inkey')

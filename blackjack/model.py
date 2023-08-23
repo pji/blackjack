@@ -38,7 +38,7 @@ class Validated(ABC, _BaseDescriptor):
     """A validating data descriptor."""
     msg = None
 
-    def __init__(self, attr_name: str = None) -> None:
+    def __init__(self, attr_name: str = '') -> None:
         """Initialize an instance of the class.
 
         :param attr_name: (Optional.) The name of the descriptor's
@@ -73,7 +73,7 @@ class ValidatedTuple(ABC, _BaseDescriptor):
     """A validating data descriptor for sequences."""
     msg = 'Invalid contents ({}).'
 
-    def __init__(self, attr_name: str = None) -> None:
+    def __init__(self, attr_name: str = '') -> None:
         """Initialize an instance of the class.
 
         :param attr_name: (Optional.) The name of the descriptor's
@@ -487,7 +487,7 @@ class TerminalController:
     data: Any = None
     fields: Any = None
 
-    def __init__(self, term: Terminal = None) -> None:
+    def __init__(self, term: Terminal | None = None) -> None:
         """Initialize an instance of the class.
 
         :param term: (Optional.) The blessed.Terminal object that

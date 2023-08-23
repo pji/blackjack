@@ -234,7 +234,11 @@ class Pile(MutableSequence):
             msg = 'Serialized object was not a Pile object.'
             raise TypeError(msg)
 
-    def __init__(self, cards: list = None, _iter_index: int = 0) -> None:
+    def __init__(
+        self,
+        cards: list[Card] | None = None,
+        _iter_index: int = 0
+    ) -> None:
         """Initialize and instance of the class.
 
         :param cards: (Optional.) A list containing the cards held by
@@ -351,8 +355,12 @@ class Deck(Pile):
             d.extend(deepcopy(std_deck))
         return d
 
-    def __init__(self, cards: list = None, size: int = 1,
-                 _iter_index: int = 0) -> None:
+    def __init__(
+        self,
+        cards: list[Card] | None = None,
+        size: int = 1,
+        _iter_index: int = 0
+    ) -> None:
         super().__init__(cards)
         self.size = size
 

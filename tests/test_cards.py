@@ -8,14 +8,21 @@ This module contains the unit tests for the blackjack.cards module.
 :license: MIT, see LICENSE for more details.
 """
 import collections.abc as col
-from copy import deepcopy
 import inspect
-from itertools import zip_longest
 import json
 import unittest
+from copy import deepcopy
+from itertools import zip_longest
 from unittest.mock import call, Mock
 
 from blackjack import cards
+
+
+# Tests for Card.
+def test_Card_can_instantiate():
+    """When invoked, an :class:`blackjack.cards.Card` object is created."""
+    card = cards.Card()
+    assert isinstance(card, cards.Card)
 
 
 class CardTestCase(unittest.TestCase):

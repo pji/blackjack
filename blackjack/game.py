@@ -204,10 +204,10 @@ class Engine(BaseEngine):
 
     def __init__(
             self,
-            deck: Deck = None,
+            deck: Deck | None = None,
             dealer: Optional[Player] = None,
             playerlist: Optional[list] = None,
-            ui: EngineUI = None,
+            ui: EngineUI | None = None,
             buyin: float = 0,
             save_file: str = 'save.json',
             deck_size: int = 6,

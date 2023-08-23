@@ -21,7 +21,7 @@ from blackjack.cards import Hand
 
 
 # Functions.
-def will_split_always(self, hand:Hand, the_game) -> bool:
+def will_split_always(self, hand: Hand, the_game) -> bool:
     """The player will always split where possible.
 
     :param hand: The hand that may be split.
@@ -37,17 +37,17 @@ def will_split_dealer(self, *args):
     raise TypeError(msg)
 
 
-def will_split_never(self, hand:Hand, the_game) -> bool:
+def will_split_never(self, hand: Hand, the_game) -> bool:
     """Never split."""
     return False
 
 
-def will_split_random(self, hand:Hand, the_game) -> bool:
+def will_split_random(self, hand: Hand, the_game) -> bool:
     """Split randomly."""
     return choice([True, False])
 
 
-def will_split_recommended(self, hand:Hand, the_game) -> bool:
+def will_split_recommended(self, hand: Hand, the_game) -> bool:
     """Make a split decision as recommended by bicycle.com."""
     dhand = the_game.dealer.hands[0]
     if hand[0].rank == 1 or hand[0].rank == 8:
@@ -66,7 +66,7 @@ def will_split_recommended(self, hand:Hand, the_game) -> bool:
             return False
 
 
-def will_split_user(self, hand:Hand, the_game) -> bool:
+def will_split_user(self, hand: Hand, the_game) -> bool:
     """Get a split decision from the user."""
 #     is_yes = the_game.ui.input('split')
     is_yes = the_game.ui.split_prompt()

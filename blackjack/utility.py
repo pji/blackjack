@@ -41,7 +41,7 @@ class Box:
     * mbot: Bottom mid-join
     * rbot: Bottom-right corner
     """
-    def __init__(self, kind: str = 'light', custom: str = None) -> None:
+    def __init__(self, kind: str = 'light', custom: str = '') -> None:
         self._names = [
             'top', 'bot', 'side',
             'mhor', 'mver',

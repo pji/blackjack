@@ -55,9 +55,9 @@ class Table(model.TerminalController):
         self,
         title: str,
         fields: abc.Sequence,
-        frame: Box = None,
-        data: abc.Sequence = None,
-        term: Terminal = None,
+        frame: Box | None = None,
+        data: abc.Sequence | None = None,
+        term: Terminal | None = None,
         row_sep: bool = False,
         rows: int = 1,
         show_status: bool = False
@@ -790,9 +790,9 @@ class TableUI(model.EngineUI):
 
 # Main UI loop.
 def main(
-        ctlr: model.TerminalController = None,
-        is_interactive=False,
-        splash_text: Sequence[str] = ''
+    ctlr: model.TerminalController | None = None,
+    is_interactive: bool = False,
+    splash_text: Sequence[str] | None = None
 ) -> Generator:
     """The main UI loop as a generator.
 
