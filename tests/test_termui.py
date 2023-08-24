@@ -419,6 +419,109 @@ def test_input_esc_to_help(table_input_test):
     assert returned == 'x'
 
 
+@pytest.mark.msg(('input', 'spam',), [
+    Keystroke('\x1b'),
+    'x',
+    'n',
+])
+def test_input_esc_to_help(table_input_test):
+    """When called with a prompt, :meth:`blackjack.termui.Table.input`
+    should write the prompt to the UI and return the response from
+    the user. The ESC key should send the user to the help screen.
+    """
+    displayed, returned = table_input_test
+    assert displayed == '\n'.join([
+        loc.format(8, 2) + fmt.format('spam'),
+        loc.format(8, 2) + fmt.format(''),
+        home + cls,
+        topleft + bold + title,
+        loc.format(2, 2) + '',
+        loc.format(3, 2) + head,
+        loc.format(4, 2) + frame,
+        loc.format(5, 1) + row.format(*data[0]),
+        loc.format(6, 1) + row.format(*data[1]),
+        loc.format(7, 1) + frame,
+        loc.format(8, 2) + fmt.format('spam'),
+        loc.format(8, 2) + fmt.format(''),
+    ]) + '\n'
+    assert returned == 'x'
+
+
+# Test for Table.input_multichar.
+@pytest.mark.msg(('input_multichar', 'spam',), ['2', '0', '\n',])
+def test_input_multichar(table_input_test):
+    """When called with a prompt,
+    :meth:`blackjack.termui.Table.input_multichar'
+    should write the prompt to the UI and return the
+    response from the user.
+    """
+    displayed, returned = table_input_test
+    assert displayed == '\n'.join([
+        loc.format(8, 2) + fmt.format('spam' + ' > '),
+        loc.format(8, 7) + '2',
+        loc.format(8, 8) + '0',
+        loc.format(8, 2) + fmt.format(''),
+    ]) + '\n'
+    assert returned == '20'
+
+
+@pytest.mark.msg(('input_multichar', 'spam', '20'), ['\n',])
+def test_input_multichar_default(table_input_test):
+    """When called with a prompt,
+    :meth:`blackjack.termui.Table.input_multichar'
+    should write the prompt to the UI and return the
+    response from the user.
+    """
+    displayed, returned = table_input_test
+    assert displayed == '\n'.join([
+        loc.format(8, 2) + fmt.format('spam' + ' > '),
+        loc.format(8, 2) + fmt.format(''),
+    ]) + '\n'
+    assert returned == '20'
+
+
+@pytest.mark.msg(('input_multichar', 'spam',), [
+    Keystroke('\x1b'),
+    'x',
+    '2',
+    '0',
+    '\n',
+])
+def test_input_multichar_esc_to_help(table_input_test):
+    """When called with a prompt,
+    :meth:`blackjack.termui.Table.input_multichar'
+    should write the prompt to the UI and return the
+    response from the user. When the user presses
+    the escape key, the help screen should be invoked.
+    """
+    displayed, returned = table_input_test
+    assert displayed == '\n'.join([
+        loc.format(8, 2) + fmt.format('spam' + ' > '),
+        home + cls,
+        loc.format(1, 1) + fmt.format(''),
+        loc.format(2, 1) + fmt.format(''),
+        loc.format(3, 1) + fmt.format(''),
+        loc.format(4, 1) + fmt.format(''),
+        loc.format(5, 1) + fmt.format(''),
+        loc.format(6, 1) + fmt.format(''),
+        loc.format(7, 1) + fmt.format(''),
+        loc.format(8, 1) + fmt.format(''),
+        topleft + bold + title,
+        loc.format(2, 2) + '',
+        loc.format(3, 2) + head,
+        loc.format(4, 2) + frame,
+        loc.format(5, 1) + row.format(*data[0]),
+        loc.format(6, 1) + row.format(*data[1]),
+        loc.format(7, 1) + frame,
+        loc.format(8, 2) + fmt.format('spam > '),
+        loc.format(8, 7) + 'x',
+        loc.format(8, 8) + '2',
+        loc.format(8, 9) + '0',
+        loc.format(8, 2) + fmt.format(''),
+    ]) + '\n'
+    assert returned == 'x20'
+
+
 class TableTestCase(ut.TestCase):
     topleft = '\x1b[1;2H'
     bold = '\x1b[1m'
@@ -557,107 +660,6 @@ class TableTestCase(ut.TestCase):
         self.assertEqual(exp, act)
 
     # Table.input_multichar() tests.
-    @patch('blessed.Terminal.inkey')
-    @patch('blackjack.termui.print')
-    def test_input_multichar(self, mock_print, mock_inkey):
-        """When called with a prompt, input_multichar() should write the
-        prompt to the UI and return the response from the user.
-        """
-        prompt = 'spam'
-        fmt = '{:<80}'
-        exp_print = [
-            call(self.loc.format(7, 2) + fmt.format(prompt + ' > ')),
-            call(self.loc.format(7, 7) + '2'),
-            call(self.loc.format(7, 8) + '0'),
-            call(self.loc.format(7, 2) + fmt.format('')),
-        ]
-        exp_resp = '20'
-
-        mock_inkey.side_effect = ('2', '0', '\n')
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        ctlr = termui.Table('Eggs', fields)
-        main = termui.main(ctlr)
-        next(main)
-        act_resp = main.send(('input_multichar', prompt))
-        del main
-        act_print = mock_print.mock_calls
-
-        self.assertListEqual(exp_print, act_print)
-        self.assertEqual(exp_resp, act_resp)
-
-    @patch('blessed.Terminal.inkey')
-    @patch('blackjack.termui.print')
-    def test_input_multichar_default(self, mock_print, mock_inkey):
-        """When called with a prompt and a default, input_number()
-        should write the prompt to the UI and return the response
-        from the user. If the user's response is only a newline,
-        input_number() should return the default.
-        """
-        prompt = 'spam'
-        fmt = '{:<80}'
-        exp_print = [
-            call(self.loc.format(7, 2) + fmt.format(prompt + ' > ')),
-            call(self.loc.format(7, 2) + fmt.format('')),
-        ]
-        exp_resp = '20'
-
-        mock_inkey.side_effect = ('\n', )
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        ctlr = termui.Table('Eggs', fields)
-        main = termui.main(ctlr)
-        next(main)
-        act_resp = main.send(('input_multichar', prompt, exp_resp))
-        del main
-        act_print = mock_print.mock_calls
-
-        self.assertListEqual(exp_print, act_print)
-        self.assertEqual(exp_resp, act_resp)
-
-    @patch('blessed.Terminal.inkey')
-    @patch('blackjack.termui.print')
-    @patch('blackjack.termui.clireader.view_text')
-    def test_input_multichar_esc_to_help(
-        self,
-        mock_clir,
-        mock_print,
-        mock_inkey
-    ):
-        """When the user presses the escape key, input_multichar()
-        should invoke the help screen.
-        """
-        # Expected values.
-        with open('blackjack/data/rules.man') as fh:
-            text = fh.read()
-        title = 'rules.man'
-        exp_clir = [
-            call(text, title, 'man'),
-        ]
-
-        # Test data and values.
-        mock_inkey.side_effect = ('\x1b', 'x', '2', '0', '\n',)
-        prompt = 'spam'
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        ctlr = termui.Table('Eggs', fields)
-        main = termui.main(ctlr)
-        next(main)
-
-        # Run test and gather actuals.
-        act_resp = main.send(('input_multichar', prompt))
-        act_clir = mock_clir.mock_calls
-        del main
-
-        # Determine test result.
-        self.assertListEqual(exp_clir, act_clir)
-
     @patch('blessed.Terminal.inkey')
     @patch('blackjack.termui.print')
     def test_input_multichar_with_status(self, mock_print, mock_inkey):
