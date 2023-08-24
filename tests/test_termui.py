@@ -17,125 +17,108 @@ from blessed.keyboard import Keystroke
 from blackjack import cards, game, model, players, termui
 
 
-class BoxTestCase(ut.TestCase):
-    def test_normal(self):
-        "A Box object should return box characters."""
-        expected = {
-            'top': '\u2500',
-            'bot': '\u2500',
-            'side': '\u2502',
-            'ltop': '\u250c',
-            'rtop': '\u2510',
-            'mtop': '\u252c',
-            'lbot': '\u2514',
-            'rbot': '\u2518',
-            'mbot': '\u2534',
-            'lside': '\u251c',
-            'rside': '\u2524',
-            'mid': '\u253c',
-        }
-
-        box = termui.Box()
-        for attr in expected:
-            actual = getattr(box, attr)
-
-            self.assertEqual(expected[attr], actual)
-
-    def test_change_type(self):
-        """If given a kind, the kind property should change the kind
-        attribute and the _chars attribute.
-        """
-        expected = ['\u2500', '\u2501', '\u2508']
-
-        box = termui.Box('light')
-        actual = [box.top,]
-        box.kind = 'heavy'
-        actual.append(box.top)
-        box.kind = 'light_quadruple_dash'
-        actual.append(box.top)
-
-        self.assertEqual(expected, actual)
-
-    def test_custom(self):
-        """If given a kind of 'custom' string of characters, the box
-         object should return the custom characters and it's kind
-         should be 'custom'.
-        """
-        exp_kind = 'custom'
-        exp_chars = 'abcdefghijklmn'
-        exp_sample = 'g'
-
-        box = termui.Box(custom=exp_chars)
-        act_kind = box.kind
-        act_chars = box._chars
-        act_sample = box.mtop
-
-        self.assertEqual(exp_kind, act_kind)
-        self.assertEqual(exp_chars, act_chars)
-        self.assertEqual(exp_sample, act_sample)
-
-    def test_invalid_custom_string(self):
-        """The passed custom string is not exactly fourteen characters
-        long, a ValueError should be raised.
-        """
-        expected = ValueError
-
-        with self.assertRaises(expected):
-            box = termui.Box(custom='bad')
+# Common data.
+bold = '\x1b[1m'
+loc = '\x1b[{};{}H'
+topleft = '\x1b[1;2H'
 
 
-class SplashTestCase(ut.TestCase):
-    topleft = '\x1b[1;2H'
-    bold = '\x1b[1m'
-    loc = '\x1b[{};{}H'
+# Tests for Box.
+def test_box_attrs():
+    """When an attribute is requested, :class:`Box` should return
+    the box character for that attribute.
+    """
+    attrs = {
+        'top': '\u2500',
+        'bot': '\u2500',
+        'side': '\u2502',
+        'ltop': '\u250c',
+        'rtop': '\u2510',
+        'mtop': '\u252c',
+        'lbot': '\u2514',
+        'rbot': '\u2518',
+        'mbot': '\u2534',
+        'lside': '\u251c',
+        'rside': '\u2524',
+        'mid': '\u253c',
+    }
+    box = termui.Box()
+    for attr in attrs:
+        assert getattr(box, attr) == attrs[attr]
 
-    def setUp(self):
-        self.prompt = 'Press any key to continue.'
-        self.text = ['spam', 'eggs',]
-        self.term = Terminal()
 
-    @patch('blessed.Terminal.inkey', return_value='\n')
-    @patch('blackjack.termui.print')
-    def test_draw(self, mock_print, mock_inkey):
-        """When called with a sequence of strings, splash() should
-        draw those strings in the middle of the terminal and wait
-        until any key is pressed.
-        """
-        # Expected values.
-        exp = [
-            call(
-                self.loc.format(
-                    self.term.height // 2 - len(self.text) // 2 + 1,
-                    self.term.width // 2 - len(self.text[0]) // 2 + 1
-                )
-                + self.text[0]
-            ),
-            call(
-                self.loc.format(
-                    self.term.height // 2 - len(self.text) // 2 + 2,
-                    self.term.width // 2 - len(self.text[1]) // 2 + 1
-                )
-                + self.text[1]
-            ),
-            call(
-                self.loc.format(
-                    self.term.height,
-                    self.term.width // 2 - len(self.prompt) // 2 + 1
-                )
-                + self.prompt
-            ),
-        ]
+def test_box_kind_change_kind():
+    """If given a kind, :attr:`Box.kind` should change the kind
+    of box characters returned.
+    """
+    expected = ['\u2500', '\u2501', '\u2508']
 
-        # Run test and gather actuals.
-        termui.splash(self.text)
-        act = mock_print.mock_calls
+    box = termui.Box('light')
+    actual = [box.top,]
+    box.kind = 'heavy'
+    actual.append(box.top)
+    box.kind = 'light_quadruple_dash'
+    actual.append(box.top)
 
-        # Determine test result.
-        self.assertListEqual(exp, act)
+    assert expected == actual
+
+
+def test_box_kind_custom():
+    """If given a kind of 'custom' string of characters, the box
+     object should return the custom characters and it's kind
+     should be 'custom'.
+    """
+    exp_kind = 'custom'
+    exp_chars = 'abcdefghijklmn'
+    exp_sample = 'g'
+
+    box = termui.Box(custom=exp_chars)
+    act_kind = box.kind
+    act_chars = box._chars
+    act_sample = box.mtop
+
+    assert exp_kind == act_kind
+    assert exp_chars == act_chars
+    assert exp_sample == act_sample
+
+
+def test_kind_invalid_custom_string():
+    """The passed custom string is not exactly fourteen characters
+    long, a ValueError should be raised.
+    """
+    with pytest.raises(ValueError):
+        box = termui.Box(custom='bad')
+
+
+# Tests for Splash.
+def test_splash(capsys, mocker):
+    """When called with a sequence of strings, :func:`termui.splash`
+    should draw those strings in the middle of the terminal and wait
+    until any key is pressed.
+    """
+    prompt = 'Press any key to continue.'
+    term = Terminal()
+    text = ['spam', 'eggs',]
+    mocker.patch('blessed.Terminal.inkey', side_effect=['\n',])
+    termui.splash(text)
+    captured = capsys.readouterr()
+    assert captured.out == '\n'.join([
+        loc.format(
+            term.height // 2 - len(text) // 2 + 1,
+            term.width // 2 - len(text[0]) // 2 + 1
+        ) + text[0],
+        loc.format(
+            term.height // 2 - len(text) // 2 + 2,
+            term.width // 2 - len(text[1]) // 2 + 1
+        ) + text[1],
+        loc.format(
+            term.height,
+            term.width // 2 - len(prompt) // 2 + 1
+        ) + prompt,
+    ]) + '\n'
 
 
 # Tests for Table.
-bold = '\x1b[1m'
 data = [[1, 2], [3, 4]]
 cls = '\x1b[2J'
 fields = [
@@ -149,9 +132,9 @@ home = '\x1b[H'
 loc = '\x1b[{};{}H'
 title = 'Eggs'
 row = ' ' + ' '.join(field[1] for field in fields) + ' '
-topleft = '\x1b[1;2H'
 
 
+# Table fixtures.
 @pytest.fixture
 def table_main():
     """A simple Table to test."""
@@ -230,9 +213,93 @@ def table_input_with_status_test(
     return captured.out, returned
 
 
+# Tests for Table initialization.
+def test_Table_init_attributes():
+    """When initialized, :class:`Table` should accept values for the
+    class's required attributes.
+    """
+    expected = {
+        'title': 'Spam',
+        'fields': (
+            termui.Field('Eggs', '{}'),
+            termui.Field('Baked Beans', '{}'),
+        ),
+    }
+    table = termui.Table(**expected)
+    for attr in expected:
+        assert getattr(table, attr) == expected[attr]
+    assert table.data == [['', ''],]
+
+
+def test_Table_init_attributes_optional():
+    """When initialized, :class:`Table` should accept values for the
+    class's optional attributes.
+    """
+    expected = {
+        'title': 'Spam',
+        'fields': (
+            termui.Field('Eggs', '{}'),
+            termui.Field('Baked Beans', '{}'),
+        ),
+        'frame': termui.Box('light'),
+        'data': [[0, 1, 2], [3, 4, 5],],
+        'term': Terminal(),
+        'row_sep': True,
+        'rows': 2,
+        'show_status': True,
+    }
+    table = termui.Table(**expected)
+    for attr in expected:
+        try:
+            actual_value = getattr(table, attr)
+            expected_value = expected[attr]
+            assert actual_value == expected_value
+        except AssertionError:
+            raise AssertionError(f'{attr} {actual_value} == {expected_value}')
+
+
+def test_Table_init_data_changes_rows():
+    """When initialized, :class:`Table` should accept values for the
+    class's required attributes. Setting the value for :attr:`Table.data`
+    should cause :attr:`Table.rows` to be the length of the value of
+    :attr:`Table.data`
+    """
+    expected = {
+        'title': 'Spam',
+        'fields': (
+            termui.Field('Eggs', '{}'),
+            termui.Field('Baked Beans', '{}'),
+        ),
+        'data': [['', ''], ['', ''],],
+    }
+    table = termui.Table(**expected)
+    for attr in expected:
+        assert getattr(table, attr) == expected[attr]
+    assert table.rows == 2
+
+
+def test_Table_init_rows_changes_data():
+    """When initialized, :class:`Table` should accept values for the
+    class's required attributes. Setting the value for :attr:`Table.rows`
+    should cause :attr:`Table.data` to have that length.
+    """
+    expected = {
+        'title': 'Spam',
+        'fields': (
+            termui.Field('Eggs', '{}'),
+            termui.Field('Baked Beans', '{}'),
+        ),
+        'rows': 2,
+    }
+    table = termui.Table(**expected)
+    for attr in expected:
+        assert getattr(table, attr) == expected[attr]
+    assert table.data == [['', ''], ['', ''],]
+
+
 # Tests for table._draw_cell.
 @pytest.mark.msg(('_draw_cell', 0, 1, 'spam'))
-def test__draw_cell(table_draw_test):
+def test_Table__draw_cell(table_draw_test):
     """When given the coordinates of a cell to draw,
     :meth:`blackjack.termui.Table._draw_cell` should
     draw that cell in the UI.
@@ -245,7 +312,7 @@ def test__draw_cell(table_draw_test):
 
 
 @pytest.mark.msg(('_draw_cell', 0, 1, '01234567890123456789'))
-def test__draw_cell_truncate(table_draw_test):
+def test_Table__draw_cell_truncate(table_draw_test):
     """When given the coordinates of a cell to draw,
     :meth:`blackjack.termui.Table._draw_cell` should
     draw that cell in the UI. If the text overflows the
@@ -260,7 +327,7 @@ def test__draw_cell_truncate(table_draw_test):
 
 
 @pytest.mark.msg(('_draw_cell', 0, 1, 1234567890123456789))
-def test__draw_cell_truncate_with_int(table_draw_test):
+def test_Table__draw_cell_truncate_with_int(table_draw_test):
     """When given the coordinates of a cell to draw,
     :meth:`blackjack.termui.Table._draw_cell` should
     draw that cell in the UI. If the text overflows the
@@ -276,7 +343,7 @@ def test__draw_cell_truncate_with_int(table_draw_test):
 
 # Tests for Table.clear.
 @pytest.mark.msg(('clear',))
-def test_clear(table_draw_test):
+def test_Table_clear(table_draw_test):
     """When called, :meth:`blackjack.termui.Table.clear` should
     erase everything on the UI.
     """
@@ -288,7 +355,7 @@ def test_clear(table_draw_test):
 
 # Tests for Table.draw.
 @pytest.mark.msg(('draw',))
-def test_draw(table_draw_test):
+def test_Table_draw(table_draw_test):
     """When called, :meth:`blackjack.termui.Table.draw` should
     draw the entire UI to the terminal.
     """
@@ -304,7 +371,7 @@ def test_draw(table_draw_test):
 
 
 @pytest.mark.msg(('draw',))
-def test_draw(table_draw_test):
+def test_Table_draw(table_draw_test):
     """When called, :meth:`blackjack.termui.Table.draw` should
     draw the entire UI to the terminal.
     """
@@ -320,7 +387,7 @@ def test_draw(table_draw_test):
 
 
 @pytest.mark.msg(('draw',))
-def test_draw(table_draw_with_status_test):
+def test_Table_draw(table_draw_with_status_test):
     """When called, :meth:`blackjack.termui.Table.draw` should
     draw the entire UI to the terminal.
     """
@@ -340,7 +407,7 @@ def test_draw(table_draw_with_status_test):
 
 # Tests for Table.error.
 @pytest.mark.msg(('error', 'spam',))
-def test_error(table_draw_test):
+def test_Table_error(table_draw_test):
     """When called with a message, :meth:`blackjack.termui.Table.error`
     should write the error to the UI.
     """
@@ -350,7 +417,7 @@ def test_error(table_draw_test):
 
 # Tests for Table.input.
 @pytest.mark.msg(('input', 'spam',), ['n',])
-def test_input(table_input_test):
+def test_Table_input(table_input_test):
     """When called with a prompt, :meth:`blackjack.termui.Table.input`
     should write the prompt to the UI and return the response from
     the user.
@@ -364,7 +431,7 @@ def test_input(table_input_test):
 
 
 @pytest.mark.msg(('input', 'spam', 'n'), ['',])
-def test_input_default(table_input_test):
+def test_Table_input_default(table_input_test):
     """When called with a prompt, :meth:`blackjack.termui.Table.input`
     should write the prompt to the UI and return the response from
     the user.
@@ -378,7 +445,7 @@ def test_input_default(table_input_test):
 
 
 @pytest.mark.msg(('input', 'spam',), ['n',])
-def test_input_with_status(table_input_with_status_test):
+def test_Table_input_with_status(table_input_with_status_test):
     """When called with a prompt, :meth:`blackjack.termui.Table.input`
     should write the prompt to the UI and return the response from
     the user.
@@ -396,7 +463,7 @@ def test_input_with_status(table_input_with_status_test):
     'x',
     'n',
 ])
-def test_input_esc_to_help(table_input_test):
+def test_Table_input_esc_to_help(table_input_test):
     """When called with a prompt, :meth:`blackjack.termui.Table.input`
     should write the prompt to the UI and return the response from
     the user. The ESC key should send the user to the help screen.
@@ -424,7 +491,7 @@ def test_input_esc_to_help(table_input_test):
     'x',
     'n',
 ])
-def test_input_esc_to_help(table_input_test):
+def test_Table_input_esc_to_help(table_input_test):
     """When called with a prompt, :meth:`blackjack.termui.Table.input`
     should write the prompt to the UI and return the response from
     the user. The ESC key should send the user to the help screen.
@@ -449,7 +516,7 @@ def test_input_esc_to_help(table_input_test):
 
 # Test for Table.input_multichar.
 @pytest.mark.msg(('input_multichar', 'spam',), ['2', '0', '\n',])
-def test_input_multichar(table_input_test):
+def test_Table_input_multichar(table_input_test):
     """When called with a prompt,
     :meth:`blackjack.termui.Table.input_multichar'
     should write the prompt to the UI and return the
@@ -466,7 +533,7 @@ def test_input_multichar(table_input_test):
 
 
 @pytest.mark.msg(('input_multichar', 'spam', '20'), ['\n',])
-def test_input_multichar_default(table_input_test):
+def test_Table_input_multichar_default(table_input_test):
     """When called with a prompt,
     :meth:`blackjack.termui.Table.input_multichar'
     should write the prompt to the UI and return the
@@ -487,7 +554,7 @@ def test_input_multichar_default(table_input_test):
     '0',
     '\n',
 ])
-def test_input_multichar_esc_to_help(table_input_test):
+def test_Table_input_multichar_esc_to_help(table_input_test):
     """When called with a prompt,
     :meth:`blackjack.termui.Table.input_multichar'
     should write the prompt to the UI and return the
@@ -522,592 +589,284 @@ def test_input_multichar_esc_to_help(table_input_test):
     assert returned == 'x20'
 
 
-class TableTestCase(ut.TestCase):
-    topleft = '\x1b[1;2H'
-    bold = '\x1b[1m'
-    loc = '\x1b[{};{}H'
+@pytest.mark.msg(('input_multichar', 'spam',), ['2', '0', '\n',])
+def test_Table_input_multichar_with_status(table_input_with_status_test):
+    """When called with a prompt,
+    :meth:`blackjack.termui.Table.input_multichar'
+    should write the prompt to the UI and return the
+    response from the user.
+    """
+    displayed, returned = table_input_with_status_test
+    assert displayed == '\n'.join([
+        loc.format(10, 2) + fmt.format('spam' + ' > '),
+        loc.format(10, 7) + '2',
+        loc.format(10, 8) + '0',
+        loc.format(10, 2) + fmt.format(''),
+    ]) + '\n'
+    assert returned == '20'
 
-    def test_init_attributes(self):
-        """When initialized, Table should accept values for the
-        class's required attributes.
-        """
-        fields = (
-            ('Eggs', '{}'),
-            ('Baked Beans', '{}')
-        )
-        expected = {
-            'title': 'Spam',
-            'fields': tuple(termui.Field(*args) for args in fields),
-        }
 
-        obj = termui.Table(**expected)
-        for attr in expected:
-            actual = getattr(obj, attr)
+# Tests for Table.update.
+@pytest.mark.msg(('update', [[1, 2], [3, 'spam']],))
+def test_Table_update(table_draw_test):
+    """When called with a message, :meth:`blackjack.termui.Table.update`
+    should update the changed data in the table.
+    """
+    assert table_draw_test == (
+        loc.format(6, 13)
+        + fields[1][1].format('spam')
+        + '\n'
+    )
 
-            self.assertEqual(expected[attr], actual)
 
-    def test_init_with_status(self):
-        """When given show_status of True, the Table.show_status
-        attribute should be true.
-        """
-        # Expected value.
-        fields = (
-            ('Eggs', '{}'),
-            ('Baked Beans', '{}')
-        )
-        exp = {
-            'title': 'Spam',
-            'fields': tuple(termui.Field(*args) for args in fields),
-            'show_status': True,
-        }
+@pytest.mark.msg(('update', [[1, 2], [3, 4], [5, 6],],))
+def test_Table_update_bigger_table(table_draw_test):
+    """When called with a message, :meth:`blackjack.termui.Table.update`
+    should update the changed data in the table.
+    """
+    actual = table_draw_test
+    expected = '\n'.join([
+        loc.format(8, 1) + ' ' * 80,
+        loc.format(7, 1) + ' ' * 80,
+        loc.format(8, 1) + frame,
+        loc.format(7, 2) + fields[0][1].format('5'),
+        loc.format(7, 13) + fields[1][1].format('6'),
+    ]) + '\n'
+    try:
+        assert actual == expected
+    except AssertionError:
+        raise AssertionError(f'{actual!r} == {expected!r}')
 
-        # Run test.
-        obj = termui.Table(**exp)
 
-        # Gather actuals.
-        act = {attr: getattr(obj, attr) for attr in exp}
+@pytest.mark.msg(('update', [[1, 2], [3, 4], [5, 6],],))
+def test_Table_update_bigger_table_with_status(table_draw_with_status_test):
+    """When called with a message, :meth:`blackjack.termui.Table.update`
+    should update the changed data in the table.
+    """
+    actual = table_draw_with_status_test
+    expected = '\n'.join([
+        loc.format(10, 1) + ' ' * 80,
+        loc.format(9, 1) + ' ' * 80,
+        loc.format(8, 1) + ' ' * 80,
+        loc.format(7, 1) + ' ' * 80,
+        loc.format(8, 1) + frame,
+        loc.format(9, 1) + ' ' * 80,
+        loc.format(9, 2) + 'Count: 0',
+        loc.format(10, 1) + frame,
+        loc.format(7, 2) + fields[0][1].format('5'),
+        loc.format(7, 13) + fields[1][1].format('6'),
+    ]) + '\n'
+    try:
+        assert actual == expected
+    except AssertionError:
+        raise AssertionError(f'{actual!r} == {expected!r}')
 
-        # Determine test result.
-        self.assertDictEqual(exp, act)
 
-    def test_init_no_data(self):
-        """When initialized, if data is not passed, an initial empty
-        table should be built.
-        """
-        expected = [['', ''],]
+@pytest.mark.msg(('update', [[1, 2],],))
+def test_Table_update_smaller_table(table_draw_test):
+    """When called with a message, :meth:`blackjack.termui.Table.update`
+    should update the changed data in the table.
+    """
+    assert table_draw_test == '\n'.join([
+        loc.format(8, 1) + ' ' * 80,
+        loc.format(7, 1) + ' ' * 80,
+        loc.format(6, 1) + frame,
+    ]) + '\n'
 
-        fields = (
-            ('Eggs', '{}'),
-            ('Baked Beans', '{}')
-        )
-        attrs = {
-            'title': 'Spam',
-            'fields': [termui.Field(*args) for args in fields]
-        }
-        obj = termui.Table(**attrs)
-        actual = obj.data
 
-        self.assertEqual(expected, actual)
+@pytest.mark.msg(('update', [[1, 2],],))
+def test_Table_update_smaller_table_with_status(table_draw_with_status_test):
+    """When called with a message, :meth:`blackjack.termui.Table.update`
+    should update the changed data in the table.
+    """
+    # raise ValueError(table_draw_with_status_test)
+    act = table_draw_with_status_test
+    exp = '\n'.join([
+        loc.format(10, 1) + ' ' * 80,
+        loc.format(9, 1) + ' ' * 80,
+        loc.format(8, 1) + ' ' * 80,
+        loc.format(7, 1) + ' ' * 80,
+        loc.format(6, 1) + frame,
+        loc.format(7, 1) + ' ' * 80,
+        loc.format(7, 2) + 'Count: 0',
+        loc.format(8, 1) + frame,
+    ]) + '\n'
+    try:
+        assert act == exp
+    except AssertionError:
+        raise AssertionError(repr(act) + ' == ' + repr(exp))
 
-    def test_init_optional_attrs(self):
-        """When initialized, Table should accept values for the
-        class's optional attributes.
-        """
-        fields = (
-            ('Eggs', '{}'),
-            ('Baked Beands', '{}')
-        )
-        data = [
-            [1, 2, 3],
-            [4, 5, 6],
-        ]
-        expected = {
-            'title': 'Spam',
-            'fields': tuple(termui.Field(*args) for args in fields),
-            'frame': termui.Box('light'),
-            'data': data,
-            'term': Terminal(),
-            'row_sep': True,
-            'rows': 2
-        }
 
-        obj = termui.Table(**expected)
-        for attr in expected:
-            actual = getattr(obj, attr)
+# Tests for Table.update_status.
+@pytest.mark.msg(('update_status', {'Count': '9',},))
+def test_Table_update_status(table_draw_with_status_test):
+    """When called with a message,
+    :meth:`blackjack.termui.Table.update_status`
+    should update the status.
+    """
+    assert table_draw_with_status_test == '\n'.join([
+        loc.format(8, 1) + ' ' * 80,
+        loc.format(8, 2) + f'Count: 9',
+        loc.format(9, 1) + frame,
+    ]) + '\n'
 
-            self.assertEqual(expected[attr], actual)
 
-    def test_setting_rows_affects_data(self):
-        """If the value of the rows attribute is changed, the size of
-        the data table should change.
-        """
-        fields = (
-            ('Eggs', '{}'),
-            ('Baked Beans', '{}')
-        )
-        rows = 4
-        exp = [
-            ['', ''],
-            ['', ''],
-            ['', ''],
-            ['', ''],
-        ]
+# Tests for TableUI.
+# TableUI fixtures.
+@pytest.fixture
+def tableui_with_mocked_main(mocker):
+    """A default :class:`blackjack.termui.TableUI` object."""
+    mock_main = mocker.patch('blackjack.termui.main')
+    ui = termui.TableUI()
+    ui.ctlr.data = [[players.Player(name='spam', chips=80), 100, '', '', ''],]
+    ui.start()
+    yield ui, mock_main
+    ui.end()
 
-        table = termui.Table('spam', fields, rows=rows)
-        act = table.data
 
-        self.assertEqual(exp, act)
+# Tests for TableUI initialization.
+def test_TableUI_init():
+    """On initialization, :class:`TableUI` should not require optional
+    attributes.
+    """
+    ui = termui.TableUI()
+    assert isinstance(ui.ctlr, termui.Table)
 
-    def test_setting_data_affects_rows(self):
-        """If the value of the data attribute is changes, the value
-        of the rows attribute should be updated.
-        """
-        exp = 4
 
-        fields = (
-            ('Eggs', '{}'),
-            ('Baked Beans', '{}')
-        )
-        data = [
-            ['', ''],
-            ['', ''],
-            ['', ''],
-            ['', ''],
-        ]
-        table = termui.Table('spam', fields, data=data)
-        act = table.rows
+def test_TableUI_init_optional_attrs():
+    """On initialization, :class:`TableUI` should accept optional
+    attributes.
+    """
+    expected = {
+        'ctlr': termui.Table('Spam', (
+            termui.Field('Eggs', '{}'),
+            termui.Field('Baked Beans', '{}'),
+        )),
+        'seats': 6,
+        'show_status': False,
+    }
+    ui = termui.TableUI(**expected)
 
-        self.assertEqual(exp, act)
+    for attr in expected:
+        try:
+            a = getattr(ui, attr)
+            e = expected[attr]
+            assert a == e
+        except AssertionError:
+            raise AssertionError(f'{attr} {a} == {e}')
 
-    # Table.input_multichar() tests.
-    @patch('blessed.Terminal.inkey')
-    @patch('blackjack.termui.print')
-    def test_input_multichar_with_status(self, mock_print, mock_inkey):
-        """When called with a prompt, input_number() should write the
-        prompt to the UI and return the response from the user.
-        """
-        # Set up expected.
-        prompt = 'spam'
-        fmt = '{:<80}'
 
-        # Expected values.
-        exp_print = [
-            call(self.loc.format(9, 2) + fmt.format(prompt + ' > ')),
-            call(self.loc.format(9, 7) + '2'),
-            call(self.loc.format(9, 8) + '0'),
-            call(self.loc.format(9, 2) + fmt.format('')),
-        ]
-        exp_resp = '20'
+def test_TableUI_init_show_status_Table_with_status():
+    """On initialization, :class:`TableUI` should accept optional
+    attributes. If :attr:`TableUI.show_status` is initialized as
+    `True` the value of :attr:`TableUI.ctlr` should have a `show_status`
+    also equal to `True`.
+    """
+    ui = termui.TableUI(show_status=True)
+    assert ui.ctlr.show_status
 
-        # Test data and state.
-        mock_inkey.side_effect = ('2', '0', '\n')
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        ctlr = termui.Table('Eggs', fields, show_status=True)
-        main = termui.main(ctlr)
-        next(main)
 
-        # Run test and gather actuals.
-        act_resp = main.send(('input_multichar', prompt))
-        del main
-        act_print = mock_print.mock_calls
+# Tests for TableUI loop management.
+def test_TableUI_end(mocker):
+    """When called, :meth:`blackjack.termui.TableUI.end` should
+    terminate UI loop gracefully.
+    """
+    mock_main = mocker.patch('blackjack.termui.main')
 
-        # Determine test result.
-        self.assertListEqual(exp_print, act_print)
-        self.assertEqual(exp_resp, act_resp)
+    ui = termui.TableUI()
+    ui.start()
 
-    # Table.status() tests.
-    @patch('blackjack.termui.print')
-    def test_status(self, mock_print):
-        """When called with a status and its value, Table.status()
-        should update the stored status value and then update the
-        status field in the UI.
-        """
-        exp_status = {
-            'Count': '9',
-        }
-        frame = '\u2500' * 23
-        exp_calls = [
-            call(self.loc.format(8, 1) + ' ' * 80),
-            call(self.loc.format(8, 2) + f'Count: {exp_status["Count"]}'),
-            call(self.loc.format(9, 1) + frame),
-        ]
+    ui.end()
+    assert mock_main.mock_calls[-1] == mocker.call().close()
 
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        data = [[0, 0], [0, 0]]
-        ctlr = termui.Table('eggs', fields, data=data, show_status=True)
-        main = termui.main(ctlr)
-        next(main)
 
-        main.send(('update_status', exp_status))
+def test_TableUI_reset(mocker):
+    """When called, :meth:`blackjack.termui.TableUI.reset` should
+    terminate the existing controller, create a new one, and prime it.
+    """
+    mock_main = mocker.patch('blackjack.termui.main')
 
-        main.close()
-        act_status = ctlr.status
-        act_calls = mock_print.mock_calls[-3:]
+    ui = termui.TableUI()
+    ui.start()
 
-        self.assertDictEqual(exp_status, act_status)
-        self.assertListEqual(exp_calls, act_calls)
+    ui.reset()
+    assert mock_main.mock_calls[-4:] == [
+        mocker.call().close(),
+        mocker.call(ui.ctlr, False, ''),
+        mocker.call().__next__(),
+        mocker.call().send(('draw',)),
+    ]
 
-    # Table.update() tests.
-    @patch('blackjack.termui.Table._draw_cell')
-    def test_update(self, mock_draw_cell):
-        """When called with a data table, update() should compare the
-        new table with the existing one, write any new values to the
-        UI, and then replace the old table with the new one.
-        """
-        exp_data = [[0, 0], [0, 'spam']]
-        exp_calls = [
-            call(1, 1, 'spam'),
-        ]
+    ui.end()
 
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        data = [[0, 0], [0, 0]]
-        ctlr = termui.Table('eggs', fields, data=data)
-        main = termui.main(ctlr)
-        next(main)
-        main.send(('update', exp_data))
-        del main
-        act_data = ctlr.data
-        act_calls = mock_draw_cell.mock_calls
 
-        self.assertEqual(exp_data, act_data)
-        self.assertEqual(exp_calls, act_calls)
+def test_TableUI_start(mocker):
+    """When called, :meth:`blackjack.termui.TableUI.start` should
+    kick off the main loop of the UI, set it as the loop attribute,
+    and prime it.
+    """
+    mock_main = mocker.patch('blackjack.termui.main')
 
-    @patch('blackjack.termui.print')
-    def test_update_smaller_table(self, mock_print):
-        """When called with a data table that is smaller than the
-        current table, update() should remove rows from the existing
-        table to allow for the cell comparisons. It should then clear
-        the removed rows from the UI and reprint the table bottom.
-        """
-        new_data = [[0, 0],]
-        frame = '\u2500' * 23
-        exp_calls = [
-            call(self.loc.format(8, 1) + ' ' * 80),
-            call(self.loc.format(7, 1) + ' ' * 80),
-            call(self.loc.format(6, 1) + frame),
-        ]
+    ui = termui.TableUI()
 
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        data = [[0, 0], [0, 0]]
-        ctlr = termui.Table('eggs', fields, data=data)
-        main = termui.main(ctlr)
-        next(main)
-        main.send(('update', new_data))
-        main.close()
-        act_calls = mock_print.mock_calls[-4:]
+    ui.start()
+    assert mock_main.mock_calls == [
+        mocker.call(ui.ctlr, False, ''),
+        mocker.call().__next__(),
+        mocker.call().send(('draw',)),
+    ]
 
-        self.assertListEqual(exp_calls, act_calls)
+    ui.end()
 
-    @patch('blackjack.termui.print')
-    def test_update_smaller_table_with_status(self, mock_print):
-        """When called with a data table that is smaller than the
-        current table, update() should remove rows from the existing
-        table to allow for the cell comparisons. It should then clear
-        the removed rows from the UI and reprint the table bottom. If
-        the status is displayed, it should be repositioned properly.
-        """
-        new_data = [[0, 0],]
-        frame = '\u2500' * 23
-        status = 'Count: 0'
-        exp_calls = [
-            call(self.loc.format(9, 1) + ' ' * 80),
-            call(self.loc.format(8, 1) + ' ' * 80),
-            call(self.loc.format(7, 1) + ' ' * 80),
-            call(self.loc.format(6, 1) + frame),
-            call(self.loc.format(7, 1) + ' ' * 80),
-            call(self.loc.format(7, 2) + status),
-            call(self.loc.format(8, 1) + frame),
-        ]
 
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        data = [[0, 0], [0, 0]]
-        ctlr = termui.Table('eggs', fields, data=data, show_status=True)
-        main = termui.main(ctlr)
-        next(main)
+# Tests for TableUI update methods.
+def test_TableUI__update_bet(mocker, tableui_with_mocked_main):
+    """Given a player, a bet amount, and a message,
+    :meth:`blackjack.termui.TableUI._update_bet` should
+    send an event to the UI that a player's bet has
+    changed.
+    """
+    tableui, mock_main = tableui_with_mocked_main
+    player = tableui.ctlr.data[0][0]
+    msg = 'Bets.'
 
-        main.send(('update', new_data))
+    try:
+        tableui._update_bet(player, 20, msg)
+        actual = mock_main.mock_calls[-1]
+        expected = mocker.call().send((
+            'update',
+            [[player, 80, 20, '', msg]]
+        ))
+        assert actual == expected
+    except AssertionError:
+        raise AssertionError(f'{actual!r} == {expected!r}')
 
-        main.close()
-        act_calls = mock_print.mock_calls[-7:]
 
-        self.assertListEqual(exp_calls, act_calls)
+def test_TableUI__update_hand(mocker, tableui_with_mocked_main):
+    """Given a player, a hand, and a message,
+    :meth:`blackjack.termui.TableUI._update_hand` should
+    send an event to the UI that a player's bet has
+    changed.
+    """
+    hand = cards.Hand((cards.Card(11, 0), cards.Card(5, 2),))
+    tableui, mock_main = tableui_with_mocked_main
+    player = tableui.ctlr.data[0][0]
+    msg = 'Takes hand.'
 
-    @patch('blackjack.termui.print')
-    def test_update_bigger_table(self, mock_print):
-        """When called with a data table that is bigger than the
-        current table, update() should add rows to the existing
-        table to allow for the cell comparisons. It should then add
-        the new rows to the UI and reprint the table bottom.
-        """
-        new_data = [[0, 0], [0, 0]]
-        frame = '\u2500' * 23
-        exp_calls = [
-            call(self.loc.format(7, 1) + ' ' * 80),
-            call(self.loc.format(6, 1) + ' ' * 80),
-            call(self.loc.format(7, 1) + frame),
-        ]
-
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        data = [[0, 0]]
-        ctlr = termui.Table('eggs', fields, data=data)
-        main = termui.main(ctlr)
-        next(main)
-        main.send(('update', new_data))
-        main.close()
-        act_calls = mock_print.mock_calls[:-2]
-
-        self.assertListEqual(exp_calls, act_calls)
-
-    @patch('blackjack.termui.print')
-    def test_update_bigger_table_with_status(self, mock_print):
-        """When called with a data table that is bigger than the
-        current table, update() should add rows to the existing
-        table to allow for the cell comparisons. It should then add
-        the new rows to the UI and reprint the table bottom. It should
-        then clear the removed rows from the UI and reprint the table
-        bottom. If the status is displayed, it should be repositioned
-        properly.
-        """
-        new_data = [[0, 0], [0, 0]]
-        frame = '\u2500' * 23
-        status = 'Count: 0'
-        exp_calls = [
-            call(self.loc.format(8, 1) + ' ' * 80),
-            call(self.loc.format(7, 1) + ' ' * 80),
-            call(self.loc.format(6, 1) + ' ' * 80),
-            call(self.loc.format(7, 1) + frame),
-            call(self.loc.format(8, 1) + ' ' * 80),
-            call(self.loc.format(8, 2) + status),
-            call(self.loc.format(9, 1) + frame),
-            call(self.loc.format(6, 2) + ' ' * 10),
-            call(self.loc.format(6, 13) + ' ' * 10),
-        ]
-
-        fields = [
-            ('Name', '{:>10}'),
-            ('Value', '{:>10}'),
-        ]
-        data = [[0, 0]]
-        ctlr = termui.Table('eggs', fields, data=data, show_status=True)
-        main = termui.main(ctlr)
-        next(main)
-
-        main.send(('update', new_data))
-
-        act_calls = mock_print.mock_calls[-9:]
-        main.close()
-
-        self.assertListEqual(exp_calls, act_calls)
+    try:
+        tableui._update_hand(player, hand, msg)
+        actual = mock_main.mock_calls[-1]
+        expected = mocker.call().send((
+            'update',
+            [[player, 100, '', str(hand), msg]]
+        ))
+        assert actual == expected
+    except AssertionError:
+        raise AssertionError(f'{actual!r} == {expected!r}')
 
 
 class TableUITestCase(ut.TestCase):
-    def test_subclass(self):
-        """TableUI is a subclass of game.EngineUI."""
-        exp = game.EngineUI
-        act = termui.TableUI
-        self.assertTrue(issubclass(act, exp))
-
-    # General operations methods.
-    def test_init_optional_attrs(self):
-        """On initialization, TableUI should accept optional
-        attributes.
-        """
-        fields = [
-            ['Name', '{:<10}',],
-            ['Value', '{:<10}',],
-        ]
-        ctlr = termui.Table('spam', fields)
-        exp = {
-            'ctlr': ctlr,
-            'seats': 6,
-            'show_status': False,
-        }
-
-        ui = termui.TableUI(**exp)
-        for attr in exp:
-            act = getattr(ui, attr)
-
-            self.assertEqual(exp[attr], act)
-
-    def test_init_no_optional_attrs(self):
-        """On initialization, TableUI should not require optional
-        attributes.
-        """
-        exp = termui.Table
-
-        ui = termui.TableUI()
-        act = ui.ctlr
-
-        self.assertTrue(isinstance(act, exp))
-
-    def test__make_ctlr_with_show_status(self):
-        """When TableUI.show_status is True, the Table returned
-        should also have show_status set to True.
-        """
-        # Expected value.
-        exp = True
-
-        # Test data and state.
-        ui = termui.TableUI(show_status=True)
-
-        # Run test.
-        ctlr = ui._make_ctlr()
-
-        # Gather actual.
-        act = ctlr.show_status
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-    @patch('blackjack.termui.main')
-    def test_end(self, mock_main):
-        """end() should terminate UI loop gracefully."""
-        exp = call().close()
-
-        ui = termui.TableUI()
-        ui.start()
-        ui.end()
-        act = mock_main.mock_calls[-1]
-
-        self.assertEqual(exp, act)
-
-    @patch('blackjack.termui.main')
-    def test_reset(self, mock_main):
-        """When called, reset() should terminate the existing
-        controller, create a new one, and prime it.
-        """
-        ui = termui.TableUI()
-        ui.start()
-        ui.reset()
-        reset_ctlr = ui.ctlr
-        exp = [
-            call().close(),
-            call(reset_ctlr, False, ''),
-            call().__next__(),
-            call().send(('draw',)),
-        ]
-
-        act = mock_main.mock_calls[-4:]
-        ui.end()
-
-        self.assertListEqual(exp, act)
-
-    @patch('blackjack.termui.main')
-    def test_start(self, mock_main):
-        """start() should kick off the main loop of the UI, set it
-        as the loop attribute, and prime it.
-        """
-        ui = termui.TableUI()
-        term = ui.ctlr
-        exp = [
-            call(ui.ctlr, False, ''),
-            call().__next__(),
-            call().send(('draw',))
-        ]
-
-        ui.start()
-        act = mock_main.mock_calls
-
-        self.assertListEqual(exp, act)
-
     # Update method tests.
-    @patch('blackjack.termui.main')
-    def test__update_bet(self, mock_main):
-        """_update_bet should send an event to the UI loop that a
-        player's bet has changed and needs to be updated. The data
-        sent in that event should be a copy of the table in the
-        termui.Table object.
-        """
-        player = players.Player(name='spam', chips=80)
-        msg = 'Bets.'
-        new_data = [[player, 80, 20, '', msg],]
-        exp = call().send(('update', new_data))
-
-        unexp_data = [[player, 100, '', '', ''],]
-        ui = termui.TableUI()
-        ui.ctlr.data = unexp_data
-        ui.start()
-        ui._update_bet(player, 20, msg)
-        act = mock_main.mock_calls[-1]
-        ui.end()
-
-        self.assertEqual(exp, act)
-
-        # Since termui.Table determines what fields to update based
-        # on differences between it's data table and the data table
-        # it's sent, it's very important that the changes made to
-        # the data table output by _update_bet() are not yet seen in
-        # the data table held by termui.Table.
-        #
-        # If this test fails, it's likely because you aren't copying
-        # the rows of self.ctrl.data. You are referencing them.
-        self.assertNotEqual(unexp_data[0][1], 80)
-
-    @patch('blackjack.termui.main')
-    def test__update_event(self, mock_main):
-        """_update_event should send an event to the UI loop that a
-        player has had an event occur. The data sent in that event
-        should be a copy of the table in the termui.Table object.
-        """
-        player = players.Player(name='spam', chips=80)
-        msg = 'Walks away.'
-        new_data = [[player, 80, '', '', msg],]
-        exp = call().send(('update', new_data))
-
-        unexp_data = [[player, 80, '', '', ''],]
-        ui = termui.TableUI()
-        ui.ctlr.data = unexp_data
-        ui.start()
-        ui._update_event(player, msg)
-        act = mock_main.mock_calls[-1]
-        ui.end()
-
-        self.assertEqual(exp, act)
-
-        # Since termui.Table determines what fields to update based
-        # on differences between it's data table and the data table
-        # it's sent, it's very important that the changes made to
-        # the data table output by _update_bet() are not yet seen in
-        # the data table held by termui.Table.
-        #
-        # If this test fails, it's likely because you aren't copying
-        # the rows of self.ctrl.data. You are referencing them.
-        self.assertNotEqual(unexp_data[0][4], 'Takes hand.')
-
-    @patch('blackjack.termui.main')
-    def test__update_hand(self, mock_main):
-        """_update_bet should send an event to the UI loop that a
-        player's hand has changed and needs to be updated. The data
-        sent in that event should be a copy of the table in the
-        termui.Table object.
-        """
-        hand = cards.Hand((
-            cards.Card(11, 0),
-            cards.Card(5, 2),
-        ))
-        player = players.Player(name='spam', chips=80)
-        msg = 'Takes hand.'
-        new_data = [[player, 80, 20, str(hand), msg],]
-        exp = call().send(('update', new_data))
-
-        unexp_data = [[player, 80, 20, '', 'Bets.'],]
-        ui = termui.TableUI()
-        ui.ctlr.data = unexp_data
-        ui.start()
-        ui._update_hand(player, hand, msg)
-        act = mock_main.mock_calls[-1]
-        ui.end()
-
-        self.assertEqual(exp, act)
-
-        # Since termui.Table determines what fields to update based
-        # on differences between it's data table and the data table
-        # it's sent, it's very important that the changes made to
-        # the data table output by _update_bet() are not yet seen in
-        # the data table held by termui.Table.
-        #
-        # If this test fails, it's likely because you aren't copying
-        # the rows of self.ctrl.data. You are referencing them.
-        self.assertNotEqual(unexp_data[0][4], 'Takes hand.')
-
     @patch('blackjack.termui.print')
     @patch('blackjack.termui.TableUI._update_bet')
     def test_bet_updates(self, mock_update_bet, _):
@@ -1682,6 +1441,7 @@ class TableUITestCase(ut.TestCase):
         self.assertEqual(exp, act)
 
 
+# Tests for main.
 class mainTestCase(ut.TestCase):
     def test_init_with_params(self):
         """main() should create its own instances of term and ctlr if

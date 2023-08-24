@@ -25,7 +25,7 @@ STAND = False
 
 
 # Functions.
-def will_hit_dealer(self, hand:Hand, the_game=None) -> bool:
+def will_hit_dealer(self, hand: Hand, the_game=None) -> bool:
     """Determine whether the player will hit or stand on the hand.
 
     :param hand: The hand to make the decision on.
@@ -43,17 +43,17 @@ def will_hit_dealer(self, hand:Hand, the_game=None) -> bool:
         return HIT
 
 
-def will_hit_never(self, hand:Hand, the_game=None) -> bool:
+def will_hit_never(self, hand: Hand, the_game=None) -> bool:
     """Never hit."""
     return False
 
 
-def will_hit_random(self, hand:Hand, the_game=None) -> bool:
+def will_hit_random(self, hand: Hand, the_game=None) -> bool:
     """Decide whether to hit at random."""
     return choice([True, False])
 
 
-def will_hit_recommended(self, hand:Hand, the_game) -> bool:
+def will_hit_recommended(self, hand: Hand, the_game) -> bool:
     """Make hit decisions as recommended by bicycle.com."""
     dhand = the_game.dealer.hands[0]
     scores = [score for score in hand.score() if score <= 21]
@@ -72,7 +72,7 @@ def will_hit_recommended(self, hand:Hand, the_game) -> bool:
     return False
 
 
-def will_hit_user(self, hand:Hand, the_game) -> bool:
+def will_hit_user(self, hand: Hand, the_game) -> bool:
     """Get a hit decision from the user."""
     is_yes = the_game.ui.hit_prompt()
 

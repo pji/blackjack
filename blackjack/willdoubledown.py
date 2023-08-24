@@ -21,7 +21,7 @@ from blackjack.cards import Hand
 
 
 # Functions.
-def will_double_down_always(self, hand:Hand, the_game) -> bool:
+def will_double_down_always(self, hand: Hand, the_game) -> bool:
     """The player will always double down.
 
     :param hand: The hand to make the decision on.
@@ -39,17 +39,17 @@ def will_double_down_dealer(self, *args):
     raise TypeError(msg)
 
 
-def will_double_down_never(self, hand:Hand, the_game) -> bool:
+def will_double_down_never(self, hand: Hand, the_game) -> bool:
     """Never double down."""
     return False
 
 
-def will_double_down_random(self, hand:Hand, the_game) -> bool:
+def will_double_down_random(self, hand: Hand, the_game) -> bool:
     """Randomly double down."""
     return choice([True, False])
 
 
-def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
+def will_double_down_recommended(self, hand: Hand, the_game) -> bool:
     """The player will follow the double down recommendation from
     bicycle.com.
 
@@ -70,7 +70,7 @@ def will_double_down_recommended(self, hand:Hand, the_game) -> bool:
     return False
 
 
-def will_double_down_user(self, hand:Hand, the_game) -> bool:
+def will_double_down_user(self, hand: Hand, the_game) -> bool:
     """Get a double down decision from the user."""
     is_yes = the_game.ui.doubledown_prompt()
     return is_yes.value
