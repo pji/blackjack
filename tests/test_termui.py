@@ -724,6 +724,68 @@ def tableui_with_mocked_main(mocker):
     ui.end()
 
 
+@pytest.fixture
+def tableui_with_mocked_main_and_two_players(mocker):
+    """A default :class:`blackjack.termui.TableUI` object."""
+    mock_main = mocker.patch('blackjack.termui.main')
+    ui = termui.TableUI()
+    ui.ctlr.data = [
+        [
+            players.Player(
+                [
+                    cards.Hand([cards.Card(11, 0),]),
+                    cards.Hand([cards.Card(11, 3),]),
+                ],
+                name='spam', chips=80
+            ),
+            100, 20, 'J♣ J♠', 'Takes hand.'
+        ],
+        [
+            players.Player(
+                [cards.Hand([cards.Card(3, 3), cards.Card(4, 3),]),],
+                name='eggs', chips=80
+            ),
+            100, 20, '3♣ 4♣', 'Takes hand.'
+        ],
+    ]
+    ui.start()
+    yield ui, mock_main
+    ui.end()
+
+
+@pytest.fixture
+def tableui_with_mocked_bet(mocker):
+    """A default :class:`blackjack.termui.TableUI` object."""
+    mock_bet = mocker.patch('blackjack.termui.TableUI._update_bet')
+    ui = termui.TableUI()
+    ui.ctlr.data = [[players.Player(name='spam', chips=80), 80, 20, '', ''],]
+    ui.start()
+    yield ui, mock_bet
+    ui.end()
+
+
+@pytest.fixture
+def tableui_with_mocked_event(mocker):
+    """A default :class:`blackjack.termui.TableUI` object."""
+    mock_event = mocker.patch('blackjack.termui.TableUI._update_event')
+    ui = termui.TableUI()
+    ui.ctlr.data = [[players.Player(name='spam', chips=80), 80, 20, '', ''],]
+    ui.start()
+    yield ui, mock_event
+    ui.end()
+
+
+@pytest.fixture
+def tableui_with_mocked_hand(mocker):
+    """A default :class:`blackjack.termui.TableUI` object."""
+    mock_hand = mocker.patch('blackjack.termui.TableUI._update_hand')
+    ui = termui.TableUI()
+    ui.ctlr.data = [[players.Player(name='spam', chips=80), 80, 20, '', ''],]
+    ui.start()
+    yield ui, mock_hand
+    ui.end()
+
+
 # Tests for TableUI initialization.
 def test_TableUI_init():
     """On initialization, :class:`TableUI` should not require optional
@@ -819,7 +881,7 @@ def test_TableUI_start(mocker):
     ui.end()
 
 
-# Tests for TableUI update methods.
+# Tests for TableUI private update methods.
 def test_TableUI__update_bet(mocker, tableui_with_mocked_main):
     """Given a player, a bet amount, and a message,
     :meth:`blackjack.termui.TableUI._update_bet` should
@@ -842,10 +904,31 @@ def test_TableUI__update_bet(mocker, tableui_with_mocked_main):
         raise AssertionError(f'{actual!r} == {expected!r}')
 
 
+def test_TableUI__update_event(mocker, tableui_with_mocked_main):
+    """Given a player and a event,
+    :meth:`blackjack.termui.TableUI._update_event` should
+    send an event to the UI that a game event has occurred.
+    """
+    tableui, mock_main = tableui_with_mocked_main
+    player = tableui.ctlr.data[0][0]
+    event = 'Shuffles the deck.'
+
+    try:
+        tableui._update_event(player, event)
+        actual = mock_main.mock_calls[-1]
+        expected = mocker.call().send((
+            'update',
+            [[player, 100, '', '', event]]
+        ))
+        assert actual == expected
+    except AssertionError:
+        raise AssertionError(f'{actual!r} == {expected!r}')
+
+
 def test_TableUI__update_hand(mocker, tableui_with_mocked_main):
     """Given a player, a hand, and a message,
     :meth:`blackjack.termui.TableUI._update_hand` should
-    send an event to the UI that a player's bet has
+    send an event to the UI that a player's hand has
     changed.
     """
     hand = cards.Hand((cards.Card(11, 0), cards.Card(5, 2),))
@@ -865,136 +948,120 @@ def test_TableUI__update_hand(mocker, tableui_with_mocked_main):
         raise AssertionError(f'{actual!r} == {expected!r}')
 
 
+# Tests for TableUI public update methods.
+def test_TableUI_bet_updates(mocker, tableui_with_mocked_bet):
+    """The tested methods should call the
+    :meth:`backjack.TableUI.termui._update_bet`
+    method with the player, bet, and event text.
+    """
+    ui, mock_bet = tableui_with_mocked_bet
+    player = ui.ctlr.data[0][0]
+    bet = 20
+    expected = [
+        mocker.call(player, bet, 'Bets.'),
+        mocker.call(player, bet, 'Doubles down.'),
+        mocker.call(player, bet, f'Buys {bet} insurance.'),
+        mocker.call(player, bet, f'Insurance pays {bet}.'),
+        mocker.call(player, '', 'Loses.'),
+        mocker.call(player, '', 'Loses.', True),
+        mocker.call(player, '', f'Ties {bet}.'),
+        mocker.call(player, '', f'Wins {bet}.'),
+        mocker.call(player, '', f'Ties {bet}.', True),
+        mocker.call(player, '', f'Wins {bet}.', True),
+    ]
+
+    ui.bet(player, bet)
+    ui.doubledown(player, bet)
+    ui.insures(player, bet)
+    ui.insurepay(player, bet)
+    ui.loses(player)
+    ui.loses_split(player)
+    ui.tie(player, bet)
+    ui.wins(player, bet)
+    ui.ties_split(player, bet)
+    ui.wins_split(player, bet)
+    actual = mock_bet.mock_calls[-10:]
+    try:
+        assert actual == expected
+    except AssertionError:
+        raise AssertionError(f'{actual!r} == {expected!r}')
+
+
+def test_TableUI_event_updates(mocker, tableui_with_mocked_event):
+    """The tested methods should call the
+    :meth:`backjack.TableUI.termui._update_event`
+    method with the player, bet, and event text.
+    """
+    ui, mock_event = tableui_with_mocked_event
+    player = ui.ctlr.data[0][0]
+    event = 'Shuffles the deck.'
+    expected = [
+        mocker.call(player, event),
+    ]
+
+    ui.shuffles(player)
+    actual = mock_event.mock_calls[-1:]
+    try:
+        assert actual == expected
+    except AssertionError:
+        raise AssertionError(f'{actual!r} == {expected!r}')
+
+
+def test_TableUI_hand_updates(mocker, tableui_with_mocked_hand):
+    """The tested methods should call the
+    :meth:`backjack.TableUI.termui._update_hand`
+    method with the player, hand, and event text.
+    """
+    ui, mock_hand = tableui_with_mocked_hand
+    player = ui.ctlr.data[0][0]
+    hand = cards.Hand([
+        cards.Card(11, 0),
+        cards.Card(10, 3),
+    ])
+    expected = [
+        mocker.call(player, hand, 'Takes hand.'),
+        mocker.call(player, hand, 'Flips card.'),
+        mocker.call(player, hand, 'Hits.'),
+        mocker.call(player, hand, 'Stands.'),
+    ]
+
+    ui.deal(player, hand)
+    ui.flip(player, hand)
+    ui.hit(player, hand)
+    ui.stand(player, hand)
+    actual = mock_hand.mock_calls[-4:]
+    try:
+        assert actual == expected
+    except AssertionError:
+        raise AssertionError(f'{actual!r} == {expected!r}')
+
+
+def test_TableUI_splits(mocker, tableui_with_mocked_main_and_two_players):
+    """When given a player and a bet, :meth:`blackjack.termui.TableUI.splits`
+    should add a row to the data table for the split hand, update it with
+    the relevant information, and send it to the UI.
+    """
+    tableui, mock_main = tableui_with_mocked_main_and_two_players
+    data = tableui.ctlr.data
+    player = data[0][0]
+    expected = [
+        mocker.call().send(('update', [
+            [player, 80, 20, 'J♣', 'Splits hand.'],
+            ['  \u2514\u2500', '', 20, 'J♠', ''],
+            data[1],
+        ])),
+    ]
+
+    tableui.splits(player, 20)
+    actual = mock_main.mock_calls[-1:]
+    try:
+        assert actual == expected
+    except AssertionError:
+        raise AssertionError(f'{actual!r} == {expected!r}')
+
+
 class TableUITestCase(ut.TestCase):
     # Update method tests.
-    @patch('blackjack.termui.print')
-    @patch('blackjack.termui.TableUI._update_bet')
-    def test_bet_updates(self, mock_update_bet, _):
-        """The tested methods should call the _update_bet() method
-        with the player, bet, and event text.
-        """
-        player = players.Player(name='spam', chips=100)
-        bet = 20
-        exp = [
-            call(player, bet, 'Bets.'),
-            call(player, bet, 'Doubles down.'),
-            call(player, bet, f'Buys {bet} insurance.'),
-            call(player, bet, f'Insurance pays {bet}.'),
-            call(player, '', 'Loses.'),
-            call(player, '', 'Loses.', True),
-            call(player, '', f'Ties {bet}.'),
-            call(player, '', f'Wins {bet}.'),
-            call(player, '', f'Ties {bet}.', True),
-            call(player, '', f'Wins {bet}.', True),
-        ]
-
-        data = [[player, 80, 20, '', ''],]
-        ui = termui.TableUI()
-        ui.ctlr.data = data
-        ui.start()
-        ui.bet(player, bet)
-        ui.doubledown(player, bet)
-        ui.insures(player, bet)
-        ui.insurepay(player, bet)
-        ui.loses(player)
-        ui.loses_split(player)
-        ui.tie(player, bet)
-        ui.wins(player, bet)
-        ui.ties_split(player, bet)
-        ui.wins_split(player, bet)
-        act = mock_update_bet.mock_calls[-10:]
-        ui.end()
-
-        self.assertEqual(exp, act)
-
-    @patch('blackjack.termui.print')
-    @patch('blackjack.termui.TableUI._update_event')
-    def test_event_updates(self, mock_update_event, _):
-        """The tested methods should call the _update_event() method
-        with the player and event text.
-        """
-        player = players.Player(name='spam', chips=100)
-        exp = [
-            call(player, 'Shuffles the deck.'),
-        ]
-
-        data = [[player, 80, 20, '', ''],]
-        ui = termui.TableUI()
-        ui.ctlr.data = data
-        ui.start()
-        ui.shuffles(player)
-        act = mock_update_event.mock_calls[-1:]
-        ui.end()
-
-        self.assertEqual(exp, act)
-
-    @patch('blackjack.termui.print')
-    @patch('blackjack.termui.TableUI._update_hand')
-    def test_hand_updates(self, mock_update_hand, _):
-        """The tested methods should call the _update_hand() method
-        with the player, hand, and event text.
-        """
-        player = players.Player(name='spam', chips=100)
-        hand = cards.Hand([
-            cards.Card(11, 0),
-            cards.Card(10, 3),
-        ])
-        handstr = str(hand)
-        exp = [
-            call(player, hand, 'Takes hand.'),
-            call(player, hand, 'Flips card.'),
-            call(player, hand, 'Hits.'),
-            call(player, hand, 'Stands.'),
-        ]
-
-        data = [[player, 80, 20, '', ''],]
-        ui = termui.TableUI()
-        ui.ctlr.data = data
-        ui.start()
-        ui.deal(player, hand)
-        ui.flip(player, hand)
-        ui.hit(player, hand)
-        ui.stand(player, hand)
-        act = mock_update_hand.mock_calls[-4:]
-        ui.end()
-
-        self.assertEqual(exp, act)
-
-    @patch('blackjack.termui.main')
-    def test_splits(self, mock_main):
-        """When given a player and a bet, splits() should add a row
-        to the data table for the split hand, update it with the
-        relevant information, and send it to the UI.
-        """
-        hands = [
-            cards.Hand([cards.Card(11, 0),]),
-            cards.Hand([cards.Card(11, 3),]),
-        ]
-        player = players.Player(hands, name='spam', chips=100)
-        player2 = players.Player(hands, name='eggs', chips=100)
-        new_data = [
-            [player, 100, 20, 'J♣', 'Splits hand.'],
-            ['  \u2514\u2500', '', 20, 'J♠', ''],
-            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'],
-        ]
-        exp_call = call().send(('update', new_data))
-        unexp_len = len(new_data)
-
-        data = [
-            [player, 100, 20, 'J♣ J♠', 'Takes hand.'],
-            [player2, 100, 20, '3♣ 4♣', 'Takes hand.'],
-        ]
-        ui = termui.TableUI()
-        ui.ctlr.data = data
-        ui.start()
-        ui.splits(player, 20)
-        act_call = mock_main.mock_calls[-1]
-        act_len = len(data)
-        ui.end()
-
-        self.assertEqual(exp_call, act_call)
-        self.assertNotEqual(unexp_len, act_len)
-
     @patch('blackjack.termui.main')
     def test_leaves(self, mock_main):
         """When given a player, leaves() should announce the player is
