@@ -72,7 +72,7 @@ class Player:
         return cls.fromdict(serial)
 
     @classmethod
-    def fromdict(cls, dict_:dict) -> 'Player':
+    def fromdict(cls, dict_: dict) -> 'Player':
         """Deserialize an instance of Player from a dictionary.
 
         :param dict_: A serialized instance of Player in a dictionary.
@@ -173,19 +173,19 @@ class Player:
     def will_bet(self, the_game) -> bool:
         raise NotImplementedError
 
-    def will_buyin(self, hand:Hand, the_game) -> bool:
+    def will_buyin(self, hand: Hand, the_game) -> bool:
         raise NotImplementedError
 
-    def will_double_down(self, hand:Hand, the_game) -> bool:
+    def will_double_down(self, hand: Hand, the_game) -> bool:
         raise NotImplementedError
 
-    def will_hit(self, hand:Hand, the_game) -> bool:
+    def will_hit(self, hand: Hand, the_game) -> bool:
         raise NotImplementedError
 
     def will_insure(self, the_game) -> bool:
         raise NotImplementedError
 
-    def will_split(self, hand:Hand, the_game) -> bool:
+    def will_split(self, hand: Hand, the_game) -> bool:
         raise NotImplementedError
 
 

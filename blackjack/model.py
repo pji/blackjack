@@ -94,7 +94,7 @@ class ValidatedTuple(ABC, _BaseDescriptor):
         valid = self.validate_tuple(value)
         setattr(instance, self.storage_name, valid)
 
-    def validate_tuple(self, seq:Iterable[Any]) -> tuple:
+    def validate_tuple(self, seq: Iterable[Any]) -> tuple:
         """Return the validated sequence as a tuple or raise a
         relevant exception.
 
@@ -216,7 +216,7 @@ def valtupfactory(name, validator, message):
     return type(name, (ValidatedTuple,), attrs)
 
 
-def wlistfactory(name:str, whitelist:Sequence, msg:str) -> type:
+def wlistfactory(name: str, whitelist: Sequence, msg: str) -> type:
     """Create whitelist validators.
 
     :param name: The name of the validator.

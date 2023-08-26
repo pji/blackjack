@@ -75,7 +75,7 @@ class LogUI(game.BaseUI):
         fmt = f'{bet} ({player.chips})'
         self._update_event(player, event, fmt)
 
-    def _update_event(self, player:players.Player, event:str,
+    def _update_event(self, player: players.Player, event: str,
                       detail: Any = '') -> None:
         """Report that an event has occurred.
 
@@ -88,8 +88,12 @@ class LogUI(game.BaseUI):
         """
         print(self.tmp.format(player, event, detail))
 
-    def _update_hand(self, player:players.Player, hand:cards.Hand,
-                     event:str) -> None:
+    def _update_hand(
+        self,
+        player: players.Player,
+        hand:cards.Hand,
+        event: str
+    ) -> None:
         """Report that a hand has changed.
 
         :param player: The player who owns the hand.
@@ -193,9 +197,9 @@ class LogUI(game.BaseUI):
 
     # Input methods.
     def _multichar_prompt(
-            self,
-            prompt: str,
-            default: str = ''
+        self,
+        prompt: str,
+        default: str = ''
     ) -> str:
         """Prompt the user for multiple characters."""
         msg = f'{prompt} > '
@@ -204,8 +208,11 @@ class LogUI(game.BaseUI):
             resp = default
         return resp
 
-    def _yesno_prompt(self, prompt:str,
-                      default: Union[str, bool] = True) -> model.IsYes:
+    def _yesno_prompt(
+        self,
+        prompt: str,
+        default: Union[str, bool] = True
+    ) -> model.IsYes:
         """Prompt the user for a yes/no answer."""
         response = None
         fmt = '{} [yn] > '

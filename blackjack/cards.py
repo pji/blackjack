@@ -11,6 +11,7 @@ cards.
 from collections import OrderedDict
 from collections.abc import MutableSequence
 from copy import copy, deepcopy
+from functools import total_ordering
 from itertools import product
 from json import dumps, loads
 from random import randrange, shuffle
@@ -118,6 +119,7 @@ Suit = valfactory('Suit', validate_suit, 'Invalid suit ({}).')
 
 
 # Common classes.
+@total_ordering
 class Card:
     """A playing card for the game of blackjack."""
     rank = Rank('rank')
@@ -125,7 +127,7 @@ class Card:
     facing = Boolean('facing')
 
     @classmethod
-    def deserialize(cls, s:str) -> 'Card':
+    def deserialize(cls, s: str) -> 'Card':
         """Deserialize an instance of the class.
 
         :param s: An object serialized as a json string.
@@ -139,8 +141,12 @@ class Card:
             msg = 'Serialized object was not a Card object.'
             raise TypeError(msg)
 
-    def __init__(self, rank: int = 11, suit: str = 'spades',
-                 facing: bool = UP) -> None:
+    def __init__(
+        self,
+        rank: int = 11,
+        suit: str = 'spades',
+        facing: bool = UP
+    ) -> None:
         """Initialize an instance of the class.
 
         :param rank: (Optional.) The rank (number value) of the card.
@@ -217,7 +223,7 @@ class Pile(MutableSequence):
     cards = CardTuple('cards')
 
     @classmethod
-    def deserialize(cls, s:str) -> 'Pile':
+    def deserialize(cls, s: str) -> 'Pile':
         """Deserialize an instance of the class.
 
         :param s: A Pile object serialized as a json string.
@@ -359,9 +365,9 @@ class Deck(Pile):
         self,
         cards: list[Card] | None = None,
         size: int = 1,
-        _iter_index: int = 0
+        *args, **kwargs
     ) -> None:
-        super().__init__(cards)
+        super().__init__(cards, *args, **kwargs)
         self.size = size
 
     def _asdict(self):

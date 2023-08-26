@@ -12,766 +12,460 @@ import inspect
 import json
 import unittest
 from copy import deepcopy
-from itertools import zip_longest
+from itertools import chain, zip_longest
+from random import seed
 from unittest.mock import call, Mock
+
+import pytest
 
 from blackjack import cards
 
 
 # Tests for Card.
-def test_Card_can_instantiate():
+@pytest.fixture
+def testcard():
+    """An instance of :class:`blackjack.cards.Card` for testing."""
+    yield cards.Card(10, 'clubs', cards.UP)
+
+
+# Tests for Card class methods.
+def test_deserialize(testcard):
+    """When given a :class:`blackjack.cards.Card` object serialized as
+    a json string, :meth:`blackjack.cards.Card.deserialize()`` should
+    return the deserialized object.
+    """
+    s = '["Card", 10, "clubs", true]'
+    assert cards.Card.deserialize(s) == testcard
+
+
+# Tests for Card initialization.
+def test_Card__init_default():
     """When invoked, an :class:`blackjack.cards.Card` object is created."""
+    optionals = {
+        'rank': 11,
+        'suit': 'spades',
+        'facing': cards.UP,
+    }
     card = cards.Card()
-    assert isinstance(card, cards.Card)
+    for attr in optionals:
+        assert getattr(card, attr) == optionals[attr]
 
 
-class CardTestCase(unittest.TestCase):
-    def test_exists(self):
-        """A class named Card should exist."""
-        names = [item[0] for item in inspect.getmembers(cards)]
-        self.assertTrue('Card' in names)
-
-    def test_can_instantiate(self):
-        """Card objects can be instantiated."""
-        expected = cards.Card
-        actual = cards.Card()
-        self.assertTrue(isinstance(actual, expected))
-
-    def test_deserialize(self):
-        """When given a Card object serialized as a json string,
-        Card.deserialize() should return the deserialized Card object.
-        """
-        exp = cards.Card(11, 0, True)
-        s = '["Card", 11, "clubs", true]'
-        act = cards.Card.deserialize(s)
-        self.assertEqual(exp, act)
-
-    def test___init__rank(self):
-        """Card objects can be initialized with a suit value."""
-        expected = 1
-
-        c = cards.Card(expected)
-        actual = c.rank
-
-        self.assertEqual(expected, actual)
-
-    def test___init__invalid_rank(self):
-        """Card ranks must be between 1 and 13."""
-        expected = ValueError
-        with self.assertRaises(expected):
-            _ = cards.Card(0)
-
-    def test___init__suit(self):
-        """Card objects can be initialized with a suit value."""
-        expected = 'spades'
-
-        c = cards.Card(10, expected)
-        actual = c.suit
-
-        self.assertEqual(expected, actual)
-
-    def test___init__invalid_suit(self):
-        """Card suits must be clubs, diamonds, hearts, or spades."""
-        expected = ValueError
-        with self.assertRaises(expected):
-            _ = cards.Card(5, 'spam')
-
-    def test___init__facing(self):
-        """Card objects can be initiated with a facing value."""
-        expected = True
-
-        c = cards.Card(1, 1, cards.UP)
-        actual = c.facing
-
-        self.assertEqual(expected, actual)
-
-    def test___init__invalid_facing(self):
-        """Card facing must be a bool."""
-        expected = ValueError
-        with self.assertRaises(expected):
-            c = cards.Card(1, 1, 'spam')
-
-    def test___repr__(self):
-        """Card should return a string useful for debugging."""
-        expected = "Card(rank=10, suit='clubs', facing=True)"
-
-        c = cards.Card(10, 'clubs', cards.UP)
-        actual = c.__repr__()
-
-        self.assertEqual(expected, actual)
-
-    def test___str__(self):
-        """Card objects should return a string suitable for printing."""
-        expected = 'Q♥'
-
-        c = cards.Card(12, 'hearts')
-        actual = str(c)
-
-        self.assertEqual(expected, actual)
-
-    def test___str__print_should_hide_info_when_face_down(self):
-        """When facing is down, __str__() should not reveal the suit
-        or rank of the card.
-        """
-        expected = '\u2500\u2500'
-
-        c = cards.Card(11, 3, cards.DOWN)
-        actual = c.__str__()
-
-        self.assertEqual(expected, actual)
-
-    def test___eq__equality_test(self):
-        """Card objects should be compared for equality based on their
-        rank and suit.
-        """
-        c1 = cards.Card(2, 'hearts')
-        c2 = cards.Card(2, 'hearts')
-        c3 = cards.Card(11, 'clubs')
-        c4 = cards.Card(2, 'spades')
-        c5 = cards.Card(11, 'hearts')
-
-        self.assertTrue(c1 == c2)
-        self.assertFalse(c1 == c3)
-        self.assertFalse(c1 == c4)
-        self.assertFalse(c1 == c5)
-
-    def test___eq__equality_test_not_implemented(self):
-        """Card objects should return not implemented when compared to
-        objects that aren't Card objets.
-        """
-        expected = NotImplemented
-
-        c1 = cards.Card(2, 'hearts')
-        other = 23
-        actual = c1.__eq__(other)
-
-        self.assertEqual(expected, actual)
-
-    def test___ne__nonequality_test(self):
-        """Card objects should compare for non equality based on their
-        rank and suit.
-        """
-        c1 = cards.Card(2, 'hearts')
-        c2 = cards.Card(2, 'hearts')
-        c3 = cards.Card(11, 'clubs')
-        c4 = cards.Card(2, 'spades')
-        c5 = cards.Card(11, 'hearts')
-
-        self.assertFalse(c1 != c2)
-        self.assertTrue(c1 != c3)
-        self.assertTrue(c1 != c4)
-        self.assertTrue(c1 != c5)
-
-    def test___lt__less_than(self):
-        """If given another Card object, __lt__() should return True
-        if the Card object is less than the other Card object, and
-        False is the Card object is not.
-        """
-        c1 = cards.Card(11, 1)
-        c2 = cards.Card(11, 1)
-        c3 = cards.Card(10, 1)
-        c4 = cards.Card(12, 1)
-        c5 = cards.Card(11, 0)
-        c6 = cards.Card(11, 2)
-        c7 = cards.Card(10, 2)
-        c8 = cards.Card(12, 0)
-
-        self.assertFalse(c1 < c2)
-        self.assertFalse(c1 < c3)
-        self.assertTrue(c1 < c4)
-        self.assertFalse(c1 < c5)
-        self.assertTrue(c1 < c6)
-        self.assertFalse(c1 < c7)
-        self.assertTrue(c1 < c8)
-
-    def test___lt__less_than_not_implemented(self):
-        """If given a value that isn't a Card object, __lt__() should
-        return NotImplemented.
-        """
-        expected = NotImplemented
-
-        c1 = cards.Card(11, 3)
-        c2 = 'spam'
-        actual = c1.__lt__(c2)
-
-        self.assertEqual(expected, actual)
-
-    def test__astuple(self):
-        """When called, astuple() should return the card's attributes
-        as a tuple for serialization.
-        """
-        exp = ('Card', 11, 'clubs', True)
-        card = cards.Card(*exp[1:])
-        act = card._astuple()
-        self.assertEqual(exp, act)
-
-    def test__astuple_deserialize(self):
-        """The result of astuple() should be able to be used to create
-        a new instance of cards.Card with the same attributes.
-        """
-        exp = cards.Card(11, 3, True)
-        serialized = exp._astuple()
-        act = cards.Card(*serialized[1:])
-        self.assertEqual(exp, act)
-
-    def test_flip_up(self):
-        """When a Card object is face down, flip() should switch it to
-        being face up.
-        """
-        expected = cards.UP
-
-        c = cards.Card(11, 0, cards.DOWN)
-        c.flip()
-        actual = c.facing
-
-        self.assertEqual(expected, actual)
-
-    def test_flip_down(self):
-        """When a Card object is face up, flip() should switch it to
-        being face down.
-        """
-        expected = cards.DOWN
-
-        c = cards.Card(11, 0, cards.UP)
-        c.flip()
-        actual = c.facing
-
-        self.assertEqual(expected, actual)
-
-    def test_serialize(self):
-        """When called, serialize() returns a version of the object
-        serialized to a json string.
-        """
-        exp = '["Card", 11, "clubs", true]'
-        card = cards.Card(11, 0, True)
-        act = card.serialize()
-        self.assertEqual(exp, act)
+def test_Card__init_invalid():
+    """When invoked, an :class:`blackjack.cards.Card` object is created.
+    If invalid values for optional parameters are passed, the object
+    should raise a :class:`ValueError` exception.
+    """
+    optionals = {
+        'rank': 23,
+        'suit': 'spam',
+        'facing': 'spam',
+    }
+    for attr in optionals:
+        kwarg = {attr: optionals[attr]}
+        with pytest.raises(ValueError):
+            card = cards.Card(**kwarg)
 
 
-class PileTestCase(unittest.TestCase):
-    # Utility methods.
-    def cardlist(self):
-        return [
+def test_Card__init_optional():
+    """When invoked, an :class:`blackjack.cards.Card` object is created.
+    If optional parameters are passed, the relevant attributes are set
+    to those values.
+    """
+    optionals = {
+        'rank': 10,
+        'suit': 'hearts',
+        'facing': cards.DOWN,
+    }
+    card = cards.Card(**optionals)
+    for attr in optionals:
+        assert getattr(card, attr) == optionals[attr]
+
+
+# Tests for Card dunder methods.
+def test_Card___repr__(testcard):
+    """:class:`blackjack.cards.Card.__repr__` should return a string
+    useful for debugging.
+    """
+    assert repr(testcard) == "Card(rank=10, suit='clubs', facing=True)"
+
+
+def test_Card___str__(testcard):
+    """:class:`blackjack.cards.Card.__str__` should return a string
+    useful for printing.
+    """
+    assert str(testcard) == '10♣︎'
+
+
+def test_Card___str__(testcard):
+    """:class:`blackjack.cards.Card.__str__` should return a string
+    useful for printing. If the card is face down, the suit and rank
+    information should be hidden.
+    """
+    testcard.facing = cards.DOWN
+    assert str(testcard) == '\u2500\u2500'
+
+
+def test_Card_comparisons(testcard):
+    """:class:`blackjack.cards.Card` objects should be compared for
+    equality based on their rank and suit.
+    """
+    assert testcard == cards.Card(10, 'clubs', cards.UP)
+    assert testcard == cards.Card(10, 'clubs', cards.DOWN)
+    assert testcard != cards.Card(11, 'clubs')
+    assert testcard != cards.Card(10, 'hearts')
+    assert testcard != cards.Card(9, 'diamonds')
+    assert testcard < cards.Card(11, 'clubs')
+    assert testcard <= cards.Card(12, 'clubs')
+    assert testcard < cards.Card(10, 'diamonds')
+    assert testcard <= cards.Card(10, 'diamonds')
+    assert testcard > cards.Card(9, 'clubs')
+    assert testcard >= cards.Card(9, 'clubs')
+    assert cards.Card(10, 'diamonds') > testcard
+    assert cards.Card(10, 'diamonds') >= testcard
+    assert testcard.__eq__(23) == NotImplemented
+
+
+# Tests for Card._astuple.
+def test_Card__astuple(testcard):
+    """When called, :meth:`blackjack.cards.Card._astuple` should return
+    the card's attributes as a tuple for serialization.
+    """
+    assert testcard._astuple() == ('Card', 10, 'clubs', True)
+
+
+# Tests for Card.flip.
+def test_Card_flip_up(testcard):
+    """When a :class:`blackjack.cards.Card` object is face down,
+    :meth:`blackjack.cards.Card.flip` should switch it to
+    being face up. If the object is face down, it should switch
+    it to face up.
+    """
+    testcard.flip()
+    assert testcard.facing == cards.DOWN
+    testcard.flip()
+    assert testcard.facing == cards.UP
+
+
+# Tests for Card.serialize.
+def test_Card_serialize(testcard):
+    """When called, :meth:`blackjack.cards.Card.serialize` returns a
+    version of the object serialized to a json string.
+    """
+    assert testcard.serialize() == '["Card", 10, "clubs", true]'
+
+
+# Tests for Pile.
+# Pile fixtures.
+@pytest.fixture
+def pile():
+    """A :class:`blackjack.cards.Pile` for testing."""
+    yield cards.Pile([
+        cards.Card(1, 0),
+        cards.Card(2, 0),
+        cards.Card(3, 0),
+    ])
+
+
+# Tests for Pile class methods.
+def test_Pile_deserialize(pile):
+    """When given a :class:`blackjack.cards.Pile` object serialized
+    to a JSON string, :meth:`blackjack.cards.Pile.deserialize` should
+    deserialize that object and return it.
+    """
+    s = json.dumps({'class': 'Pile', '_iter_index': 0, 'cards': [
+        '["Card", 1, 0, true]',
+        '["Card", 2, 0, true]',
+        '["Card", 3, 0, true]',
+    ],})
+    assert cards.Pile.deserialize(s) == pile
+
+
+# Tests for Pile initialization.
+def test_Pile_init_default():
+    """Given no parameters, :class:`blackjack.cards.Pile` should
+    return a instance that uses default values for its attributes.
+    """
+    optionals = {
+        'cards': (),
+        '_iter_index': 0
+    }
+    pile = cards.Pile()
+    for attr in optionals:
+        assert getattr(pile, attr) == optionals[attr]
+
+
+def test_Pile_init_optional():
+    """Given optional parameters, :class:`blackjack.cards.Pile` should
+    return a instance that uses the given values for its attributes.
+    """
+    optionals = {
+        'cards': (
             cards.Card(1, 0),
             cards.Card(2, 0),
             cards.Card(3, 0),
+        ),
+        '_iter_index': 2
+    }
+    pile = cards.Pile(**optionals)
+    for attr in optionals:
+        assert getattr(pile, attr) == optionals[attr]
+
+
+# Tests for Pile dunder methods.
+def test_Pile_comparisons(pile):
+    """:class:`blackjack.cards.Pile` should be able to be compared with
+    other instances of :class:`blackjack.cards.Pile`. The comparison
+    should be based on the contents of :attr:`blackjack.cards.Pile.cards`.
+    """
+    assert pile == cards.Pile(pile.cards)
+    assert pile != cards.Pile([cards.Card(1, 0),])
+    assert pile.__eq__(23) == NotImplemented
+
+
+def test_Pile_container(pile):
+    """:class:`blackjack.cards.Pile` should implement the `Container`
+    protocol.
+    """
+    assert isinstance(pile, col.Container)
+    assert cards.Card(2, 0) in pile
+    assert cards.Card(4, 0) not in pile
+
+
+def test_Pile_iterator(pile):
+    """:class:`blackjack.cards.Pile` should implement the iterator
+    protocol.
+    """
+    assert isinstance(pile, col.Iterator)
+    assert iter(pile) == pile
+    assert iter(pile) is not pile
+    next(pile)
+    assert pile._iter_index == 1
+    assert next(pile) == cards.Card(2, 0)
+    assert next(pile) == cards.Card(3, 0)
+    with pytest.raises(StopIteration):
+        next(pile)
+
+
+def test_Pile_mutablesequence(pile):
+    """:class:`blackjack.cards.Pile` should implement the
+    `MutableSequence` protocol.
+    """
+    assert isinstance(pile, col.MutableSequence)
+    card = cards.Card(5, 2)
+
+    # Test Pile.__set_item__.
+    assert pile[1] is not card
+    pile[1] = card
+    assert pile[1] is card
+
+    # Test Pile.__del_item__.
+    assert len(pile) == 3
+    del pile[1]
+    assert pile[1] is not card
+    assert len(pile) == 2
+
+    # Test Pile.insert.
+    pile.insert(1, card)
+    assert pile[1] is card
+    assert len(pile) == 3
+
+
+def test_Pile_reversible(pile):
+    """:class:`blackjack.cards.Pile` should implement the `Reversible`
+    protocol.
+    """
+    assert isinstance(pile, col.Reversible)
+    assert reversed(pile) == cards.Pile(pile.cards[::-1])
+
+
+def test_Pile_sequence(pile):
+    """:class:`blackjack.cards.Pile` should implement the `Sequence`
+    protocol.
+    """
+    assert isinstance(pile, col.Sequence)
+    assert pile[1] == cards.Card(2, 0)
+
+
+def test_Pile_sized(pile):
+    """Pile should implement the `Sized` protocol."""
+    assert len(pile) == 3
+
+
+# Tests for Pile.copy.
+def test_Pile_copy(pile):
+    """When called, :meth:`blackjack.cards.Pile.copy` should return
+    a shallow copy of the object.
+    """
+    result = pile.copy()
+    assert pile == result
+    assert pile is not result
+
+
+# Tests for Pile.serialize.
+def test_Pile_serialize(pile):
+    """When called, :meth:`blackjack.cards.Pile.serialize` should return
+    the Pile object serialized to a JSON string.
+    """
+    assert pile.serialize() == json.dumps({
+        'class': 'Pile',
+        '_iter_index': 0,
+        'cards': [
+            '["Card", 1, "clubs", true]',
+            '["Card", 2, "clubs", true]',
+            '["Card", 3, "clubs", true]',
         ]
-
-    # Tests.
-    def test_exists(self):
-        """A class named Pile should exist."""
-        names = [item[0] for item in inspect.getmembers(cards)]
-        self.assertTrue('Pile' in names)
-
-    def test_can_instantiate(self):
-        """An instance of Pile should be able to be instantiated."""
-        expected = cards.Pile
-        actual = cards.Pile()
-        self.assertTrue(isinstance(actual, expected))
-
-    def test_class_deserialize(self):
-        """When given a Pile object serialized to a json string,
-        Pile.deserialize() should deserialize that object and
-        return it.
-        """
-        cardlist = [
-            cards.Card(11, 0, True),
-            cards.Card(12, 0, True),
-            cards.Card(13, 0, True),
-        ]
-        exp = cards.Pile(cardlist)
-
-        s = exp.serialize()
-        act = cards.Pile.deserialize(s)
-
-        self.assertEqual(exp, act)
-
-    def test_cards(self):
-        """An instance of Pile should be able to hold cards in its
-        cards attribute.
-        """
-        expected = (
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        )
-
-        d = cards.Pile(expected)
-        actual = d.cards
-
-        self.assertEqual(expected, actual)
-
-    def test__iter_index(self):
-        """An instance of Pile should initialize the iter_index
-        attribute to zero.
-        """
-        expected = 0
-
-        d = cards.Pile()
-        actual = d._iter_index
-
-        self.assertEqual(expected, actual)
-
-    def test_sized_protocol(self):
-        """Pile should implement the Sized protocol by returning the
-        number of cards in the deck for Pile.__len__."""
-        expected = 3
-
-        d = cards.Pile(self.cardlist())
-        actual = len(d)
-
-        self.assertEqual(expected, actual)
-
-    def test_equality_test(self):
-        """Piles that contain the same cards in the same order should
-        be equal.
-        """
-        d1 = cards.Pile([
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        ])
-        d2 = cards.Pile([
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        ])
-        d3 = cards.Pile([
-            cards.Card(1, 2),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        ])
-        d4 = cards.Pile([
-            cards.Card(1, 3),
-            cards.Card(3, 3),
-        ])
-        d5 = cards.Pile([
-            cards.Card(3, 3),
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-        ])
-
-        self.assertTrue(d1 == d2)
-        self.assertFalse(d1 == d3)
-        self.assertFalse(d1 == d4)
-        self.assertFalse(d1 == d5)
-
-    def test_equality_notimplemented(self):
-        """Attempts to compare a Pile object with a non-Pile object
-        should return NotImplemented.
-        """
-        expected = NotImplemented
-
-        d1 = cards.Pile([
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        ])
-        other = 'spam'
-        actual = d1.__eq__(other)
-
-        self.assertEqual(expected, actual)
-
-    def test_copy(self):
-        """Pile.copy() should return a shallow copy of the Pile
-        object.
-        """
-        expected = cards.Pile([
-            cards.Card(1, 3),
-            cards.Card(2, 3),
-            cards.Card(3, 3),
-        ])
-
-        actual = expected.copy()
-
-        self.assertEqual(expected, actual)
-        self.assertFalse(expected is actual)
-        for i in range(len(actual)):
-            self.assertTrue(expected.cards[i] is actual.cards[i])
-
-    def test_iterator_protocol(self):
-        """Pile implements the iterator protocol."""
-        expected = col.Iterator
-        d = cards.Pile()
-        self.assertTrue(isinstance(d, expected))
-
-    def test___next___increment(self):
-        """Calls to __next__() should increment the Pile object's
-        _iter_index attribute.
-        """
-        expected = 2
-
-        d = cards.Pile(self.cardlist())
-        next(d)
-        next(d)
-        actual = d._iter_index
-
-        self.assertEqual(expected, actual)
-
-    def test___next___stop(self):
-        """If _iter_index is equal to or greater than the number of
-        cards in the Pile object, __next__() should raise
-        StopIteration.
-        """
-        expected = StopIteration
-
-        d = cards.Pile(self.cardlist())
-        d._iter_index = 3
-
-        with self.assertRaises(expected):
-            _ = next(d)
-
-    def test___next___return(self):
-        """__next__() should return the next card held by the Pile
-        object.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-        ]
-        expected = card_list[1]
-
-        d = cards.Pile(card_list)
-        d._iter_index = 1
-        actual = next(d)
-
-        self.assertEqual(expected, actual)
-
-    def test___iter__(self):
-        """__iter__() should return a copy of of the Pile object for
-        iteration.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-        ]
-        expected = cards.Pile(card_list)
-
-        actual = expected.__iter__()
-
-        self.assertEqual(expected, actual)
-        self.assertFalse(expected is actual)
-
-    def test_card_iteratation(self):
-        """The cards in Pile.card should be able to be iterated."""
-        expected = 3
-
-        d = cards.Pile(self.cardlist())
-        actual = 0
-        for card in d:
-            actual += 1
-
-        self.assertEqual(expected, actual)
-
-    def test_container_protocol(self):
-        """Pile should implement the Container protocol."""
-        expected = col.Container
-        d = cards.Pile()
-        self.assertTrue(isinstance(d, col.Container))
-
-    def test___contains__(self):
-        """Pile should implement the in operator."""
-        c1 = cards.Card(1, 0)
-        c2 = cards.Card(2, 0)
-        c3 = cards.Card(3, 0)
-        d = cards.Pile([c1, c2])
-        self.assertTrue(c1 in d)
-        self.assertFalse(c3 in d)
-
-    def test_reversible_protocol(self):
-        """Pile should implement the Reversible protocol."""
-        expected = col.Reversible
-        d = cards.Pile()
-        self.assertTrue(isinstance(d, expected))
-
-    def test___reversed__(self):
-        """__reversed__ should return an iterator that iterates
-        though the cards in the Pile object in reverse order.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-            cards.Card(3, 0),
-        ]
-        expected = cards.Pile(card_list[::-1])
-
-        d = cards.Pile(card_list)
-        actual = d.__reversed__()
-
-        self.assertEqual(expected, actual)
-
-    def test_sequence_protocol(self):
-        """Pile should implement the Sequence protocol."""
-        expected = col.Sequence
-        d = cards.Pile()
-        self.assertTrue(isinstance(d, expected))
-
-    def test___getitem__(self):
-        """Given a key, __getitem__ should return the item for that
-        key.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-            cards.Card(3, 0),
-        ]
-        expected = card_list[1]
-
-        d = cards.Pile(card_list)
-        actual = d.__getitem__(1)
-
-        self.assertEqual(expected, actual)
-
-    def test_mutablesequence_protocol(self):
-        """Pile should implement the MutableSequence protocol."""
-        expected = col.MutableSequence
-        d = cards.Pile()
-        self.assertTrue(isinstance(d, expected))
-
-    def test___setitem__(self):
-        """Given a key and value, __setitem__ should set the value of
-        cards at that index to the value.
-        """
-        expected = cards.Card(11, 3)
-
-        d = cards.Pile(self.cardlist())
-        d.__setitem__(1, expected)
-        actual = d.cards[1]
-
-        self.assertEqual(expected, actual)
-
-    def test___delitem__(self):
-        """Given a key, __delitem__ should delete the item at that key
-        of cards.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-            cards.Card(3, 0),
-        ]
-        expected = (card_list[0], card_list[2])
-
-        d = cards.Pile(card_list)
-        d.__delitem__(1)
-        actual = d.cards
-
-        self.assertEqual(expected, actual)
-
-    def test_insert(self):
-        """Given a key and an object, insert() should insert the item
-        at the key.
-        """
-        expected = cards.Card(11, 3)
-
-        d = cards.Pile(self.cardlist())
-        d.insert(1, expected)
-        actual = d.cards[1]
-
-        self.assertEqual(expected, actual)
-
-    def test_serialize(self):
-        """When called, serialize() should return the Pile object
-        serialized to a JSON string.
-        """
-        exp = json.dumps({
-            'class': 'Pile',
-            '_iter_index': 0,
-            'cards': [
-                '["Card", 11, "clubs", true]',
-                '["Card", 12, "clubs", true]',
-                '["Card", 13, "clubs", true]',
-            ]
-        })
-
-        cardlist = [
-            cards.Card(11, 0, True),
-            cards.Card(12, 0, True),
-            cards.Card(13, 0, True),
-        ]
-        pile = cards.Pile(cardlist)
-        act = pile.serialize()
-
-        self.assertEqual(exp, act)
-
-
-class DeckTestCase(unittest.TestCase):
-    def test_exists(self):
-        """A class named Deck should exist."""
-        names = [item[0] for item in inspect.getmembers(cards)]
-        self.assertTrue('Deck' in names)
-
-    def test_can_instantiate(self):
-        """An instance of Deck should be able to be instantiated."""
-        expected = cards.Deck
-        actual = cards.Deck()
-        self.assertTrue(isinstance(actual, expected))
-
-    def test_Pile_subclass(self):
-        """Deck should be a subclass of Pile."""
-        expected = cards.Pile
-        actual = cards.Deck
-        self.assertTrue(issubclass(actual, expected))
-
-    def test_build(self):
-        """Pile.build() should return an instance of deck that
-        contains the cards needed for a blackjack game.
-        """
-        expected_len = 52
-        expected_size = 1
-        expected_class = cards.Card
-
-        d = cards.Deck.build()
-        actual_len = len(d.cards)
-        actual_size = d.size
-
-        self.assertEqual(expected_len, actual_len)
-        self.assertEqual(expected_size, actual_size)
-        for card in d.cards:
-            self.assertTrue(isinstance(card, expected_class))
-
-    def test_deserialize(self):
-        """When given a Deck serialized as a JSON string, deserialize()
-        should return the deserialized Deck object.
-        """
-        cardlist = [
-            cards.Card(11, 0, True),
-            cards.Card(12, 0, True),
-            cards.Card(13, 0, True),
-        ]
-        exp = cards.Pile(cardlist)
-
-        s = exp.serialize()
-        act = cards.Pile.deserialize(s)
-
-        self.assertEqual(exp, act)
-
-    def test_build_cards_face_down(self):
-        """Card objects should be face down in the deck."""
-        expected = cards.DOWN
-
-        d = cards.Deck.build()
-        for c in d:
-            actual = c.facing
-
-            self.assertEqual(expected, actual)
-
-    def test_build_casino_deck(self):
-        """If given the number of standard decks to use, Pile.build()
-        should return a Pile object that contains cards from that many
-        standard decks.
-        """
-        expected_size = 6
-        expected_len = 52 * expected_size
-        expected_class = cards.Card
-
-        d = cards.Deck.build(expected_size)
-        actual_len = len(d.cards)
-        actual_size = d.size
-
-        self.assertEqual(expected_len, actual_len)
-        self.assertEqual(expected_size, actual_size)
-        for card in d.cards:
-            self.assertTrue(isinstance(card, expected_class))
-
-    def test_build_each_card_unique(self):
-        """When build() uses multiple decks, each card should still
-        be a unique object.
-        """
-        deck = cards.Deck.build(2)
-        for i in range(52):
-            self.assertFalse(deck[i] is deck[i + 52])
-
-    def test_draw_a_card(self):
-        """draw() should remove the "top card" of the deck and return
-        it. For performance reasons, "top card" is defined as the
-        card at index -1.
-        """
-        card_list = [
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-            cards.Card(3, 0),
-        ]
-        expected_card = card_list[-1]
-        expected_deck = cards.Pile(card_list[0:2])
-
-        d = cards.Deck(card_list)
-        actual_card = d.draw()
-        actual_deck = d
-
-        self.assertEqual(expected_card, actual_card)
-        self.assertEqual(expected_deck, actual_deck)
-
-    def test_shuffle(self):
-        """shuffle() should randomize the order of the deck.
-
-        NOTE: Because shuffling is a random action, it's possible
-        for this to fail because the randomized order ends up the
-        same as the original order. The odds for this should be
-        1 in 52!, which is around 8 * 10^67.
-        """
-        original = cards.Deck.build()
-        expected_len = len(original)
-
-        d = deepcopy(original)
-        d.shuffle()
-        actual_len = len(d)
-
-        self.assertNotEqual(original, d)
-        self.assertEqual(expected_len, actual_len)
-
-    def test_random_cut_end_of_deck(self):
-        """In order to make counting cards more difficult, cut()
-        should remove a random amount, between 60 and 75, cards from
-        the deck.
-
-        NOTE: Since the number of cards removed is random, this test
-        will run 10 times to try to catch issues with the number
-        generation.
-        """
-        num_decks = 6
-        original_len = 52 * num_decks
-        too_few_cards = original_len - 76
-        too_many_cards = original_len - 59
-        lengths = []
-
-        for i in range(10):
-            d = cards.Deck.build(num_decks)
-            d.random_cut()
-            actual_len = len(d)
-            lengths.append(actual_len)
-
-            self.assertNotEqual(original_len, actual_len)
-            self.assertTrue(actual_len > too_few_cards)
-            self.assertTrue(actual_len < too_many_cards)
-
-        length = lengths.pop()
-        comp_lengths = [length == n for n in lengths]
-        self.assertFalse(all(comp_lengths))
-
-    def test_serialize(self):
-        """When called, serialize() should return the Deck object
-        serialized as a JSON string.
-        """
-        exp = json.dumps({
-            'class': 'Deck',
-            '_iter_index': 0,
-            'cards': [
-                '["Card", 11, "clubs", true]',
-                '["Card", 12, "clubs", true]',
-                '["Card", 13, "clubs", true]',
-            ],
-            'size': 1
-        })
-
-        cardlist = [
-            cards.Card(11, 0, True),
-            cards.Card(12, 0, True),
-            cards.Card(13, 0, True),
-        ]
-        deck = cards.Deck(cardlist)
-        act = deck.serialize()
-
-        self.assertEqual(exp, act)
+    })
+
+
+# Tests for Deck.
+# Fixtures for Deck.
+@pytest.fixture
+def deck():
+    """A :class:`blackjack.cards.Deck` object for testing."""
+    yield cards.Deck([
+        cards.Card(1, 0),
+        cards.Card(2, 0),
+        cards.Card(3, 0),
+    ])
+
+
+@pytest.fixture
+def frenchdeck():
+    cards_ = []
+    for suit in range(4):
+        for rank in range(13, 0, -1):
+            cards_.append(cards.Card(rank, suit, cards.DOWN))
+    yield cards.Deck(cards_)
+
+
+# Tests for Deck class methods and traits.
+def test_Deck_subclasses_pile(deck):
+    """:class:`blackjack.cards.Deck` should be a subclass of
+    :class:`blackjack.cards.Pile`.
+    """
+    assert isinstance(deck, cards.Pile)
+
+
+def test_Deck_build(frenchdeck):
+    """:meth:`blackjack.cards.Deck.build1 should return an instance
+    of :class:`blackjack.cards.Deck` that contains the cards needed
+    for a blackjack game.
+    """
+    deck = cards.Deck.build()
+    assert deck == frenchdeck
+    assert deck.size == 1
+
+
+def test_Deck_build_casino_deck(frenchdeck):
+    """:meth:`blackjack.cards.Deck.build1 should return an instance
+    of :class:`blackjack.cards.Deck` that contains the cards needed
+    for a blackjack game. Despite using multiple decks, each card
+    in the casino deck should be a unique object.
+    """
+    deck = cards.Deck.build(6)
+    assert deck == cards.Deck(chain(*[frenchdeck for _ in range(6)]))
+    assert deck.size == 6
+    for i in range(52):
+        for j in range(1, 6):
+            assert deck[i] is not deck[52 * j + i]
+            assert deck[i] == deck[52 * j + i]
+
+
+def test_Deck_deserialize(deck):
+    """When given a Deck serialized as a JSON string, deserialize()
+    should return the deserialized Deck object.
+    """
+    s = json.dumps({'class': 'Deck', '_iter_index': 0, 'size': 1, 'cards': [
+        '["Card", 1, 0, true]',
+        '["Card", 2, 0, true]',
+        '["Card", 3, 0, true]',
+    ],})
+    assert cards.Deck.deserialize(s) == deck
+
+
+# Tests for Deck initialization.
+def test_Deck_init_default():
+    """If no parameters are passed, a :class:`blackjack.cards.Deck`
+    object should be initialized with default values.
+    """
+    optionals = {
+        'cards': tuple(),
+        'size': 1,
+        '_iter_index': 0
+    }
+    deck = cards.Deck()
+    for attr in optionals:
+        assert getattr(deck, attr) == optionals[attr]
+
+
+def test_Deck_init_optionals():
+    """If optional parameters are passed, a :class:`blackjack.cards.Deck`
+    object should be initialized with those values.
+    """
+    optionals = {
+        'cards': (cards.Card(1, 0), cards.Card(2, 0),),
+        'size': 2,
+        '_iter_index': 1
+    }
+    deck = cards.Deck(**optionals)
+    for attr in optionals:
+        assert getattr(deck, attr) == optionals[attr]
+
+
+# Tests for Deck.draw.
+def test_Deck_draw(deck):
+    """When called, :meth:`blackjack.cards.Deck.draw` should remove the
+    "top card" of the deck and return it. For performance reasons, "top
+    card" is defined as the card at index -1.
+    """
+    assert len(deck) == 3
+    assert deck.draw() == cards.Card(3, 0)
+    assert len(deck) == 2
+
+
+# Tests for Deck.shuffle.
+def test_Deck_shuffle(deck):
+    """When called, :meth:`blackjack.cards.Deck.shuffle` should
+    randomize the order of the deck.
+    """
+    seed('spam1')
+    deck.shuffle()
+    assert deck == cards.Deck([
+        cards.Card(1, 0),
+        cards.Card(3, 0),
+        cards.Card(2, 0),
+    ])
+
+
+# Tests for Deck.random_cut.
+def test_Deck_random_cut(frenchdeck):
+    """When called, :meth:`blackjack.cards.Deck.random_cut` should
+    remove between 60 and 75 cards from the deck.
+    """
+    casinodeck = cards.Deck(chain(*[frenchdeck for _ in range(6)]))
+    seed('spam')
+    for start in [63, 68, 60, 70]:
+        deck = deepcopy(casinodeck)
+        deck.random_cut()
+        assert deck == casinodeck[start:]
+
+
+# Tests for Deck.serialize.
+def test_Deck_serialize(deck):
+    """When called, :meth:`blackjack.cards.Deck.serialize` should return
+    the Deck object serialized as a JSON string.
+    """
+    assert deck.serialize() == json.dumps({
+        'class': 'Deck',
+        '_iter_index': 0,
+        'cards': [
+            '["Card", 1, "clubs", true]',
+            '["Card", 2, "clubs", true]',
+            '["Card", 3, "clubs", true]',
+        ],
+        'size': 1,
+    })
 
 
 class HandTestCase(unittest.TestCase):
