@@ -8,34 +8,42 @@ This module contains the unit tests for the blackjack.cards module.
 :license: MIT, see LICENSE for more details.
 """
 import collections.abc as col
-import inspect
 import json
-import unittest
 from copy import deepcopy
-from itertools import chain, zip_longest
+from functools import partial
+from itertools import chain
 from random import seed
-from unittest.mock import call, Mock
 
 import pytest
 
 from blackjack import cards
 
 
+# Utility functions.
+def raises_test(cls, *args, **kwargs):
+    """Return the exception raised by the callable."""
+    try:
+        cls(*args, **kwargs)
+    except Exception as ex:
+        return type(ex)
+    return None
+
+
 # Tests for Card.
 @pytest.fixture
-def testcard():
+def card():
     """An instance of :class:`blackjack.cards.Card` for testing."""
     yield cards.Card(10, 'clubs', cards.UP)
 
 
 # Tests for Card class methods.
-def test_deserialize(testcard):
+def test_deserialize(card):
     """When given a :class:`blackjack.cards.Card` object serialized as
     a json string, :meth:`blackjack.cards.Card.deserialize()`` should
     return the deserialized object.
     """
     s = '["Card", 10, "clubs", true]'
-    assert cards.Card.deserialize(s) == testcard
+    assert cards.Card.deserialize(s) == card
 
 
 # Tests for Card initialization.
@@ -56,15 +64,13 @@ def test_Card__init_invalid():
     If invalid values for optional parameters are passed, the object
     should raise a :class:`ValueError` exception.
     """
-    optionals = {
-        'rank': 23,
-        'suit': 'spam',
-        'facing': 'spam',
-    }
-    for attr in optionals:
-        kwarg = {attr: optionals[attr]}
-        with pytest.raises(ValueError):
-            card = cards.Card(**kwarg)
+    raises = partial(raises_test, cards.Card)
+    assert raises(23, 'clubs', True) == ValueError
+    assert raises(0, 'clubs', True) == ValueError
+    assert raises(2, 'spam', True) == ValueError
+    assert raises(2, 5, True) == ValueError
+    assert raises(2, -7, True) == ValueError
+    assert raises(2, 'clubs', 'spam') == ValueError
 
 
 def test_Card__init_optional():
@@ -83,76 +89,76 @@ def test_Card__init_optional():
 
 
 # Tests for Card dunder methods.
-def test_Card___repr__(testcard):
+def test_Card___repr__(card):
     """:class:`blackjack.cards.Card.__repr__` should return a string
     useful for debugging.
     """
-    assert repr(testcard) == "Card(rank=10, suit='clubs', facing=True)"
+    assert repr(card) == "Card(rank=10, suit='clubs', facing=True)"
 
 
-def test_Card___str__(testcard):
+def test_Card___str__(card):
     """:class:`blackjack.cards.Card.__str__` should return a string
     useful for printing.
     """
-    assert str(testcard) == '10♣︎'
+    assert str(card) == '10♣︎'
 
 
-def test_Card___str__(testcard):
+def test_Card___str__(card):
     """:class:`blackjack.cards.Card.__str__` should return a string
     useful for printing. If the card is face down, the suit and rank
     information should be hidden.
     """
-    testcard.facing = cards.DOWN
-    assert str(testcard) == '\u2500\u2500'
+    card.facing = cards.DOWN
+    assert str(card) == '\u2500\u2500'
 
 
-def test_Card_comparisons(testcard):
+def test_Card_comparisons(card):
     """:class:`blackjack.cards.Card` objects should be compared for
     equality based on their rank and suit.
     """
-    assert testcard == cards.Card(10, 'clubs', cards.UP)
-    assert testcard == cards.Card(10, 'clubs', cards.DOWN)
-    assert testcard != cards.Card(11, 'clubs')
-    assert testcard != cards.Card(10, 'hearts')
-    assert testcard != cards.Card(9, 'diamonds')
-    assert testcard < cards.Card(11, 'clubs')
-    assert testcard <= cards.Card(12, 'clubs')
-    assert testcard < cards.Card(10, 'diamonds')
-    assert testcard <= cards.Card(10, 'diamonds')
-    assert testcard > cards.Card(9, 'clubs')
-    assert testcard >= cards.Card(9, 'clubs')
-    assert cards.Card(10, 'diamonds') > testcard
-    assert cards.Card(10, 'diamonds') >= testcard
-    assert testcard.__eq__(23) == NotImplemented
+    assert card == cards.Card(10, 'clubs', cards.UP)
+    assert card == cards.Card(10, 'clubs', cards.DOWN)
+    assert card != cards.Card(11, 'clubs')
+    assert card != cards.Card(10, 'hearts')
+    assert card != cards.Card(9, 'diamonds')
+    assert card < cards.Card(11, 'clubs')
+    assert card <= cards.Card(12, 'clubs')
+    assert card < cards.Card(10, 'diamonds')
+    assert card <= cards.Card(10, 'diamonds')
+    assert card > cards.Card(9, 'clubs')
+    assert card >= cards.Card(9, 'clubs')
+    assert cards.Card(10, 'diamonds') > card
+    assert cards.Card(10, 'diamonds') >= card
+    assert card.__eq__(23) == NotImplemented
 
 
 # Tests for Card._astuple.
-def test_Card__astuple(testcard):
+def test_Card__astuple(card):
     """When called, :meth:`blackjack.cards.Card._astuple` should return
     the card's attributes as a tuple for serialization.
     """
-    assert testcard._astuple() == ('Card', 10, 'clubs', True)
+    assert card._astuple() == ('Card', 10, 'clubs', True)
 
 
 # Tests for Card.flip.
-def test_Card_flip_up(testcard):
+def test_Card_flip_up(card):
     """When a :class:`blackjack.cards.Card` object is face down,
     :meth:`blackjack.cards.Card.flip` should switch it to
     being face up. If the object is face down, it should switch
     it to face up.
     """
-    testcard.flip()
-    assert testcard.facing == cards.DOWN
-    testcard.flip()
-    assert testcard.facing == cards.UP
+    card.flip()
+    assert card.facing == cards.DOWN
+    card.flip()
+    assert card.facing == cards.UP
 
 
 # Tests for Card.serialize.
-def test_Card_serialize(testcard):
+def test_Card_serialize(card):
     """When called, :meth:`blackjack.cards.Card.serialize` returns a
     version of the object serialized to a json string.
     """
-    assert testcard.serialize() == '["Card", 10, "clubs", true]'
+    assert card.serialize() == '["Card", 10, "clubs", true]'
 
 
 # Tests for Pile.
@@ -193,6 +199,17 @@ def test_Pile_init_default():
     pile = cards.Pile()
     for attr in optionals:
         assert getattr(pile, attr) == optionals[attr]
+
+
+def test_Pile_init_invalid():
+    """Given an invalid parameter, :class:`Pile` should raise an
+    exception.
+    """
+    raises = partial(raises_test, cards.Pile)
+    assert raises('spam') == ValueError
+    assert raises(6) == ValueError
+    assert raises(['spam', 'eggs']) == ValueError
+    assert raises(_iter_index='spam') == ValueError
 
 
 def test_Pile_init_optional():
@@ -290,6 +307,19 @@ def test_Pile_sequence(pile):
 def test_Pile_sized(pile):
     """Pile should implement the `Sized` protocol."""
     assert len(pile) == 3
+
+
+# Tests for Pile.append.
+def test_Pile_append(pile):
+    """Given a :class:`Card`, :meth:`Pile.append` should add the card
+    to the :class:`Pile`.
+    """
+    card = cards.Card(4, 0)
+    assert len(pile) == 3
+    assert pile[-1] == cards.Card(3, 0)
+    pile.append(card)
+    assert len(pile) == 4
+    assert pile[-1] == card
 
 
 # Tests for Pile.copy.
@@ -399,6 +429,16 @@ def test_Deck_init_default():
         assert getattr(deck, attr) == optionals[attr]
 
 
+def test_Deck_invalid():
+    """Given an invalid parameter value, :class:`Deck` should raise
+    the appropriate exception.
+    """
+    raises = partial(raises_test, cards.Deck)
+    assert raises(size='spam') == ValueError
+    assert raises(size=-2) == ValueError
+    assert raises(size=['spam', 'eggs']) == TypeError
+
+
 def test_Deck_init_optionals():
     """If optional parameters are passed, a :class:`blackjack.cards.Deck`
     object should be initialized with those values.
@@ -468,406 +508,180 @@ def test_Deck_serialize(deck):
     })
 
 
-class HandTestCase(unittest.TestCase):
-    # Utility methods.
-    def cardlist(self):
-        return (
-            cards.Card(1, 0),
-            cards.Card(2, 0),
-            cards.Card(3, 0),
-        )
-
-    # Tests.
-    def test_Pile_subclass(self):
-        """Hand should be a subclass of Pile."""
-        expected = cards.Pile
-        actual = cards.Hand
-        self.assertTrue(issubclass(actual, expected))
-
-    def test_can_instantiate(self):
-        """An instance of Hand should be able to be instantiated."""
-        expected = cards.Hand
-        actual = cards.Hand()
-        self.assertTrue(isinstance(actual, expected))
-
-    def test_append(self):
-        """Given a Card object, append() should append that card to
-        cards.
-        """
-        expected = self.cardlist()
-
-        h = cards.Hand(expected[:2])
-        h.append(expected[2])
-        actual = h.cards
-
-        self.assertEqual(expected, actual)
-
-    def test_can_split_true(self):
-        """can_split() should return true if the hand can be split."""
-        cardlist = [
-            cards.Card(10, 0),
-            cards.Card(10, 2),
-        ]
-        h = cards.Hand(cardlist)
-        actual = h.can_split()
-
-        self.assertTrue(actual)
-
-    def test_can_split_false(self):
-        """can_split() should return false if the hand cannot be
-        split.
-        """
-        cardlist = [
-            cards.Card(10, 0),
-            cards.Card(11, 2),
-        ]
-        h = cards.Hand(cardlist)
-        actual = h.can_split()
-
-        self.assertFalse(actual)
-
-    def test_deserialize(self):
-        """When given a Hand object serialized as a JSON string,
-        deserialize() should return the deserialized object.
-        """
-        cardlist = [
-            cards.Card(11, 0, True),
-            cards.Card(12, 0, True),
-            cards.Card(13, 0, True),
-        ]
-        exp = cards.Hand(cardlist)
-
-        s = exp.serialize()
-        act = cards.Hand.deserialize(s)
-
-        self.assertEqual(exp, act)
-
-    def test_doubled_down_initialized(self):
-        """Hand objects should have a doubled_down attribute that
-        is initialized to False.
-        """
-        hand = cards.Hand()
-        self.assertFalse(hand.doubled_down)
-
-    def test_is_blackjack_true(self):
-        """is_blackjack() should return true if the hand is a natural
-        blackjack.
-        """
-        cardlist = [
-            cards.Card(11, 3),
-            cards.Card(1, 2),
-        ]
-        h = cards.Hand(cardlist)
-        actual = h.is_blackjack()
-
-        self.assertTrue(actual)
-
-    def test_is_blackjack_false_two_cards(self):
-        """is_blackjack() should return false if the hand doesn't
-        equal 21.
-        """
-        cardlist = [
-            cards.Card(11, 3),
-            cards.Card(4, 2),
-        ]
-        h = cards.Hand(cardlist)
-        actual = h.is_blackjack()
-
-        self.assertFalse(actual)
-
-    def test_is_blackjack_false_three_cards(self):
-        """is_blackjack() should return false if the hand has more
-        than two cards.
-        """
-        cardlist = [
-            cards.Card(11, 3),
-            cards.Card(4, 2),
-            cards.Card(7, 3),
-        ]
-        h = cards.Hand(cardlist)
-        actual = h.is_blackjack()
-
-        self.assertFalse(actual)
-
-    def test_is_bust(self):
-        """When called, is_bust() should return true if the score of
-        the hand is over 21.
-        """
-        exp = True
-
-        hand = cards.Hand((
-            cards.Card(11, 0),
-            cards.Card(11, 0),
-            cards.Card(11, 0),
-        ))
-        act = hand.is_bust()
-
-        self.assertEqual(exp, act)
-
-    def test_is_bust_false(self):
-        """When called, is_bust() should return true if their are
-        possible scores under 21.
-        """
-        exp = False
-
-        hand = cards.Hand((
-            cards.Card(1, 0),
-            cards.Card(1, 0),
-            cards.Card(1, 0),
-        ))
-        act = hand.is_bust()
-
-        self.assertEqual(exp, act)
-
-    def test_score(self):
-        """score() should add together the values of the cards in the
-        hand and return the score.
-        """
-        expected = [18,]
-
-        cardlist = [
-            cards.Card(11, 3),
-            cards.Card(8, 2),
-        ]
-        h = cards.Hand(cardlist)
-        actual = h.score()
-
-        self.assertEqual(expected, actual)
-
-    def test_score_ace(self):
-        """score() should return all unique scores if there is an
-        ace in the hand.
-        """
-        expected = [
-            4,      # 1, 1, 2
-            14,     # 1, 11, 2 & 11, 1, 2
-            24,     # 11, 11, 2
-        ]
-
-        cardlist = [
-            cards.Card(1, 0),
-            cards.Card(1, 1),
-            cards.Card(2, 3),
-        ]
-        h = cards.Hand(cardlist)
-        actual = h.score()
-
-        self.assertEqual(expected, actual)
-
-    def test_serialize(self):
-        """When called, serialize() should return the object
-        serialized as a JSON string.
-        """
-        exp = json.dumps({
-            'class': 'Hand',
-            '_iter_index': 0,
-            'cards': [
-                '["Card", 11, "clubs", true]',
-                '["Card", 12, "clubs", true]',
-                '["Card", 13, "clubs", true]',
-            ],
-            'doubled_down': False,
-        })
-
-        cardlist = [
-            cards.Card(11, 0, True),
-            cards.Card(12, 0, True),
-            cards.Card(13, 0, True),
-        ]
-        hand = cards.Hand(cardlist)
-        act = hand.serialize()
-
-        self.assertEqual(exp, act)
-
-    def test_split_valid(self):
-        """If the hand can be split, split() should return two Hand
-        objects, each containing one of the cards of the split hand.
-        """
-        cardlist = [
-            cards.Card(11, 0),
-            cards.Card(11, 3),
-        ]
-        expected = (
-            cards.Hand([cardlist[0],]),
-            cards.Hand([cardlist[1],]),
-        )
-
-        h = cards.Hand(cardlist)
-        actual = h.split()
-
-        self.assertEqual(expected, actual)
-
-    def test_split_invalid(self):
-        """If the hand cannot be split, split() should raise a
-        ValueError exception.
-        """
-        expected = ValueError
-
-        h = cards.Hand([
-            cards.Card(11, 0),
-            cards.Card(2, 3),
-        ])
-
-        with self.assertRaises(ValueError):
-            _ = h.split()
-
-
-class validate_cardtuple(unittest.TestCase):
-    def test_valid(self):
-        """Given a valid value, validate_cardtuple should normalize
-        and validate it then return the normalized value.
-        """
-        exp = (
-            cards.Card(11, 3),
-            cards.Card(1, 1),
-        )
-
-        value = list(exp)
-        act = cards.validate_cardtuple(None, value)
-
-        self.assertEqual(exp, act)
-
-
-class validate_deckTestCase(unittest.TestCase):
-    def test_valid(self):
-        """Given a valid value, validate_deck should validate and
-        return it.
-        """
-        exp = cards.Deck.build(3)
-        act = cards.validate_deck(None, exp)
-        self.assertEqual(exp, act)
-
-    def test_invalid(self):
-        """Given an invalid value, validate_deck should raise a
-        ValueError exception.
-        """
-        exp = ValueError
-
-        class Spam:
-            msg = '{}'
-        value = 'eggs'
-
-        with self.assertRaises(exp):
-            _ = cards.validate_deck(Spam(), value)
-
-
-class validate_handtuple(unittest.TestCase):
-    def test_valid(self):
-        """Given a valid value, validate_handtuple should normalize
-        and validate it then return the normalized value.
-        """
-        exp = (
-            cards.Hand((
-                cards.Card(11, 3),
-                cards.Card(1, 1),
-            )),
-            cards.Hand((
-                cards.Card(3, 1),
-                cards.Card(5, 1),
-            )),
-        )
-
-        value = list(exp)
-        act = cards.validate_handtuple(None, value)
-
-        self.assertEqual(exp, act)
-
-
-class validate_rankTestCase(unittest.TestCase):
-    def test_exists(self):
-        """A function named validate_rank should exist."""
-        names = [item[0] for item in inspect.getmembers(cards)]
-        self.assertTrue('validate_rank' in names)
-
-    def test_valid(self):
-        """validate_rank should accept ints from 1 to 13."""
-        expected = 9
-        actual = cards.validate_rank(None, expected)
-        self.assertEqual(expected, actual)
-
-    def test_invalid_type(self):
-        """validate_rank should reject data that cannot be coerced
-        into an int by raising a TypeError.
-        """
-        expected = TypeError
-
-        class Spam:
-            msg = '{}'
-
-        with self.assertRaises(expected):
-            _ = cards.validate_rank(Spam(), 'spam')
-
-    def test_invalid_too_low(self):
-        """validate_rank should reject values less than 1 by raising
-        a ValueError."""
-        expected = ValueError
-
-        class Spam:
-            msg = '{}'
-
-        with self.assertRaises(expected):
-            _ = cards.validate_rank(Spam(), -3)
-
-    def test_invalid_too_high(self):
-        """vaidate_rank should reject values more than 13 by raising
-        a ValueError.
-        """
-        expected = ValueError
-
-        class Spam:
-            msg = '{}'
-
-        with self.assertRaises(expected):
-            _ = cards.validate_rank(Spam(), 14)
-
-
-class validate_suitTestCase(unittest.TestCase):
-    def test_exist(self):
-        """A function named validate_suit shold exist."""
-        names = [item[0] for item in inspect.getmembers(cards)]
-        self.assertTrue('validate_suit' in names)
-
-    def test_valid(self):
-        """validate_suit should accept the names of the four suits
-        as strings.
-        """
-        expected = 'hearts'
-        actual = cards.validate_suit(None, expected)
-        self.assertEqual(expected, actual)
-
-    def test_invalid(self):
-        """validate_suit should reject invalid values not in the list
-        of valid suits by raising a ValueError.
-        """
-        expected = ValueError
-
-        class Spam:
-            msg = '{}'
-
-        with self.assertRaises(expected):
-            _ = cards.validate_suit(Spam(), 'eggs')
-
-    def test_normalize_index(self):
-        """If passed the index of a valid suit in the suit list,
-        validate_suit should normalize the value to the name of that
-        suit.
-        """
-        expected = 'clubs'
-
-        class Spam:
-            msg = '{}'
-
-        actual = cards.validate_suit(Spam(), 0)
-        self.assertEqual(expected, actual)
-
-    def test_normalize_case(self):
-        """validate_suit should normalize passed strings to lowercase
-        before comparing them to the list of valid values.
-        """
-        expected = 'diamonds'
-
-        class Spam:
-            msg = '{}'
-
-        actual = cards.validate_suit(Spam(), 'Diamonds')
-        self.assertEqual(expected, actual)
+# Tests for Hand.
+# Fixtures for Hand.
+@pytest.fixture
+def blackjack():
+    """A :class:`Hand` object with natural blackjack for testing."""
+    yield cards.Hand([
+        cards.Card(1, 0),
+        cards.Card(11, 0),
+    ])
+
+
+@pytest.fixture
+def hand():
+    """A :class:`Hand` object for testing."""
+    yield cards.Hand([
+        cards.Card(1, 0),
+        cards.Card(2, 0),
+        cards.Card(3, 0),
+    ])
+
+
+@pytest.fixture
+def hand_20():
+    """A :class:`Hand` object with a score of 20 for testing."""
+    yield cards.Hand([
+        cards.Card(11, 0),
+        cards.Card(11, 1),
+    ])
+
+
+@pytest.fixture
+def hand_21():
+    """A :class:`Hand` object with a score of 21 for testing."""
+    yield cards.Hand([
+        cards.Card(10, 0),
+        cards.Card(7, 0),
+        cards.Card(4, 0),
+    ])
+
+
+# Tests for Hand class methods and traits.
+def test_Hand_subclasses_Pile(hand):
+    """:class:`Hand` should be a subclass of :class:`Pile`."""
+    assert isinstance(hand, cards.Pile)
+
+
+def test_Hand_deserialize(hand):
+    """When given a :class:`Hand` serialized as a JSON string,
+    :meth:`Hand.deserialize` should return the deserialized
+    :class:`Deck` object.
+    """
+    s = json.dumps({
+        'class': 'Hand',
+        '_iter_index': 0,
+        'doubled_down': False,
+        'cards': [
+            '["Card", 1, 0, true]',
+            '["Card", 2, 0, true]',
+            '["Card", 3, 0, true]',
+        ],
+    })
+    assert cards.Hand.deserialize(s) == hand
+
+
+# Tests for Hand initialization.
+def test_Hand_init_default():
+    """Given no parameters, :class:`blackjack.cards.Hand` should
+    return a instance that uses default values for its attributes.
+    """
+    optionals = {
+        'cards': (),
+        '_iter_index': 0,
+        'doubled_down': False,
+    }
+    hand = cards.Hand()
+    for attr in optionals:
+        assert getattr(hand, attr) == optionals[attr]
+
+
+def test_Hand_init_invalid():
+    """Given an invalid parameter value, :class:`Hand` should raise
+    the appropriate exception.
+    """
+    raises = partial(raises_test, cards.Hand)
+    assert raises(doubled_down=6) == ValueError
+    assert raises(doubled_down='spam') == ValueError
+    assert raises(doubled_down=['spam', 'eggs']) == ValueError
+
+
+def test_Hand_init_default():
+    """Given parameters, :class:`blackjack.cards.Hand` should return
+    a instance that uses given values for its attributes.
+    """
+    optionals = {
+        'cards': (cards.Card(1, 0), cards.Card(2, 0)),
+        '_iter_index': 1,
+        'doubled_down': True,
+    }
+    hand = cards.Hand(**optionals)
+    for attr in optionals:
+        assert getattr(hand, attr) == optionals[attr]
+
+
+# Tests for Hand_can_split.
+def test_Hand_can_split(hand, hand_20):
+    """When called, :meth:`Hand.can_split` should return whether the
+    :class:`Hand` can be split.
+    """
+    assert hand_20.can_split()
+    assert not hand.can_split()
+
+
+# Tests for Hand_is_blackjack.
+def test_Hand_is_blackjack(blackjack, hand_20, hand_21):
+    """When called, :meth:`Hand.is_blackjack` should return whether the
+    :class:`Hand` is a natural blackjack.
+    """
+    assert blackjack.is_blackjack()
+    assert not hand_21.is_blackjack()
+    assert not hand_20.is_blackjack()
+
+
+# Tests for Hand.is_bust.
+def test_Hand_is_bust(hand_20):
+    """When called, :meth:`Hand.is_bust` should return whether the
+    :class:`Hand` is bust.
+    """
+    assert not hand_20.is_bust()
+    hand_20.append(cards.Card(10, 2))
+    assert hand_20.is_bust()
+
+
+# Tests for Hand.score.
+def test_Hand_score(blackjack, hand, hand_20, hand_21):
+    """When called, :meth:`Hand.score` should return the score of
+    the :class:`Hand`.
+    """
+    assert blackjack.score() == [11, 21]
+    assert hand.score() == [6, 16]
+    assert hand_20.score() == [20,]
+    assert hand_21.score() == [21,]
+
+
+# Tests for Hand.serialize.
+def test_Hand_serialize(hand):
+    """When called, :meth:`Hand.serialize` should return the
+    :class:`Hand` serialized as a JSON string.
+    """
+    assert hand.serialize() == json.dumps({
+        'class': 'Hand',
+        '_iter_index': 0,
+        'cards': [
+            '["Card", 1, "clubs", true]',
+            '["Card", 2, "clubs", true]',
+            '["Card", 3, "clubs", true]',
+        ],
+        'doubled_down': False,
+    })
+
+
+def test_Hand_split_valid(hand_20):
+    """When called on a :class:`Hand` that can be split,
+    :meth:`Hand.split` should split the :class:`Hand` and return
+    the resulting two :class:`Hand` objects.
+    """
+    assert hand_20.split() == (
+        cards.Hand([cards.Card(11, 0)]),
+        cards.Hand([cards.Card(11, 1)]),
+    )
+
+
+def test_Hand_split_invalid(hand):
+    """When called on a :class:`Hand` that cannot be split,
+    :meth:`Hand.split` should raise a ValueError exception.
+    """
+    with pytest.raises(ValueError):
+        _ = hand.split()

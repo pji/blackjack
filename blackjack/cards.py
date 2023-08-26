@@ -323,6 +323,11 @@ class Pile(MutableSequence):
             'cards': [card.serialize() for card in self.cards]
         }
 
+    def append(self, item):
+        cards = list(self.cards)
+        cards.append(item)
+        self.cards = tuple(cards)
+
     def copy(self):
         """Return a copy of the Deck object."""
         return copy(self)
@@ -430,11 +435,6 @@ class Hand(Pile):
         serial = super()._asdict()
         serial['doubled_down'] = self.doubled_down
         return serial
-
-    def append(self, item):
-        cards = list(self.cards)
-        cards.append(item)
-        self.cards = tuple(cards)
 
     def can_split(self):
         """Determine whether the hand can be split."""
