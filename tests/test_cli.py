@@ -7,35 +7,11 @@ This module contains the unit tests for the blackjack.cli module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
-from contextlib import contextmanager
-from io import StringIO
 from json import load, loads
-import sys
-import unittest as ut
-from unittest.mock import patch, call, MagicMock
 
 import pytest
-from blessed import Terminal
 
 from blackjack import cards, cli, game, model, players, termui, utility
-
-
-# Utility functions.
-@contextmanager
-def capture():
-    new_out, new_err = StringIO(), StringIO()
-    old_out, old_err = sys.stdout, sys.stderr
-    try:
-        sys.stdout, sys.stderr = new_out, new_err
-        yield sys.stdout, sys.stderr
-    finally:
-        sys.stdout, sys.stderr = old_out, old_err
-
-
-def mock_run_terminal_only_yesno():
-    values = [None, model.IsYes(True)]
-    for value in values:
-        yield value
 
 
 # Tests.
@@ -399,323 +375,130 @@ def test_LogUI_insure_prompt_invalid(mocker, logui):
     ]
 
 
-class ParseCliTestCase(ut.TestCase):
-    def setUp(self):
-        self.original_args = sys.argv
-
-    def tearDown(self):
-        sys.argv = self.original_args
-
-    def test_default_game(self):
-        """When passed no options, blackjack should start a default
-        game with four computer players and a human player.
-        """
-        # Expected values.
-        exp = {
-            'table_seats': 6,
-            'deck_len': 52 * 6,
-            'dealer': players.Dealer(name='Dealer'),
-            'playerlist_len': 5,
-            'last_player': players.UserPlayer(name='You', chips=200),
-            'buyin': 20,
-            'save_file': 'save.json',
-            'deck_size': 6,
-            'deck_cut': False,
-        }
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', ]
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act = {
-            'table_seats': engine.ui.seats,
-            'deck_len': len(engine.deck),
-            'dealer': engine.dealer,
-            'playerlist_len': len(engine.playerlist),
-            'last_player': engine.playerlist[-1],
-            'buyin': engine.buyin,
-            'save_file': engine.save_file,
-            'deck_size': engine.deck_size,
-            'deck_cut': engine.deck_cut,
-        }
-
-        # Determine test result.
-        self.assertDictEqual(exp, act)
-
-    def test_automated_players_only(self):
-        """Given the -a option, the game should not include
-        a UserPlayer.
-        """
-        # The not expected value:
-        not_exp = players.UserPlayer
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', f'-a']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act_list = engine.playerlist
-
-        # Determine test result.
-        for act in act_list:
-            self.assertNotIsInstance(act, not_exp)
-
-    def test_change_buyin(self):
-        """When passed the -b option, change amount of chips needed to
-        buy into each hand.
-        """
-        # Expected values.
-        exp = 100
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', f'-b {exp}']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act = engine.buyin
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-    def test_change_chips(self):
-        """When passed the -c option, change amount of chips given to
-        the user player.
-        """
-        # Expected values.
-        exp = 100
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', f'-c {exp}']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act = engine.playerlist[-1].chips
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-    @patch('blackjack.cards.randrange', return_value=65)
-    def test_cut_deck(self, mock_randrange):
-        """When passed the -C option, cut a random number of cards
-        between 60 and 75 from the bottom of the deck to make card
-        counting harder.
-        """
-        # Expected values.
-        cards_in_deck = 52
-        num_decks = 6
-        cut_cards = mock_randrange()
-        exp = cards_in_deck * num_decks - cut_cards
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', f'-C']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act = len(engine.deck)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-    def test_change_decks(self):
-        """When passed the -d option, change the number of standard
-        decks used to build the deck for the game..
-        """
-        # Expected values.
-        decks = 4
-        exp = decks * 52
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', f'-d {decks}']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act = len(engine.deck)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-    def test_change_number_of_computer_players(self):
-        """When passed the -p option, change the number of computer
-        players in the game.
-        """
-        # Expected values.
-        num_players = 7
-        exp_seats = num_players + 2
-        exp_playerlist_len = num_players + 1
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', f'-p {num_players}']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act_seats = engine.ui.seats
-        act_playerlist_len = len(engine.playerlist)
-
-        # Determine test result.
-        self.assertEqual(exp_seats, act_seats)
-        self.assertEqual(exp_playerlist_len, act_playerlist_len)
-
-    def test_change_save_file(self):
-        """When passed the -b option, change amount of chips needed to
-        buy into each hand.
-        """
-        # Expected values.
-        exp = 'spam'
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', f'-s {exp}']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act = engine.save_file
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-    def test_count_cards(self):
-        """When passed the -K option, display the running count in the
-        UI.
-        """
-        # Expected values.
-        exp = True
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', f'-K']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act = engine.running_count
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-    def test_no_user_player(self):
-        """When passed the -a option, do not add a user player to
-        the game.
-        """
-        # Expected values.
-        not_exp = players.UserPlayer
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', f'-a']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act = type(engine.playerlist[-1])
-
-        # Determine test result.
-        self.assertNotIsInstance(act, not_exp)
-
-    def test_restore_from_file(self):
-        """When passed a -f option followed by a file path, create a
-        new game from the save information stored in the file.
-        """
-        # Set up for expected value.
-        path = 'tests/data/savefile'
-        with open(path) as fp:
-
-            # Expected values.
-            exp = load(fp)
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', '-f tests/data/savefile']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        serial = engine.serialize()
-        act = loads(serial)
-
-        # Determine test result.
-        for key in act:
-            self.assertEqual(exp[key], act[key])
-        self.assertDictEqual(exp, act)
-
-    def test_restore_from_file_with_counting(self):
-        """When passed a -f option followed by a file path and -K,
-        create a new game from the save information stored in the file.
-        """
-        # Set up for expected value.
-        path = 'tests/data/savefile'
-        with open(path) as fp:
-
-            # Expected values.
-            exp = load(fp)
-        exp_show_status = True
-
-        # Test data and state.
-        sys.argv = [
-            'python -m blackjack',
-            '-f tests/data/savefile',
-            '-K',
-        ]
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        serial = engine.serialize()
-        act = loads(serial)
-        act_show_status = engine.ui.show_status
-
-        # Determine test result.
-        for key in exp:
-            e = key, exp[key]
-            a = key, act[key]
-            self.assertEqual(e, a)
-        self.assertDictEqual(exp, act)
-        self.assertEqual(exp_show_status, act_show_status)
-
-    def test_use_logui(self):
-        """When passed the -L option, change the UI to use LogUI
-        instead of TableUI.
-        """
-        # Expected values.
-        exp = cli.LogUI
-
-        # Test data and state.
-        sys.argv = ['python -m blackjack', f'-L']
-
-        # Run test.
-        args = cli.parse_cli()
-        engine = cli.build_game(args)
-
-        # Gather actual data.
-        act = engine.ui
-
-        # Determine test result.
-        self.assertIsInstance(act, exp)
+# Tests for command line parsing.
+# Fixtures for parse_cli.
+@pytest.fixture
+def engine(mocker, request):
+    """A basic test of the command line."""
+    marker = request.node.get_closest_marker('argv')
+    mocker.patch('sys.argv', list(marker.args))
+    mocker.patch('blackjack.cards.randrange', return_value=65)
+    args = cli.parse_cli()
+    yield cli.build_game(args)
+
+
+# Tests for parse_cli.
+@pytest.mark.argv(['blackjack',])
+def test_cli_default_game(engine):
+    """When given no options, `blackjack` should start a default
+    game with four computer players and a human player.
+    """
+    assert engine.ui.seats == 6
+    assert len(engine.deck) == 52 * 6
+    assert engine.dealer == players.Dealer(name='Dealer')
+    assert len(engine.playerlist) == 5
+    assert engine.playerlist[-1] == players.UserPlayer(name='You', chips=200)
+    assert engine.buyin == 20
+    assert engine.save_file == 'save.json'
+    assert engine.deck_size == 6
+    assert not engine.deck_cut
+    assert not engine.running_count
+
+
+@pytest.mark.argv('blackjack', '-a')
+def test_cli_automated_game(engine):
+    """Given the -a option, the game should not include
+    a :class:`UserPlayer`.
+    """
+    for player in engine.playerlist:
+        assert not isinstance(player, players.UserPlayer)
+
+
+@pytest.mark.argv('blackjack', '-b 100')
+def test_cli_change_buyin(engine):
+    """When passed the -b option, change amount of chips needed to
+    buy into each hand.
+    """
+    assert engine.buyin == 100
+
+
+@pytest.mark.argv('blackjack', '-c 100')
+def test_cli_change_player_chips(engine):
+    """When passed the -c option, change amount of chips given to
+    the user player.
+    """
+    assert engine.playerlist[-1].chips == 100
+
+
+@pytest.mark.argv('blackjack', '-C')
+def test_cli_cut_deck(engine):
+    """When passed the -C option, cut a random number of cards
+    between 60 and 75 from the bottom of the deck to make card
+    counting harder.
+    """
+    assert len(engine.deck) == 52 * 6 - 65
+
+
+@pytest.mark.argv('blackjack', '-d 4')
+def test_cli_change_deck_size(engine):
+    """When passed the -d option, change the number of standard
+    decks used to build the deck for the game.
+    """
+    assert engine.deck_size == 4
+    assert len(engine.deck) == 52 * 4
+
+
+@pytest.mark.argv('blackjack', '-p 7')
+def test_cli_change_number_of_computer_players(engine):
+    """When passed the -p option, change the number of computer
+    players in the game.
+    """
+    assert engine.ui.seats == 7 + 2
+    assert len(engine.playerlist) == 7 + 1
+
+
+@pytest.mark.argv('blackjack', '-s spam')
+def test_cli_change_save_file(engine):
+    """When passed the -s option and the path to a save file, change
+    the save file location to that path.
+    """
+    assert engine.save_file == 'spam'
+
+
+@pytest.mark.argv('blackjack', '-K')
+def test_cli_count_cards(engine):
+    """When passed the -K option, display the running count in the UI."""
+    assert engine.running_count
+
+
+@pytest.mark.argv('blackjack', '-f tests/data/savefile')
+def test_cli_restore_game(engine):
+    """When passed a -f option followed by a file path, create a
+    new game from the save information stored in the file.
+    """
+    path = 'tests/data/savefile'
+    with open(path) as fh:
+        expected = load(fh)
+    actual = loads(engine.serialize())
+    assert actual == expected
+
+
+@pytest.mark.argv('blackjack', '-f tests/data/savefile', '-K')
+def test_cli_restore_game_and_count_cards(engine):
+    """When passed a -f option followed by a file path and -K,
+    create a new game from the save information stored in the file.
+    """
+    path = 'tests/data/savefile'
+    with open(path) as fh:
+        expected = load(fh)
+    actual = loads(engine.serialize())
+    assert actual == expected
+    assert engine.ui.show_status
+
+
+@pytest.mark.argv('blackjack', '-L')
+def test_cli_use_LogUI(engine):
+    """When passed the -L option, change the UI to use LogUI
+    instead of TableUI.
+    """
+    assert isinstance(engine.ui, cli.LogUI)
