@@ -21,8 +21,8 @@ from blackjack import cards, game, model, players, termui
 class LogUI(game.BaseUI):
     tmp = '{:<15} {:<15} {:<}'
 
-    def __init__(self, silent: bool = False) -> None:
-        self.is_interactive = silent
+    def __init__(self, is_interactive: bool = False) -> None:
+        self.is_interactive = is_interactive
 
     # Engine UI protocol.
     def end(self, is_interactive: bool = True) -> None:
