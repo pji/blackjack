@@ -7,16 +7,17 @@ This module contains the unit tests for the blackjack.game module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
-from copy import copy, deepcopy
-from functools import partial
 import inspect
-from itertools import zip_longest
 import json
 import unittest as ut
+from copy import copy, deepcopy
+from functools import partial
+from itertools import zip_longest
+from random import seed
 from unittest.mock import Mock, call, patch
 from types import MethodType
 
-from blackjack import cards, game, players
+from blackjack import cli, cards, game, players
 
 
 # Utility functions.
@@ -26,6 +27,93 @@ def loopback(value):
 
 
 # Test cases.
+# Engine test cases.
+# Tests for Engine initialization.
+def test_Engine_init_all_defaults():
+    """Given no parameters, the attributes of the :class:`Engine`
+    object should be set to default values.
+    """
+    # Creation of the deck involves random behavior, so seed the RNG,
+    # create the expected deck, then seed the RNG with the same seed.
+    seed('spam')
+    deck = cards.Deck.build(6)
+    deck.shuffle()
+    seed('spam')
+
+    optionals = {
+        'bet_max': 500,
+        'bet_min': 20,
+        'buyin': 0,
+        'card_count': 0,
+        'deck': deck,
+        'deck_cut': False,
+        'deck_size': 6,
+        'dealer': players.Dealer(name='Dealer'),
+        'playerlist': (),
+        'running_count': False,
+        'save_file': 'save.json',
+        'ui': game.BaseUI(),
+    }
+    engine = game.Engine()
+    for attr in optionals:
+        assert getattr(engine, attr) == optionals[attr]
+
+
+def test_Engine_init_all_optionals():
+    """Given parameters, the attributes of the :class:`Engine`
+    object should be set to given values.
+    """
+    optionals = {
+        'bet_max': 50,
+        'bet_min': 2,
+        'buyin': 10,
+        'card_count': 3,
+        'deck': cards.Deck.build(4),
+        'deck_cut': True,
+        'deck_size': 4,
+        'dealer': players.Dealer(name='Spam'),
+        'playerlist': (
+            players.UserPlayer(name='You'),
+        ),
+        'running_count': True,
+        'save_file': 'eggs.json',
+        'ui': cli.LogUI(),
+    }
+    engine = game.Engine(**optionals)
+    for attr in optionals:
+        assert getattr(engine, attr) == optionals[attr]
+
+
+def test_Engine_init_deck_size_without_deck():
+    """Given a deck size and no deck and no random cut, :class:`Engine`
+    should construct a deck of the given size.
+    """
+    seed('spam')
+    deck = cards.Deck.build(3)
+    deck.shuffle()
+    seed('spam')
+
+    engine = game.Engine(deck_size=3)
+    assert engine.deck_size == 3
+    assert engine.deck == deck
+
+
+def test_Engine_init_deck_size_and_deck_cut_without_deck():
+    """Given a deck sie and random cut, :class:`Engine` should
+    construct a deck of the given size with a random cut.
+    """
+    seed('spam')
+    deck = cards.Deck.build(5)
+    deck.shuffle()
+    deck.random_cut()
+    seed('spam')
+
+    engine = game.Engine(deck_size=5, deck_cut=True)
+    assert engine.deck_size == 5
+    assert engine.deck_cut
+    assert engine.deck == deck
+
+
 class EngineTestCase(ut.TestCase):
     # Test Engine._ace_split_hit()
     def test__ace_split_hit(self):
@@ -1839,148 +1927,6 @@ class EngineTestCase(ut.TestCase):
             new_player,
             engine
         )
-
-
-class EngineInitTestCase(ut.TestCase):
-    def assertDictEqual(self, exp, act):
-        try:
-            super().assertDictEqual(exp, act)
-        except AssertionError:
-            self.assertSetEqual(set(exp.keys()), set(act.keys()))
-            for key in exp:
-                e = (key, exp[key])
-                a = (key, act[key])
-                self.assertEqual(e, a)
-
-    def setUp(self):
-        self.default_attrs = {
-            'bet_max': 500,
-            'bet_min': 20,
-            'buyin': 0,
-            'card_count': 0,
-            'deck': cards.Deck.build(6),
-            'deck_cut': False,
-            'deck_size': 6,
-            'dealer': players.Dealer(name='Dealer'),
-            'playerlist': (),
-            'running_count': False,
-            'save_file': 'save.json',
-            'ui': game.BaseUI(),
-        }
-
-    def tearDown(self):
-        self.default_attrs = None
-
-    @patch('blackjack.cards.randrange', return_value=65)
-    @patch('blackjack.cards.shuffle', side_effect=loopback)
-    def attr_test(self, params, mock_shuffle, mock_rand):
-        """Test to ensure the game.Engine's attributes match
-        expectations.
-        """
-        exp = self.default_attrs
-        for key in params:
-            exp[key] = params[key]
-
-        # Some adjustments to the expectations to account for behavior
-        # within __init__().
-        if 'deck' in params:
-            exp['deck_size'] = params['deck'].size
-        if 'deck_size' in params and 'deck' not in params:
-            exp['deck'] = cards.Deck.build(params['deck_size'])
-        if 'deck_cut' in params:
-            exp['deck'] = cards.Deck.build(exp['deck_size'])
-            exp['deck'].random_cut()
-
-        engine = game.Engine(**params)
-        act = engine._asdict()
-        self.assertDictEqual(exp, act)
-
-    def test_exists(self):
-        """The class Game should exist in the game module."""
-        names = [item[0] for item in inspect.getmembers(game)]
-        self.assertTrue('Engine' in names)
-
-    # Attribute setting tests.
-    def test_default_attrs(self):
-        """When given no parameters, use the default parameters for
-        the new object.
-        """
-        params = {}
-        self.attr_test(params)
-
-    def test_deck_given(self):
-        """If a deck is given, it should be stored in the deck
-        attribute.
-        """
-        params = {
-            'deck': cards.Deck.build(),
-        }
-        self.attr_test(params)
-
-    def test_deck_size_given(self):
-        """Given a deck size and no deck and no random cut, game.Engine
-        should construct a deck of the given size.
-        """
-        params = {
-            'deck_size': 3,
-        }
-        self.attr_test(params)
-
-    def test_deck_cut_given(self):
-        """If the deck_cut parameter is true, the deck should
-        be cut.
-        """
-        params = {
-            'deck_cut': True,
-        }
-        self.attr_test(params)
-
-    def test_dealer_given(self):
-        """If given a dealer, the game should use it."""
-        params = {
-            'dealer': players.Dealer(name='Eric'),
-        }
-        self.attr_test(params)
-
-    def test_ui_given(self):
-        """If a UI is given, the game should use it."""
-        class Spam(game.BaseUI):
-            pass
-        params = {
-            'ui': Spam()
-        }
-        self.attr_test(params)
-
-    def test_playerlist_given(self):
-        """If given a list of players, that list should be stored in
-        the playerlist attribute.
-        """
-        params = {
-            'playerlist': (
-                players.Player(name='John'),
-                players.Player(name='Michael'),
-                players.Player(name='Graham'),
-            ),
-        }
-        self.attr_test(params)
-
-    def test_buyin_given(self):
-        """If given a value for buyin, that value should be stored in
-        the buyin attribute.
-        """
-        params = {
-            'buyin': 500.00,
-        }
-        self.attr_test(params)
-
-    def test_running_count_given(self):
-        """If given a value for running_count, that value should be
-        stored in the running_count attribute.
-        """
-        params = {
-            'running_count': True,
-        }
-        self.attr_test(params)
 
 
 class SplittingRulesTestCase(ut.TestCase):
