@@ -15,11 +15,21 @@ from blackjack import cards, game, model, players, termui
 
 
 # Common ANSI escape sequences.
-bold = '\x1b[1m'
-cls = '\x1b[2J'
-home = '\x1b[H'
-loc = '\x1b[{};{}H'
-topleft = '\x1b[1;2H'
+# bold = '\x1b[1m'
+# cls = '\x1b[2J'
+# home = '\x1b[H'
+# loc = '\x1b[{};{}H'
+# topleft = '\x1b[1;2H'
+term = Terminal()
+bold = term.bold                                # \x1b[1m
+cls = term.clear                                # \x1b[H\x1b[2J
+topleft = term.move(0, 1)                       # \x1b[1;2H
+
+
+class loc:
+    @classmethod
+    def format(cls, y, x):
+        return term.move(y - 1, x - 1)
 
 
 # Utility functions.
@@ -203,7 +213,12 @@ def table_draw_test(request, capsys, table_main):
 
 
 @pytest.fixture
-def table_draw_with_status_test(request, capsys, table_main_with_status):
+def table_draw_with_status_test(
+    request,
+    mocker,
+    capsys,
+    table_main_with_status
+):
     """A basic test of :meth:`blackjack.termui.Table._draw_cell`."""
     next(table_main_with_status)
     marker = request.node.get_closest_marker('msg')
@@ -510,7 +525,7 @@ def test_Table_input_esc_to_help(table_input_test):
     assert displayed == '\n'.join([
         loc.format(8, 2) + fmt.format('spam'),
         loc.format(8, 2) + fmt.format(''),
-        home + cls,
+        cls,
         topleft + bold + title,
         loc.format(2, 2) + '',
         loc.format(3, 2) + head,
@@ -538,7 +553,7 @@ def test_Table_input_esc_to_help(table_input_test):
     assert displayed == '\n'.join([
         loc.format(8, 2) + fmt.format('spam'),
         loc.format(8, 2) + fmt.format(''),
-        home + cls,
+        cls,
         topleft + bold + title,
         loc.format(2, 2) + '',
         loc.format(3, 2) + head,
@@ -602,7 +617,7 @@ def test_Table_input_multichar_esc_to_help(table_input_test):
     displayed, returned = table_input_test
     assert displayed == '\n'.join([
         loc.format(8, 2) + fmt.format('spam' + ' > '),
-        home + cls,
+        cls,
         loc.format(1, 1) + fmt.format(''),
         loc.format(2, 1) + fmt.format(''),
         loc.format(3, 1) + fmt.format(''),
