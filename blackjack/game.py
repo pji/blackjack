@@ -194,13 +194,30 @@ class Engine(BaseEngine):
     buyin = Integer_('buyin')
 
     @classmethod
+    def deserialize(cls, s: str) -> 'Engine':
+        """Create a new object from a serialized object."""
+        kwargs = loads(s)
+        if 'class' in kwargs:
+            if kwargs['class'] != cls.__name__:
+                raise TypeError(f'Cannot deserialize type {kwargs["class"]}.')
+            del kwargs['class']
+        if 'dealer' in kwargs:
+            kwargs['dealer'] = Dealer.deserialize(kwargs['dealer'])
+        if 'deck' in kwargs:
+            kwargs['deck'] = Deck.deserialize(kwargs['deck'])
+        if 'playerlist' in kwargs:
+            kwargs['playerlist'] = [
+                restore_player(p)
+                for p in kwargs['playerlist']
+            ]
+        return cls(**kwargs)
+
+    @classmethod
     def load(cls, fname: str = 'save.json') -> 'Engine':
         """Create a new object from a save file."""
         with open(fname, 'r') as f:
             s = f.read()
-        engine = cls()
-        engine._deserialize(s)
-        return engine
+        return cls.deserialize(s)
 
     def __init__(
             self,

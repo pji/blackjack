@@ -17,6 +17,8 @@ from random import seed
 from unittest.mock import Mock, call, patch
 from types import MethodType
 
+import pytest
+
 from blackjack import cli, cards, game, players
 
 
@@ -28,6 +30,84 @@ def loopback(value):
 
 # Test cases.
 # Engine test cases.
+# Fixtures for Engine.
+@pytest.fixture
+def deck(request):
+    """Create a :class:`Deck` object for testing."""
+    marker = request.node.get_closest_marker('deck')
+    cardlist = [cards.Card(*args) for args in marker.args]
+    yield cards.Deck(cardlist)
+
+
+@pytest.fixture
+def engine(mocker):
+    """Create a :class:`Engine` object for testing."""
+    mocker.patch(
+        'blackjack.game.ValidUI.validate',
+        return_value=mocker.Mock()
+    )
+    yield game.Engine(buyin=20)
+
+
+@pytest.fixture
+def hand(request):
+    """Create a :class:`Hand` object for testing."""
+    marker = request.node.get_closest_marker('hand')
+    cardlist = [cards.Card(*args) for args in marker.args]
+    yield cards.Hand(cardlist)
+
+
+@pytest.fixture
+def hands(request):
+    """Create a :class:`Hand` object for testing."""
+    marker = request.node.get_closest_marker('hands')
+    hands = []
+    for item in marker.args:
+        cardlist = [cards.Card(*args) for args in item]
+        hands.append(cards.Hand(cardlist))
+    return hands
+
+
+@pytest.fixture
+def player():
+    """Create a :class:`AutoPlayer` object for testing."""
+    return players.AutoPlayer(name='Eric', chips=100)
+
+
+# Tests for Engine class methods.
+def test_Engine_deserialize():
+    """Given a serialized :class:`Engine` object, deserialize and
+    return the object.
+    """
+    dealer = players.Dealer(name='Spam')
+    deck = cards.Deck.build(4)
+    user = players.AutoPlayer(name='You')
+    attrs = {
+        'class': 'Engine',
+        'bet_max': 50,
+        'bet_min': 2,
+        'buyin': 10,
+        'card_count': 3,
+        'deck': deck.serialize(),
+        'deck_cut': True,
+        'deck_size': 4,
+        'dealer': dealer.serialize(),
+        'playerlist': (
+            user.serialize(),
+        ),
+        'running_count': True,
+        'save_file': 'eggs.json',
+    }
+    s = json.dumps(attrs)
+    attrs['dealer'] = dealer
+    attrs['deck'] = deck
+    attrs['playerlist'] = (user,)
+    del attrs['class']
+    engine = game.Engine.deserialize(s)
+    for attr in attrs:
+        assert getattr(engine, attr) == attrs[attr]
+
+
 # Tests for Engine initialization.
 def test_Engine_init_all_defaults():
     """Given no parameters, the attributes of the :class:`Engine`
@@ -114,605 +194,286 @@ def test_Engine_init_deck_size_and_deck_cut_without_deck():
     assert engine.deck == deck
 
 
+# Tests for Engine private methods.
+@pytest.mark.deck([11, 0, False])
+@pytest.mark.hands(
+    [[1, 3],],
+    [[1, 3], [11, 0, False]]
+)
+def test_Engine__ace_split_hit(mocker, deck, engine, hands, player):
+    """Given a hand with an ace that had been split,
+    :meth:`Engine._ace_split_hit` should give hand one
+    hit and then stand.
+    """
+    hand, expected = hands
+    player.hands = (hand,)
+    engine.deck = deck
+    engine._ace_split_hit(player, hand)
+    assert player.hands[0] == expected
+    assert engine.ui.mock_calls == [
+        mocker.call.hit(player, hand),
+        mocker.call.stand(player, hand),
+    ]
+
+
+def test_Engine__add_player(engine, player):
+    """Given a player, :meth:`Engine._add_player` adds that player in
+    the first empty slot in the playerlist.
+    """
+    engine.playerlist = [None,]
+    engine._add_player(player)
+    assert engine.playerlist == (player,)
+
+
+@pytest.mark.hands(
+    [[10, 3], [7, 2]],
+    [[10, 1], [11, 3]]
+)
+def test_Engine__compare_score_player_wins(engine, hands):
+    """Given a player hand and a dealer hand,
+    :meth:`Engine._compare_score` should return
+    `True` if the player's score is higher.
+    """
+    dhand, phand = hands
+    assert engine._compare_score(dhand, phand)
+
+
+@pytest.mark.hands(
+    [[10, 1], [11, 3]],
+    [[10, 3], [7, 2]]
+)
+def test_Engine__compare_score_player_loses(engine, hands):
+    """Given a player hand and a dealer hand,
+    :meth:`Engine._compare_score` should return
+    `False` if the player's score is lower.
+    """
+    dhand, phand = hands
+    assert engine._compare_score(dhand, phand) is False
+
+
+@pytest.mark.hands(
+    [[10, 1], [11, 3]],
+    [[10, 3], [7, 2], [6, 2]]
+)
+def test_Engine__compare_score_player_busts(engine, hands):
+    """Given a player hand and a dealer hand,
+    :meth:`Engine._compare_score` should return
+    `False` if the player busts.
+    """
+    dhand, phand = hands
+    assert engine._compare_score(dhand, phand) is False
+
+
+@pytest.mark.hands(
+    [[10, 1], [11, 3], [10, 0]],
+    [[10, 3], [7, 2]]
+)
+def test_Engine__compare_score_dealer_busts(engine, hands):
+    """Given a player hand and a dealer hand,
+    :meth:`Engine._compare_score` should return
+    `True` if the dealer busts.
+    """
+    dhand, phand = hands
+    assert engine._compare_score(dhand, phand)
+
+
+@pytest.mark.hands(
+    [[10, 1], [11, 3]],
+    [[10, 3], [12, 2]]
+)
+def test_Engine__compare_score_tie(engine, hands):
+    """Given a player hand and a dealer hand,
+    :meth:`Engine._compare_score` should return
+    `None` if it's a tie.
+    """
+    dhand, phand = hands
+    assert engine._compare_score(dhand, phand) is None
+
+
+@pytest.mark.hands(
+    [[10, 1], [11, 3], [7, 3]],
+    [[10, 3], [12, 2], [7, 0]]
+)
+def test_Engine__compare_both_bust(engine, hands):
+    """Given a player hand and a dealer hand,
+    :meth:`Engine._compare_score` should return
+    `Fale` if both bust.
+    """
+    dhand, phand = hands
+    assert engine._compare_score(dhand, phand) is False
+
+
+@pytest.mark.hand([4, 2], [6, 3])
+def test_Engine__double_down(mocker, engine, hand, player):
+    """Given a hand and a player who will double down and can
+    double down, :meth:`Engine._double_down` should set
+    :attr:`Hand.doubled_down` on the hand and take the player's
+    additional bet.
+    """
+    player.hands = [hand,]
+    engine._double_down(player, hand)
+    assert hand.doubled_down
+    assert player.chips == 80
+    assert engine.ui.mock_calls == [
+        mocker.call.doubledown(player, 20)
+    ]
+
+
+@pytest.mark.hand([1, 2], [11, 3])
+def test_Engine__double_down(mocker, engine, hand, player):
+    """Given a hand with blackjack and a player who will double
+    down, :meth:`Engine._double_down` should not allow the double
+    down.
+    """
+    player.hands = [hand,]
+    engine._double_down(player, hand)
+    assert not hand.doubled_down
+    assert player.chips == 100
+    assert engine.ui.mock_calls == []
+
+
+def test_Engine__draw(mocker, engine):
+    """When called, :meth:`Engine._draw` should draw the top card
+    of the deck.
+    """
+    seed('spam')
+    engine.deck = cards.Deck([])
+    assert engine._draw() == cards.Card(4, 0, False)
+    assert len(engine.deck) == 52 * 6 - 1
+    assert engine.ui.mock_calls == [
+        mocker.call.shuffles(engine.dealer),
+    ]
+
+
+def test_Engine__draw_with_no_card(engine):
+    """If the game deck has no card, :meth:`Engine._draw` should
+    create, shuffle, and cut a new deck, then draw.
+    """
+    seed('spam')
+    deck = cards.Deck.build(6)
+    deck.shuffle()
+    top_card = deck.draw()
+    seed('spam')
+
+    engine.deck = cards.Deck([])
+    assert engine._draw() == top_card
+    assert engine.deck == deck
+
+
+def test_Engine__draw_with_no_card_and_random_cut(engine):
+    """If the game deck has no card, :meth:`Engine._draw` should
+    create, shuffle, and cut a new deck, then draw.
+    """
+    seed('spam')
+    deck = cards.Deck.build(6)
+    deck.shuffle()
+    deck.random_cut()
+    top_card = deck.draw()
+    seed('spam')
+
+    engine.deck = cards.Deck([])
+    engine.deck_cut = True
+    assert engine._draw() == top_card
+    assert engine.deck == deck
+
+
+def test_Engine__draw_updates_count(mocker, engine):
+    """When called, :meth:`Engine._draw` should draw the top card
+    of the deck. If the engine is counting cards, drawing a card
+    should update the count.
+    """
+    seed('spam')
+    engine.deck = cards.Deck([])
+    engine.running_count = True
+    assert engine._draw() == cards.Card(4, 0, False)
+    assert len(engine.deck) == 52 * 6 - 1
+    assert engine.ui.mock_calls == [
+        mocker.call.shuffles(engine.dealer),
+        mocker.call.update_count(1),
+    ]
+
+
+@pytest.mark.hand([11, 3], [1, 3])
+def test_Engine__hit_no_hit_on_blackjack(mocker, engine, hand, player):
+    """Given a natural blackjack hand, hit should stand."""
+    player.hands = (hand,)
+    engine._hit(player, hand)
+    assert engine.ui.mock_calls == [
+        mocker.call.stand(player, hand),
+    ]
+
+
+@pytest.mark.hand([11, 3], [11, 3], [11, 3])
+def test_Engine__hit_no_hit_on_blackjack(mocker, engine, hand, player):
+    """Given a busted hand, hit should stand."""
+    player.hands = (hand,)
+    engine._hit(player, hand)
+    assert engine.ui.mock_calls == [
+        mocker.call.stand(player, hand),
+    ]
+
+
+@pytest.mark.hand([1, 1], [11, 0])
+def test_Engine__insure(mocker, engine, hand, player):
+    """Given a dealer hand a player can insure and a player who
+    will insure, :meth:`Engine._insure` should set the insured
+    attribute on the player and take the player's additional bet.
+    """
+    player.bet = 20
+    player.hands = (cards.Hand(),)
+    engine.dealer.hands = (hand,)
+    engine._insure(player)
+    assert player.insured == 10
+    assert player.chips == 90
+    assert engine.ui.mock_calls == [
+        mocker.call.insures(player, 10),
+    ]
+
+
+@pytest.mark.hand([1, 1], [11, 0])
+def test_Engine__insure_zero(engine, hand):
+    """Given a dealer hand a player can insure and a player who
+    will not insure, :meth:`Engine._insure` should set the insured
+    attribute on the player and take the player's additional bet.
+    """
+    player = players.BetterPlayer(name='Eric', chips=100)
+    player.bet = 20
+    player.hands = (cards.Hand(),)
+    engine.dealer.hands = (hand,)
+    engine._insure(player)
+    assert player.insured == 0
+    assert player.chips == 100
+    assert engine.ui.mock_calls == []
+
+
+def test_Engine__remove_player(engine, player):
+    """Given player, :meth:`Engine._remove_player` should remove that
+    player from the playlist attribute.
+    """
+    engine.playerlist = (player,)
+    engine._remove_player(player)
+    assert engine.playerlist == (None,)
+
+
+@pytest.mark.hands(
+    [[11, 3], [11, 1]],
+    [[11, 3],],
+    [[11, 1],],
+)
+def test_Engine__split(mocker, hands, engine, player):
+    """Given a hand that can be split and a player, :meth:`Engine._split`
+    should split the hand and update the UI.
+    """
+    prehand, *posthands = hands
+    player.hands = (prehand,)
+    assert engine._split(prehand, player)
+    assert player.hands == tuple(posthands)
+    assert engine.ui.mock_calls == [
+        mocker.call.splits(player, 20),
+    ]
+
+
 class EngineTestCase(ut.TestCase):
-    # Test Engine._ace_split_hit()
-    def test__ace_split_hit(self):
-        """Given a hand with an ace that had been split,
-        _ace_split_hit() should give hand one hit and then
-        stand.
-        """
-        expected = cards.Hand([
-            cards.Card(1, 3),
-            cards.Card(11, 0, cards.DOWN),
-        ])
-
-        deck = cards.Deck([
-            expected[1],
-        ])
-        hand = cards.Hand([
-            expected[0],
-        ])
-        player = players.AutoPlayer((hand,), name='Eric')
-        g = game.Engine(deck, None, (player,))
-        g._ace_split_hit(player, hand)
-        actual = player.hands[0]
-
-        self.assertEqual(expected, actual)
-
-    @patch('blackjack.game.ValidUI.validate', return_value=Mock())
-    def test__ace_split_hit_ui(self, _):
-        """Given a hand with an ace that had been split,
-        _ace_split_hit() should send an event to the UI
-        for the single hit and the stand.
-        """
-        hand = cards.Hand([
-            cards.Card(1, 3),
-        ])
-        player = players.AutoPlayer([hand,], name='John')
-        expected = [
-            call.hit(player, hand),
-            call.stand(player, hand),
-        ]
-
-        deck = cards.Deck([
-            cards.Card(11, 0, cards.DOWN),
-        ])
-        g = game.Engine(deck, None, (player,))
-        g._ace_split_hit(player, hand)
-        actual = g.ui.mock_calls
-
-        self.assertListEqual(expected, actual)
-
-    # Test Engine._add_player().
-    def test__add_player(self):
-        """Given a player, _add_player() adds that player in the first
-        empty slot in the playerlist.
-        """
-        player = players.Player(name='Spam')
-        expected = (player,)
-
-        playerlist = [None,]
-        g = game.Engine(None, None, playerlist, None, None)
-        g._add_player(player)
-        actual = g.playerlist
-
-        self.assertEqual(expected, actual)
-
-    # Test Engine._compare_score().
-    def test__compare_score_player_win(self):
-        """Given a player hand and a dealer hand, _compare_score()
-        should return True if the player's score is higher.
-        """
-        expected = True
-
-        p_hand = cards.Hand([
-            cards.Card(10, 1),
-            cards.Card(11, 3),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(7, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-
-        self.assertEqual(expected, actual)
-
-    def test__compare_score_player_lose(self):
-        """Given a player hand and a dealer hand, _compare_score()
-        should return False if the player's score is lower.
-        """
-        expected = False
-
-        p_hand = cards.Hand([
-            cards.Card(3, 1),
-            cards.Card(11, 3),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(7, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-
-        self.assertEqual(expected, actual)
-
-    def test__compare_score_player_bust(self):
-        """Given a player hand and a dealer hand, _compare_score()
-        should return False if the player busts.
-        """
-        expected = False
-
-        p_hand = cards.Hand([
-            cards.Card(3, 1),
-            cards.Card(11, 3),
-            cards.Card(12, 2),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(7, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-
-        self.assertEqual(expected, actual)
-
-    def test__compare_score_dealer_bust(self):
-        """Given a player hand and a dealer hand, _compare_score()
-        should return True if the dealer busts.
-        """
-        expected = True
-
-        p_hand = cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(12, 2),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(6, 1),
-            cards.Card(7, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-
-        self.assertEqual(expected, actual)
-
-    def test__compare_score_tie(self):
-        """Given a player hand and a dealer hand, _compare_score()
-        should return None if it is a tie.
-        """
-        expected = None
-
-        p_hand = cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(12, 2),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(5, 1),
-            cards.Card(5, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-
-        self.assertEqual(expected, actual)
-
-    def test__compare_score_dealer_wins_busts(self):
-        """Given a player hand and a dealer hand, _compare_score()
-        should return True if the dealer busts.
-        """
-        expected = False
-
-        p_hand = cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(12, 2),
-            cards.Card(13, 0),
-        ])
-        d_hand = cards.Hand([
-            cards.Card(10, 3),
-            cards.Card(6, 1),
-            cards.Card(7, 2),
-        ])
-        g = game.Engine()
-        actual = g._compare_score(d_hand, p_hand)
-
-        self.assertEqual(expected, actual)
-
-    # Test Engine._deserialize().
-    def test__deserialize(self):
-        """When given a serialized Engine object, _deserialize()
-        should change the attributes of the current Engine object
-        to match the serialized object's attributes.
-        """
-        deck2 = cards.Deck([
-            cards.Card(11, 3, True),
-        ])
-        dealer2 = players.Dealer(name='ham')
-        exp_before = {
-            'class': 'Engine',
-            'bet_max': 500,
-            'bet_min': 20,
-            'buyin': 0,
-            'card_count': 0,
-            'deck': deck2.serialize(),
-            'deck_cut': False,
-            'deck_size': deck2.size,
-            'dealer': dealer2.serialize(),
-            'playerlist': [],
-            'running_count': False,
-            'save_file': 'baked.beans',
-        }
-
-        deck = cards.Deck([
-            cards.Card(11, 0, True),
-            cards.Card(11, 1, True),
-            cards.Card(11, 2, True),
-        ])
-        dealer = players.Dealer(name='spam')
-        player1 = players.AutoPlayer(name='eggs')
-        player2 = players.AutoPlayer(name='bacon')
-        exp_after = {
-            'class': 'Engine',
-            'bet_max': 100,
-            'bet_min': 10,
-            'buyin': 200,
-            'card_count': 7,
-            'deck': deck.serialize(),
-            'deck_cut': True,
-            'deck_size': deck.size,
-            'dealer': dealer.serialize(),
-            'playerlist': [
-                player1.serialize(),
-                player2.serialize(),
-            ],
-            'running_count': True,
-            'save_file': 'tomato',
-        }
-
-        g = game.Engine(deck2, dealer2, (), None, 0, 'baked.beans')
-        text_before = g.serialize()
-        act_before = json.loads(text_before)
-        g._deserialize(json.dumps(exp_after))
-        text_after = g.serialize()
-        act_after = json.loads(text_after)
-
-        self.assertDictEqual(exp_before, act_before)
-        self.assertDictEqual(exp_after, act_after)
-
-    # Test Engine._double_down().
-    def test__double_down(self):
-        """Given a hand and a player who will double down and can
-        double down, _double_down() should set the doubled_down
-        attribute on the hand and take the player's additional bet.
-        """
-        expected_dd = True
-        expected_chips = 0
-
-        hand = cards.Hand([
-            cards.Card(4, 2),
-            cards.Card(6, 3),
-        ])
-        player = players.AutoPlayer([hand,], 'Eric', 20)
-        g = game.Engine(None, None, (player,), None, 20)
-        g._double_down(player, hand)
-        actual_dd = hand.doubled_down
-        actual_chips = player.chips
-
-        self.assertEqual(expected_dd, actual_dd)
-        self.assertEqual(expected_chips, actual_chips)
-
-    @patch('blackjack.game.BaseUI.doubledown')
-    def test__double_down_ui(self, mock_dd):
-        """If the player doubles down, _double_down() should send that
-        event to the UI.
-        """
-        hand = cards.Hand([
-            cards.Card(4, 2),
-            cards.Card(6, 3),
-        ])
-        player = players.AutoPlayer([hand,], 'Eric', 20)
-        expected = (player, 20)
-
-        g = game.Engine(None, None, (player,), None, 20)
-        g._double_down(player, hand)
-
-        mock_dd.assert_called_with(*expected)
-
-    @patch('blackjack.players.AutoPlayer.will_double_down', return_value=True)
-    def test__double_down_not_on_blackjack(self, mock_willdd):
-        """If player has a blackjack, _double_down() should not allow
-        the hand to be doubled down.
-        """
-        expected_dd = False
-        expected_chips = 20
-        exp_calls = []
-
-        hand = cards.Hand([
-            cards.Card(1, 2),
-            cards.Card(13, 3),
-        ])
-        player = players.AutoPlayer([hand,], 'Eric', 20)
-        g = game.Engine(None, None, (player,), None, 20)
-        g._double_down(player, hand)
-        actual_dd = hand.doubled_down
-        actual_chips = player.chips
-        act_calls = mock_willdd.mock_calls
-
-        self.assertEqual(expected_dd, actual_dd)
-        self.assertEqual(expected_chips, actual_chips)
-        self.assertListEqual(exp_calls, act_calls)
-
-    # Test Engine._draw().
-    def test__draw_deck_with_cards(self):
-        """Draw a the top card from the game deck."""
-        deck = cards.Deck.build(6)
-        expected = deck[-1]
-
-        g = game.Engine(deck)
-        actual = g._draw()
-
-        self.assertEqual(expected, actual)
-
-    def test__draw_deck_with_no_cards(self):
-        """If the game deck has no card, create, shuffle, and cut a
-        new deck, then draw.
-        """
-        # Expected values.
-        cards_per_deck = 52
-        num_decks = 6
-        num_drawn = 1
-        expected = cards.Card
-        exp_num_cards = cards_per_deck * num_decks - num_drawn
-
-        # Test data and state.
-        card_count = 20
-        g = game.Engine(card_count=card_count)
-        g.deck = cards.Deck([])
-        g.deck.size = num_decks
-
-        # Run test.
-        actual = g._draw()
-        act_num_cards = len(g.deck)
-        act_count = g.card_count
-
-        # Determine test result.
-        self.assertIsInstance(actual, expected)
-        self.assertEqual(exp_num_cards, act_num_cards)
-        if actual.rank == 1 or actual.rank >= 10:
-            self.assertEqual(act_count, -1)
-        elif actual.rank <= 6:
-            self.assertEqual(act_count, 1)
-        else:
-            self.assertEqual(act_count, 0)
-
-    @patch('blackjack.cards.randrange', return_value=65)
-    def test__draw_deck_with_no_cards_with_deck_cut(self, mock_randrange):
-        """If the game deck has no card, create, shuffle, and cut a
-        new deck, then draw.
-        """
-        # Expected values.
-        cards_per_deck = 52
-        num_decks = 6
-        num_cut = mock_randrange()
-        num_drawn = 1
-        expected = cards.Card
-        exp_num_cards = cards_per_deck * num_decks - num_cut - num_drawn
-
-        # Test data and state.
-        g = game.Engine(deck_cut=True)
-        g.deck = cards.Deck([])
-        g.deck.size = num_decks
-
-        # Run test.
-        actual = g._draw()
-        act_num_cards = len(g.deck)
-
-        # Determine test result.
-        self.assertIsInstance(actual, expected)
-        self.assertEqual(exp_num_cards, act_num_cards)
-
-    @patch('blackjack.game.BaseUI.shuffles')
-    def test__draw_shuffled_ui(self, mock_shuffles):
-        """If the deck is shuffled, _draw() should send that
-        event to the UI.
-        """
-        dhand = cards.Hand([
-            cards.Card(1, 1),
-            cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        ui = Mock()
-        g = game.Engine(None, dealer, None, None, 20)
-        g.deck = cards.Deck([])
-        g.deck.size = 6
-        _ = g._draw()
-
-        mock_shuffles.assert_called()
-
-    @patch('blackjack.game.BaseUI.update_count')
-    def test__draw_updates_count(self, mock_update_count):
-        """Drawing a card from the deck should update the count."""
-        # Expected value.
-        exp = -2
-        exp_ui_calls = [
-            call(-1),
-            call(0),
-            call(-1),
-            call(-2),
-        ]
-
-        # Test data and state.
-        deck = cards.Deck([
-            cards.Card(11, 0),
-            cards.Card(8, 1),
-            cards.Card(12, 3),
-            cards.Card(2, 0),
-            cards.Card(1, 2),
-        ])
-        running_count = True
-        g = game.Engine(deck, running_count=running_count)
-
-        # Run test.
-        while g.deck:
-            _ = g._draw()
-
-        # Gather actual data.
-        act = g.card_count
-        act_ui_calls = mock_update_count.mock_calls
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-        self.assertListEqual(exp_ui_calls, act_ui_calls)
-
-    @patch('blackjack.game.BaseUI.update_count')
-    def test__draw_updates_count_no_running_count(self, mock_update_count):
-        """If Engine.running_count is False, don't send the event to
-        update the count to the UI.
-        """
-        # Expected value.
-        exp = -2
-        exp_ui_calls = []
-
-        # Test data and state.
-        deck = cards.Deck([
-            cards.Card(11, 0),
-            cards.Card(8, 1),
-            cards.Card(12, 3),
-            cards.Card(2, 0),
-            cards.Card(1, 2),
-        ])
-        g = game.Engine(deck)
-
-        # Run test.
-        while g.deck:
-            _ = g._draw()
-
-        # Gather actual data.
-        act = g.card_count
-        act_ui_calls = mock_update_count.mock_calls
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-        self.assertListEqual(exp_ui_calls, act_ui_calls)
-
-    # Test Engine._hit().
-    @patch('blackjack.players.AutoPlayer.will_hit', return_value=True)
-    @patch('blackjack.game.BaseUI.hit')
-    def test__hit_no_hit_on_blackjack(self, mock_hit, _):
-        """Given a natural blackjack hand, hit should stand."""
-        exp = []
-
-        hand = cards.Hand((
-            cards.Card(11, 3),
-            cards.Card(1, 3),
-        ))
-        player = players.AutoPlayer((hand,), name='spam')
-        g = game.Engine()
-        g._hit(player, hand)
-        act = mock_hit.mock_calls
-
-        self.assertListEqual(exp, act)
-
-    @patch('blackjack.players.AutoPlayer.will_hit', return_value=True)
-    @patch('blackjack.game.BaseUI.hit')
-    def test__hit_no_hit_on_bust(self, mock_hit, _):
-        """Given a busted hand, hit should stand."""
-        exp = []
-
-        hand = cards.Hand((
-            cards.Card(11, 3),
-            cards.Card(11, 3),
-            cards.Card(11, 3),
-        ))
-        player = players.AutoPlayer((hand,), name='spam')
-        g = game.Engine()
-        g._hit(player, hand)
-        act = mock_hit.mock_calls
-
-        self.assertListEqual(exp, act)
-
-    # Test Engine._insure().
-    def test__insure(self):
-        """Given a dealer hand a player can insure and a player who
-        will insure, _insure() should set the insured attribute on
-        the player and take the player's additional bet.
-        """
-        expected_insured = 10
-        expected_chips = 0
-
-        dhand = cards.Hand([
-            cards.Card(1, 1),
-            cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        player = players.AutoPlayer(cards.Hand(), 'Eric', 10)
-        player.bet = expected_insured * 2
-        g = game.Engine(None, dealer, (player,), None, 20)
-        g._insure(player)
-        actual_insured = player.insured
-        actual_chips = player.chips
-
-        self.assertEqual(expected_insured, actual_insured)
-        self.assertEqual(expected_chips, actual_chips)
-
-    def test__insure_zero(self):
-        """Given a dealer hand a player can ensure and a player who
-        will insure, _insure() should set the insured attribute on
-        the player and take the player's additional bet.
-        """
-        expected_insured = 0
-        expected_chips = 10
-
-        dhand = cards.Hand([
-            cards.Card(1, 1),
-            cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        player = players.BetterPlayer(cards.Hand(), 'Eric', 10)
-        g = game.Engine(None, dealer, (player,), None, 20)
-        g._insure(player)
-        actual_insured = player.insured
-        actual_chips = player.chips
-
-        self.assertEqual(expected_insured, actual_insured)
-        self.assertEqual(expected_chips, actual_chips)
-
-    @patch('blackjack.game.BaseUI.insures')
-    def test__insure_ui(self, mock_insures):
-        """If the player insures, _insure() should send that
-        event to the UI.
-        """
-        dhand = cards.Hand([
-            cards.Card(1, 1),
-            cards.Card(11, 0),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        player = players.AutoPlayer(None, 'Eric', 20)
-        expected = (player, 10)
-
-        ui = Mock()
-        player.bet = expected[1] * 2
-        g = game.Engine(None, dealer, (player,), None, 20)
-        g._insure(player)
-
-        mock_insures.assert_called_with(*expected)
-
-    # Test Engine._remove_player().
-    def test__remove_player(self):
-        """Given player, _remove_player() should remove that player
-        from the playlist attribute.
-        """
-        expected = (None,)
-
-        p1 = players.Player(name='John', chips=1)
-        g = game.Engine(None, None, [p1,], None, 20)
-        g._remove_player(p1)
-        actual = g.playerlist
-
-        self.assertEqual(expected, actual)
-
-    @patch('blackjack.game.BaseUI.splits')
-    def test__split_with_ui(self, mock_splits):
-        """If _split() splits the hand, it should send the event,
-        the player, and the new hand to the UI.
-        """
-        hands = (
-            cards.Hand([cards.Card(11, 3),]),
-            cards.Hand([cards.Card(11, 1),]),
-        )
-        h1 = [cards.Hand([
-            cards.Card(11, 3),
-            cards.Card(11, 1),
-        ]),]
-        p1 = players.AutoPlayer(copy(h1), 'John', 200)
-        expected = (p1, 20)
-
-        playerlist = [p1,]
-        g = game.Engine(None, None, playerlist, None, 20)
-        _ = g._split(h1[0], p1)
-
-        mock_splits.assert_called_with(*expected)
-
     # Engine.deal() tests.
     def test_deal(self):
         """In a Engine object with a deck and a dealer, deal() should
