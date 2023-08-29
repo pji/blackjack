@@ -310,13 +310,27 @@ trusted_Players = [
 ]
 
 
+registered_players = {
+    'Player': Player,
+    'Dealer': Dealer,
+    'AutoPlayer': AutoPlayer,
+    'BetterPlayer': BetterPlayer,
+    'NeverPlayer': NeverPlayer,
+    'UserPlayer': UserPlayer,
+}
+
+
 # Player validation functions.
 def validate_player_or_none(self, value):
     """Validate Players and None."""
-    if not isinstance(value, (Player, type(None))):
-        reason = 'not an instance of Player'
-        raise ValueError(self.msg.format(reason))
-    return value
+    if isinstance(value, (Player, type(None))):
+        return value
+    elif isinstance(value, str):
+        data = loads(value)
+        cls = registered_players[data['class']]
+        return cls.deserialize(value)
+    reason = 'not an instance of Player'
+    raise ValueError(self.msg.format(reason))
 
 
 # Player validating descriptors.

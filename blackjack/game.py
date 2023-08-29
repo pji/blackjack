@@ -201,8 +201,6 @@ class Engine(BaseEngine):
             if kwargs['class'] != cls.__name__:
                 raise TypeError(f'Cannot deserialize type {kwargs["class"]}.')
             del kwargs['class']
-        if 'dealer' in kwargs:
-            kwargs['dealer'] = Dealer.deserialize(kwargs['dealer'])
         if 'deck' in kwargs:
             kwargs['deck'] = Deck.deserialize(kwargs['deck'])
         if 'playerlist' in kwargs:

@@ -10,4 +10,5 @@ markers = [
     "hand",
     "hands",
     "msg",
+    "validator",
 ]

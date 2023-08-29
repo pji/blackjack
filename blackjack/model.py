@@ -189,12 +189,15 @@ def validate_yesno(self, value):
     """Validate yes/no responses from a UI."""
     if isinstance(value, bool):
         return value
+    if not isinstance(value, str):
+        reason = 'Not bool or str.'
+        raise TypeError(reason)
     normal = value.lower()
     if normal == 'y' or normal == 'yes':
         return True
     if normal == 'n' or normal == 'no':
         return False
-    reason = 'Not "yes" or "no".' + str(value)
+    reason = 'Not "yes" or "no".'
     raise ValueError(self.msg.format(reason))
 
 
@@ -256,9 +259,9 @@ TextTuple = valtupfactory(
 
 # Common trusted objects.
 class Bet:
+    """User input that is a valid bet."""
     msg = 'Invalid ({}).'
 
-    """User input that is a valid bet."""
     def __init__(
             self,
             value: str | int,
