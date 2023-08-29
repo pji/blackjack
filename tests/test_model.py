@@ -7,11 +7,7 @@ This module contains the unit tests for the blackjack.model module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
-import abc
-import inspect
-import unittest
 from functools import partial
-from unittest.mock import call, Mock
 
 import pytest
 
@@ -312,7 +308,7 @@ def test_IsYes_init_default():
 
 
 def test_IsYes_init_invalid():
-    """Given invalid values, :class:`Bet` should raise the appropriate
+    """Given invalid values, :class:`IsYes` should raise the appropriate
     exception.
     """
     raises = partial(raises_test, model.IsYes)

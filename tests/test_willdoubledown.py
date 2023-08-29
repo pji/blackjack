@@ -8,74 +8,56 @@ module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
-from functools import partial
 import inspect
 import unittest as ut
+from functools import partial
+from random import seed
 from unittest.mock import call, Mock, patch
 
-from blackjack import cards, cli, players, game, model, willdoubledown
+import pytest
+
+from blackjack import cards, cli, players, game, model
+from blackjack import willdoubledown as wdd
+from tests.common import engine, hand, player
 
 
-class will_double_down_alwaysTestCase(ut.TestCase):
-    def test_parameters(self):
-        """Functions that follow the will_double_down protocol should
-        accept the following parameters: self, hand, game.
-        """
-        player = players.Player()
-        hand = cards.Hand()
-        g = game.Engine()
-
-        _ = willdoubledown.will_double_down_always(player, hand, game)
-
-        # The test was that no exception was raised when will_buyin
-        # was called.
-        self.assertTrue(True)
-
-    def test_always_true(self):
-        """will_double_down_always() will always return True."""
-        g = game.Engine()
-        h = cards.Hand()
-        p = players.Player()
-        actual = willdoubledown.will_double_down_always(p, h, g)
-
-        self.assertTrue(actual)
+# Tests cases.
+@pytest.mark.hand([3, 1], [4, 2])
+@pytest.mark.will('will_double_down', wdd.will_double_down_always)
+def test_will_double_down_always(engine, hand, player):
+    """When called as the will_double_down
+    method of a :class:`Player` object with
+    a :class:`game.Engine`, :func:`willbet.will_double_down_always`
+    will always double down.
+    """
+    assert player.will_double_down(hand, game)
 
 
-class will_double_down_neverTestCase(ut.TestCase):
-    def test_never_double_down(self):
-        """will_double_down_never should always return False."""
-        expected = False
-
-        phand = cards.Hand([
-            cards.Card(4, 0),
-            cards.Card(6, 0),
-        ])
-        player = players.Player((phand,), 'Terry')
-        dhand = cards.Hand([
-            cards.Card(11, 0),
-            cards.Card(8, 3, cards.DOWN),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Engine(None, dealer, (player,), None, None)
-        actual = willdoubledown.will_double_down_never(player, phand, g)
-
-        self.assertEqual(expected, actual)
+@pytest.mark.hand([3, 1], [4, 2])
+@pytest.mark.will('will_double_down', wdd.will_double_down_never)
+def test_will_double_down_never(engine, hand, player):
+    """When called as the will_double_down
+    method of a :class:`Player` object with
+    a :class:`game.Engine`,
+    :func:`willbet.will_double_down_never`
+    will never double down.
+    """
+    assert not player.will_double_down(hand, game)
 
 
-class will_double_down_randomTestCase(ut.TestCase):
-    @patch('blackjack.willdoubledown.choice', return_value=True)
-    def test_random_double_down(self, mock_choice):
-        """When called, will_double_down_random() should call
-        random.choice() and return the result.
-        """
-        exp_result = True
-        exp_call = call([True, False])
-
-        act_result = willdoubledown.will_double_down_random(None, None, None)
-        act_call = mock_choice.mock_calls[-1]
-
-        self.assertEqual(exp_result, act_result)
-        self.assertEqual(exp_call, act_call)
+@pytest.mark.hand([3, 1], [4, 2])
+@pytest.mark.will('will_double_down', wdd.will_double_down_random)
+def test_will_double_down_random(engine, hand, player):
+    """When called as the will_double_down
+    method of a :class:`Player` object with
+    a :class:`game.Engine`,
+    :func:`willbet.will_double_down_random`
+    will randomly double down.
+    """
+    seed('spam')
+    assert player.will_double_down(hand, game)
+    assert not player.will_double_down(hand, game)
+    assert player.will_double_down(hand, game)
 
 
 class will_double_down_recommendedTestCase(ut.TestCase):
@@ -94,7 +76,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
         g = game.Engine(None, dealer, (player,), None, None)
-        actual = willdoubledown.will_double_down_recommended(player, phand, g)
+        actual = wdd.will_double_down_recommended(player, phand, g)
 
         self.assertEqual(expected, actual)
 
@@ -115,7 +97,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
         g = game.Engine(None, dealer, (player,), None, None)
-        actual = willdoubledown.will_double_down_recommended(player, phand, g)
+        actual = wdd.will_double_down_recommended(player, phand, g)
 
         self.assertEqual(expected, actual)
 
@@ -136,7 +118,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
         g = game.Engine(None, dealer, (player,), None, None)
-        actual = willdoubledown.will_double_down_recommended(player, phand, g)
+        actual = wdd.will_double_down_recommended(player, phand, g)
 
         self.assertEqual(expected, actual)
 
@@ -153,7 +135,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
         g = game.Engine(None, dealer, (player,), None, None)
-        actual = willdoubledown.will_double_down_recommended(player, phand, g)
+        actual = wdd.will_double_down_recommended(player, phand, g)
 
         self.assertEqual(expected, actual)
 
@@ -174,7 +156,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
         g = game.Engine(None, dealer, (player,), None, None)
-        actual = willdoubledown.will_double_down_recommended(player, phand, g)
+        actual = wdd.will_double_down_recommended(player, phand, g)
 
         self.assertEqual(expected, actual)
 
@@ -195,7 +177,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
         g = game.Engine(None, dealer, (player,), None, None)
-        actual = willdoubledown.will_double_down_recommended(player, phand, g)
+        actual = wdd.will_double_down_recommended(player, phand, g)
 
         self.assertEqual(expected, actual)
 
@@ -212,7 +194,7 @@ class will_double_down_recommendedTestCase(ut.TestCase):
         ])
         dealer = players.Dealer((dhand,), 'Dealer')
         g = game.Engine(None, dealer, (player,), None, None)
-        actual = willdoubledown.will_double_down_recommended(player, phand, g)
+        actual = wdd.will_double_down_recommended(player, phand, g)
 
         self.assertEqual(expected, actual)
 
@@ -227,7 +209,7 @@ class will_double_down_userTestCase(ut.TestCase):
 
         mock_input.return_value = model.IsYes(expected)
         g = game.Engine(None, None, None, None, None)
-        actual = willdoubledown.will_double_down_user(None, None, g)
+        actual = wdd.will_double_down_user(None, None, g)
 
         mock_input.assert_called()
         self.assertEqual(expected, actual)
@@ -241,7 +223,7 @@ class will_double_down_userTestCase(ut.TestCase):
 
         mock_input.return_value = model.IsYes(expected)
         g = game.Engine(None, None, None, None, None)
-        actual = willdoubledown.will_double_down_user(None, None, g)
+        actual = wdd.will_double_down_user(None, None, g)
 
         mock_input.assert_called()
         self.assertEqual(expected, actual)

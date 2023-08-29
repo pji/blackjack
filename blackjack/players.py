@@ -61,6 +61,7 @@ class Player:
     name = Text('name')
     chips = Integer_('chips')
     insured = PosInt('insured')
+    bet = PosInt('bet')
 
     @classmethod
     def deserialize(cls, s):
@@ -106,10 +107,14 @@ class Player:
 
         return player
 
-    def __init__(self, hands: tuple = (),
-                 name: str = 'Player',
-                 chips: int = 0,
-                 insured: int = 0) -> None:
+    def __init__(
+        self,
+        hands: tuple = (),
+        name: str = 'Player',
+        chips: int = 0,
+        insured: int = 0,
+        bet: int = 0
+    ) -> None:
         """Initialize and instance of the class.
 
         :param hands: The player's hands of blackjack.
@@ -120,11 +125,9 @@ class Player:
         """
         self.hands = hands
         self.name = name
-        if not chips:
-            chips = 0
         self.chips = chips
-        self.insured = 0
-        self.bet = 0
+        self.insured = insured
+        self.bet = bet
 
     def __str__(self):
         return self.name

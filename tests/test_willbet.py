@@ -7,236 +7,119 @@ This module contains the unit tests for the blackjack.willbet module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
+from itertools import cycle
+from random import seed
 from types import MethodType
-import unittest as ut
-from unittest.mock import patch
+
+import pytest
 
 from blackjack import players, game, model, willbet
-
-
-class WillBetTestCase(ut.TestCase):
-    def setUp(self):
-        self.engine = game.Engine()
-        self.player = players.Player(chips=1000)
-
-    def returned_value_test(self, fn, exp):
-        # Test data and state.
-        self.player.will_bet = MethodType(fn, self.player)
-
-        # Run test.
-        act = self.player.will_bet(self.engine)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
+from tests.common import engine, player
 
 
 # Test cases.
-class WillBetCountTestCase(WillBetTestCase):
-    def test_will_bet_high_with_high_count(self):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_count will return the maximum
-        bet allowed by the game when the running count is positive.
-        """
-        exp = self.engine.bet_max
-        fn = willbet.will_bet_count
-        self.engine.card_count = 1
-        self.returned_value_test(fn, exp)
-
-    def test_will_bet_low_with_low_count(self):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_count will return the minimum
-        bet allowed by the game when the running count is negative.
-        """
-        exp = self.engine.bet_min
-        fn = willbet.will_bet_count
-        self.engine.card_count = -1
-        self.returned_value_test(fn, exp)
-
-    def test_will_bet_low_with_neutral_count(self):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_count will return the minimum
-        bet allowed by the game when the running count is neutral.
-        """
-        exp = self.engine.bet_min
-        fn = willbet.will_bet_count
-        self.engine.card_count = 0
-        self.returned_value_test(fn, exp)
-
-    def test_will_not_bet_more_chips_than_has(self):
-        """If the maximum bet is higher than the amount the player
-        has, the player will bet all their remaining chips.
-        """
-        exp = 96
-        self.player.chips = exp
-        fn = willbet.will_bet_count
-        self.engine.card_count = 1
-        self.returned_value_test(fn, exp)
+@pytest.mark.will('will_bet', willbet.will_bet_count)
+def test_will_bet_count(engine, player):
+    """When called as the will_bet method of a :class:`Player`
+    object with a :class:`game.Engine`, :func:`willbet.will_bet_count`
+    will bet based on the running count of the game.
+    """
+    engine.card_count = 1
+    assert player.will_bet(engine) == 100
+    engine.card_count = -1
+    assert player.will_bet(engine) == 20
+    engine.card_count = 0
+    assert player.will_bet(engine) == 20
+    player.chips = 95
+    engine.card_count = 1
+    assert player.will_bet(engine) == 95
 
 
-class WillBetCountBadlyTestCase(WillBetTestCase):
-    @patch('blackjack.willbet.roll', return_value=10)
-    def test_will_bet_high_with_high_count(self, mock_roll):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_count_badly will return the
-        maximum bet allowed by the game when the running count is
-        positive.
-        """
-        exp = self.engine.bet_max
-        fn = willbet.will_bet_count_badly
-        self.engine.card_count = 1
-        self.returned_value_test(fn, exp)
-
-    @patch('blackjack.willbet.roll', return_value=8)
-    def test_will_bet_low_with_high_count_when_miscounting(self, mock_roll):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_count_badly will sometimes get
-        the count wrong and return the minimum bet allowed by the
-        game when the running count is positive.
-        """
-        exp = self.engine.bet_min
-        fn = willbet.will_bet_count_badly
-        self.engine.card_count = 1
-        self.returned_value_test(fn, exp)
-
-    @patch('blackjack.willbet.roll', return_value=10)
-    def test_will_bet_low_with_low_count(self, mock_roll):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_count_badly will return the
-        minimum bet allowed by the game when the running count is
-        negative.
-        """
-        exp = self.engine.bet_min
-        fn = willbet.will_bet_count_badly
-        self.engine.card_count = -1
-        self.returned_value_test(fn, exp)
-
-    @patch('blackjack.willbet.roll', return_value=12)
-    def test_will_bet_low_with_low_count_when_miscounting(self, mock_roll):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_count_badly will sometimes get
-        the count wrong and return the maximum bet allowed by the
-        game when the running count is negative.
-        """
-        exp = self.engine.bet_max
-        fn = willbet.will_bet_count_badly
-        self.engine.card_count = -1
-        self.returned_value_test(fn, exp)
-
-    @patch('blackjack.willbet.roll', return_value=10)
-    def test_will_bet_low_with_neutral_count(self, mock_roll):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_count_badly will return the
-        minimum bet allowed by the game when the running count is
-        neutral.
-        """
-        exp = self.engine.bet_min
-        fn = willbet.will_bet_count_badly
-        self.engine.card_count = 0
-        self.returned_value_test(fn, exp)
-
-    @patch('blackjack.willbet.roll', return_value=12)
-    def test_will_bet_low_with_neutral_count_when_miscounting(
-        self,
-        mock_roll
-    ):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_count will sometimes get
-        the count wrong and return the maximum bet allowed by the
-        game when the running count is neutral.
-        """
-        exp = self.engine.bet_max
-        fn = willbet.will_bet_count_badly
-        self.engine.card_count = 0
-        self.returned_value_test(fn, exp)
-
-    @patch('blackjack.willbet.roll', return_value=10)
-    def test_will_not_bet_more_chips_than_has(self, mock_roll):
-        """If the maximum bet is higher than the amount the player
-        has, the player will bet all their remaining chips.
-        """
-        exp = 96
-        self.player.chips = exp
-        fn = willbet.will_bet_count_badly
-        self.engine.card_count = 1
-        self.returned_value_test(fn, exp)
+@pytest.mark.will('will_bet', willbet.will_bet_count_badly)
+def test_will_bet_count_badly(mocker, engine, player):
+    """When called as the will_bet method of a :class:`Player`
+    object with a :class:`game.Engine`,
+    :func:`willbet.will_bet_count_badly`
+    will bet based on the running count of the game,
+    but it will skew the count by a random number each
+    time a decision is made.
+    """
+    mocker.patch('blackjack.willbet.roll', side_effect=cycle([1, 10, 19]))
+    engine.card_count = 1
+    assert player.will_bet(engine) == 20        # 1
+    assert player.will_bet(engine) == 100       # 10
+    assert player.will_bet(engine) == 100       # 19
+    engine.card_count = -1
+    assert player.will_bet(engine) == 20        # 1
+    assert player.will_bet(engine) == 20        # 10
+    assert player.will_bet(engine) == 100       # 19
+    engine.card_count = 0
+    assert player.will_bet(engine) == 20        # 1
+    assert player.will_bet(engine) == 20        # 10
+    assert player.will_bet(engine) == 100       # 19
+    player.chips = 95
+    engine.card_count = 1
+    assert player.will_bet(engine) == 20        # 1
+    assert player.will_bet(engine) == 95        # 10
+    assert player.will_bet(engine) == 95        # 19
 
 
-class WillBetDealerTestCase(WillBetTestCase):
-    def test_will_raise_error(self):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_dealer will raise a TypeError.
-        """
-        # Expected value.
-        exp_ex = TypeError
-        exp_msg = 'Dealer cannot bet.'
-
-        # Test data.
-        fn = willbet.will_bet_dealer
-
-        # Run test and determine result.
-        with self.assertRaisesRegex(exp_ex, exp_msg):
-            self.returned_value_test(fn, None)
+@pytest.mark.will('will_bet', willbet.will_bet_dealer)
+def test_will_bet_dealer(mocker, engine, player):
+    """When called as the will_bet method of a :class:`Player`
+    object with a :class:`game.Engine`, :func:`willbet.will_bet_dealer`
+    will raise a :class:`TypeError`.
+    """
+    with pytest.raises(TypeError, match='Dealer cannot bet[.]'):
+        _ = player.will_bet(engine)
 
 
-class WillBetMaxTestCase(WillBetTestCase):
-    def test_will_always_return_maximum_bet(self):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_max will return the maximum
-        bet allowed by the game.
-        """
-        exp = self.engine.bet_max
-        fn = willbet.will_bet_max
-        self.returned_value_test(fn, exp)
-
-    def test_will_not_bet_more_chips_than_has(self):
-        """If the maximum bet is higher than the amount the player
-        has, the player will bet all their remaining chips.
-        """
-        exp = 96
-        self.player.chips = exp
-        fn = willbet.will_bet_max
-        self.returned_value_test(fn, exp)
+@pytest.mark.will('will_bet', willbet.will_bet_max)
+def test_will_bet_max(engine, player):
+    """When called as the will_bet method of a :class:`Player`
+    object with a :class:`game.Engine`, :func:`willbet.will_bet_max`
+    will bet the maximum bet.
+    """
+    assert player.will_bet(engine) == 100
+    player.chips = 95
+    assert player.will_bet(engine) == 95
 
 
-class WillBetMinTestCase(WillBetTestCase):
-    def test_will_always_return_maximum_bet(self):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_min will return the minimum
-        bet allowed by the game.
-        """
-        exp = self.engine.bet_min
-        fn = willbet.will_bet_min
-        self.returned_value_test(fn, exp)
+@pytest.mark.will('will_bet', willbet.will_bet_min)
+def test_will_bet_min(engine, player):
+    """When called as the will_bet method of a :class:`Player`
+    object with a :class:`game.Engine`, :func:`willbet.will_bet_min`
+    will bet the minimum bet.
+    """
+    assert player.will_bet(engine) == 20
 
 
-class WillBetNeverTestCase(WillBetTestCase):
-    def test_will_always_return_zero(self):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_never will return zero.
-        """
-        exp = 0
-        fn = willbet.will_bet_never
-        self.returned_value_test(fn, exp)
+@pytest.mark.will('will_bet', willbet.will_bet_never)
+def test_will_bet_never(engine, player):
+    """When called as the will_bet method of a :class:`Player`
+    object with a :class:`game.Engine`, :func:`willbet.will_bet_never`
+    will bet zero.
+    """
+    assert player.will_bet(engine) == 0
 
 
-class WillBetRandomTestCase(WillBetTestCase):
-    @patch('blackjack.willbet.randrange', return_value=125)
-    def test_will_return_a_random_number(self, mock_randrange):
-        """When called as the will_bet method of a Player object
-        with a game.Engine, will_bet_random will return a random
-        number between the minimum and maximum bet.
-        """
-        exp = mock_randrange()
-        fn = willbet.will_bet_random
-        self.returned_value_test(fn, exp)
+@pytest.mark.will('will_bet', willbet.will_bet_random)
+def test_will_bet_random(engine, player):
+    """When called as the will_bet method of a :class:`Player`
+    object with a :class:`game.Engine`, :func:`willbet.will_bet_random`
+    will bet a random amount.
+    """
+    seed('spam')
+    assert player.will_bet(engine) == 35
+    assert player.will_bet(engine) == 53
+    assert player.will_bet(engine) == 20
 
 
-class WillBetUserTestCase(WillBetTestCase):
-    @patch('blackjack.game.BaseUI.bet_prompt', return_value=model.Bet(125))
-    def test_will_bet(self, mock_input):
-        """When the user choses an amount to bet, will_bet_user()
-        will return the amount of the bet.
-        """
-        exp = mock_input().value
-        fn = willbet.will_bet_user
-        self.returned_value_test(fn, exp)
+@pytest.mark.will('will_bet', willbet.will_bet_user)
+def test_will_bet_user(engine, player):
+    """When called as the will_bet method of a :class:`Player`
+    object with a :class:`game.Engine`, :func:`willbet.will_bet_never`
+    will prompt the user for an amount to bet.
+    """
+    engine.ui.bet_prompt.return_value = model.Bet(50)
+    assert player.will_bet(engine) == 50
