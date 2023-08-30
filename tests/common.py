@@ -31,6 +31,17 @@ def hand(request):
 
 
 @pytest.fixture
+def hands(request):
+    """Create a :class:`Hand` object for testing."""
+    marker = request.node.get_closest_marker('hands')
+    hands = []
+    for item in marker.args:
+        cardlist = [cards.Card(*args) for args in item]
+        hands.append(cards.Hand(cardlist))
+    return hands
+
+
+@pytest.fixture
 def player(request):
     """Create a :class:`AutoPlayer` object for testing."""
     marker = request.node.get_closest_marker('will')
@@ -40,7 +51,7 @@ def player(request):
         player.will_bet = MethodType(meth, player)
     elif name == 'will_double_down':
         player.will_double_down = MethodType(meth, player)
-    elif nane == 'will_hit':
+    elif name == 'will_hit':
         player.will_hit = MethodType(meth, player)
     elif name == 'will_insure':
         player.will_insure == MethodType(meth, player)
