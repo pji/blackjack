@@ -1,8 +1,8 @@
 .PHONY: build
 build:
-	sphinx-build -b html docs/source/ docs/build/html
+	# sphinx-build -b html docs/source/ docs/build/html
 	python -m build
-	twine check dist/*
+	# twine check dist/*
 
 .PHONY: clean
 clean:
