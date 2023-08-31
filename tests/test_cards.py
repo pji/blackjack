@@ -17,6 +17,33 @@ from random import seed
 import pytest
 
 from blackjack import cards
+from tests.common import deck, hand, hands
+
+
+# Fixtures.
+@pytest.fixture
+def card():
+    """An instance of :class:`blackjack.cards.Card` for testing."""
+    yield cards.Card(10, 'clubs', cards.UP)
+
+
+@pytest.fixture
+def frenchdeck():
+    cards_ = []
+    for suit in range(4):
+        for rank in range(13, 0, -1):
+            cards_.append(cards.Card(rank, suit, cards.DOWN))
+    yield cards.Deck(cards_)
+
+
+@pytest.fixture
+def pile():
+    """A :class:`blackjack.cards.Pile` for testing."""
+    yield cards.Pile([
+        cards.Card(1, 0),
+        cards.Card(2, 0),
+        cards.Card(3, 0),
+    ])
 
 
 # Utility functions.
@@ -27,13 +54,6 @@ def raises_test(cls, *args, **kwargs):
     except Exception as ex:
         return type(ex)
     return None
-
-
-# Tests for Card.
-@pytest.fixture
-def card():
-    """An instance of :class:`blackjack.cards.Card` for testing."""
-    yield cards.Card(10, 'clubs', cards.UP)
 
 
 # Tests for Card class methods.
@@ -159,18 +179,6 @@ def test_Card_serialize(card):
     version of the object serialized to a json string.
     """
     assert card.serialize() == '["Card", 10, "clubs", true]'
-
-
-# Tests for Pile.
-# Pile fixtures.
-@pytest.fixture
-def pile():
-    """A :class:`blackjack.cards.Pile` for testing."""
-    yield cards.Pile([
-        cards.Card(1, 0),
-        cards.Card(2, 0),
-        cards.Card(3, 0),
-    ])
 
 
 # Tests for Pile class methods.
@@ -348,27 +356,6 @@ def test_Pile_serialize(pile):
     })
 
 
-# Tests for Deck.
-# Fixtures for Deck.
-@pytest.fixture
-def deck():
-    """A :class:`blackjack.cards.Deck` object for testing."""
-    yield cards.Deck([
-        cards.Card(1, 0),
-        cards.Card(2, 0),
-        cards.Card(3, 0),
-    ])
-
-
-@pytest.fixture
-def frenchdeck():
-    cards_ = []
-    for suit in range(4):
-        for rank in range(13, 0, -1):
-            cards_.append(cards.Card(rank, suit, cards.DOWN))
-    yield cards.Deck(cards_)
-
-
 # Tests for Deck class methods and traits.
 def test_Deck_subclasses_pile(deck):
     """:class:`blackjack.cards.Deck` should be a subclass of
@@ -508,46 +495,6 @@ def test_Deck_serialize(deck):
     })
 
 
-# Tests for Hand.
-# Fixtures for Hand.
-@pytest.fixture
-def blackjack():
-    """A :class:`Hand` object with natural blackjack for testing."""
-    yield cards.Hand([
-        cards.Card(1, 0),
-        cards.Card(11, 0),
-    ])
-
-
-@pytest.fixture
-def hand():
-    """A :class:`Hand` object for testing."""
-    yield cards.Hand([
-        cards.Card(1, 0),
-        cards.Card(2, 0),
-        cards.Card(3, 0),
-    ])
-
-
-@pytest.fixture
-def hand_20():
-    """A :class:`Hand` object with a score of 20 for testing."""
-    yield cards.Hand([
-        cards.Card(11, 0),
-        cards.Card(11, 1),
-    ])
-
-
-@pytest.fixture
-def hand_21():
-    """A :class:`Hand` object with a score of 21 for testing."""
-    yield cards.Hand([
-        cards.Card(10, 0),
-        cards.Card(7, 0),
-        cards.Card(4, 0),
-    ])
-
-
 # Tests for Hand class methods and traits.
 def test_Hand_subclasses_Pile(hand):
     """:class:`Hand` should be a subclass of :class:`Pile`."""
@@ -612,39 +559,57 @@ def test_Hand_init_default():
 
 
 # Tests for Hand_can_split.
-def test_Hand_can_split(hand, hand_20):
+@pytest.mark.hands(
+    [[9, 0], [11, 1]],
+    [[10, 1], [10, 2]],
+)
+def test_Hand_can_split(hands):
     """When called, :meth:`Hand.can_split` should return whether the
     :class:`Hand` can be split.
     """
+    hand, hand_20 = hands
     assert hand_20.can_split()
     assert not hand.can_split()
 
 
 # Tests for Hand_is_blackjack.
-def test_Hand_is_blackjack(blackjack, hand_20, hand_21):
+@pytest.mark.hands(
+    [[11, 0], [1, 0]],
+    [[10, 2], [12, 1]],
+    [[13, 2], [6, 1], [5, 2]],
+)
+def test_Hand_is_blackjack(hands):
     """When called, :meth:`Hand.is_blackjack` should return whether the
     :class:`Hand` is a natural blackjack.
     """
+    blackjack, hand_20, hand_21 = hands
     assert blackjack.is_blackjack()
     assert not hand_21.is_blackjack()
     assert not hand_20.is_blackjack()
 
 
 # Tests for Hand.is_bust.
-def test_Hand_is_bust(hand_20):
+@pytest.mark.hand([10, 2], [12, 1])
+def test_Hand_is_bust(hand):
     """When called, :meth:`Hand.is_bust` should return whether the
     :class:`Hand` is bust.
     """
-    assert not hand_20.is_bust()
-    hand_20.append(cards.Card(10, 2))
-    assert hand_20.is_bust()
+    assert not hand.is_bust()
+    hand.append(cards.Card(10, 2))
+    assert hand.is_bust()
 
 
 # Tests for Hand.score.
-def test_Hand_score(blackjack, hand, hand_20, hand_21):
+@pytest.mark.hands(
+    [[11, 0], [1, 0]],
+    [[10, 2], [12, 1]],
+    [[13, 2], [6, 1], [5, 2]],
+)
+def test_Hand_score(hand, hands):
     """When called, :meth:`Hand.score` should return the score of
     the :class:`Hand`.
     """
+    blackjack, hand_20, hand_21 = hands
     assert blackjack.score() == [11, 21]
     assert hand.score() == [6, 16]
     assert hand_20.score() == [20,]
@@ -668,12 +633,13 @@ def test_Hand_serialize(hand):
     })
 
 
-def test_Hand_split_valid(hand_20):
+@pytest.mark.hand([11, 0], [11, 1])
+def test_Hand_split_valid(hand):
     """When called on a :class:`Hand` that can be split,
     :meth:`Hand.split` should split the :class:`Hand` and return
     the resulting two :class:`Hand` objects.
     """
-    assert hand_20.split() == (
+    assert hand.split() == (
         cards.Hand([cards.Card(11, 0)]),
         cards.Hand([cards.Card(11, 1)]),
     )

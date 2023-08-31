@@ -8,12 +8,11 @@ module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
-from functools import partial
 from random import seed
 
 import pytest
 
-from blackjack import cards, cli, players, game, model
+from blackjack import model
 from blackjack import willdoubledown as wdd
 from tests.common import engine, hand, hands, player
 
@@ -27,7 +26,7 @@ def test_will_double_down_always(engine, hand, player):
     a :class:`game.Engine`, :func:`willbet.will_double_down_always`
     will always double down.
     """
-    assert player.will_double_down(hand, game)
+    assert player.will_double_down(hand, engine)
 
 
 @pytest.mark.hand([3, 1], [4, 2])
@@ -40,7 +39,7 @@ def test_will_double_down_never(engine, hand, player):
     :func:`willbet.will_double_down_never`
     will never double down.
     """
-    assert not player.will_double_down(hand, game)
+    assert not player.will_double_down(hand, engine)
 
 
 @pytest.mark.hand([3, 1], [4, 2])

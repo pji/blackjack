@@ -12,6 +12,7 @@ from json import load, loads
 import pytest
 
 from blackjack import cards, cli, game, model, players, termui, utility
+from tests.common import engine
 
 
 # Tests.
@@ -373,18 +374,6 @@ def test_LogUI_insure_prompt_invalid(mocker, logui):
         mocker.call('Invalid input.'),
         mocker.call('Invalid input.'),
     ]
-
-
-# Tests for command line parsing.
-# Fixtures for parse_cli.
-@pytest.fixture
-def engine(mocker, request):
-    """A basic test of the command line."""
-    marker = request.node.get_closest_marker('argv')
-    mocker.patch('sys.argv', list(marker.args))
-    mocker.patch('blackjack.cards.randrange', return_value=65)
-    args = cli.parse_cli()
-    yield cli.build_game(args)
 
 
 # Tests for parse_cli.

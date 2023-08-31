@@ -9,11 +9,10 @@ This module contains the unit tests for the blackjack.willbet module.
 """
 from itertools import cycle
 from random import seed
-from types import MethodType
 
 import pytest
 
-from blackjack import players, game, model, willbet
+from blackjack import model, willbet
 from tests.common import engine, player
 
 

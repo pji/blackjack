@@ -7,14 +7,11 @@ This module contains the unit tests for the blackjack.willhit module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
-import inspect
-import unittest as ut
 from random import seed
-from unittest.mock import call, Mock, patch
 
 import pytest
 
-from blackjack import cards, cli, players, game, model, termui
+from blackjack import model
 from blackjack import willhit as wh
 from common import hand, hands, player, engine
 

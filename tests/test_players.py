@@ -20,6 +20,7 @@ from blackjack import willdoubledown as wdd
 from blackjack import willhit as wh
 from blackjack import willinsure as wi
 from blackjack import willsplit as ws
+from tests.common import hands, msgobj
 
 
 # Utility functions.
@@ -40,17 +41,6 @@ def validator_test(fn, self, value):
 
 
 # Common fixtures.
-@pytest.fixture
-def hands(request):
-    """Create a :class:`Hand` object for testing."""
-    marker = request.node.get_closest_marker('hands')
-    hands = []
-    for item in marker.args:
-        cardlist = [cards.Card(*args) for args in item]
-        hands.append(cards.Hand(cardlist))
-    return tuple(hands)
-
-
 @pytest.fixture
 def player():
     """A :class:`players.Player` object for testing."""
@@ -281,14 +271,6 @@ def test_get_chips():
     assert players.get_chips(10) == 40
     assert players.get_chips(10) == 90
     assert players.get_chips(10) == 10
-
-
-# Fixture for validators.
-@pytest.fixture
-def msgobj(request):
-    class Spam:
-        msg = '{}'
-    return Spam()
 
 
 # Tests for validators.

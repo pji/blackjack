@@ -12,6 +12,7 @@ from functools import partial
 import pytest
 
 from blackjack import model
+from tests.common import msgobj
 
 
 # Utility functions.
@@ -151,14 +152,6 @@ def test_wlistfactory():
     assert obj.__dict__['_Spam__attr'] == 'spam'
     with pytest.raises(ValueError, match='Not spam[.]'):
         obj.attr = 6
-
-
-# Fixtures for validator functions.
-@pytest.fixture
-def msgobj(request):
-    class Spam:
-        msg = '{}'
-    return Spam()
 
 
 # Tests for validator functions.

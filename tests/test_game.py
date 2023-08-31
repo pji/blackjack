@@ -15,6 +15,7 @@ from types import MethodType
 import pytest
 
 from blackjack import cli, cards, game, players
+from tests.common import deck, hand, hands, engine, player
 
 
 # Utility functions.
@@ -25,52 +26,6 @@ def raises_test(cls, *args, **kwargs):
     except Exception as ex:
         return type(ex)
     return None
-
-
-# Test cases.
-# Engine test cases.
-# Fixtures for Engine.
-@pytest.fixture
-def deck(request):
-    """Create a :class:`Deck` object for testing."""
-    marker = request.node.get_closest_marker('deck')
-    cardlist = [cards.Card(*args) for args in marker.args]
-    yield cards.Deck(cardlist)
-
-
-@pytest.fixture
-def engine(mocker):
-    """Create a :class:`Engine` object for testing."""
-    mocker.patch(
-        'blackjack.game.ValidUI.validate',
-        return_value=mocker.Mock()
-    )
-    yield game.Engine(buyin=20)
-
-
-@pytest.fixture
-def hand(request):
-    """Create a :class:`Hand` object for testing."""
-    marker = request.node.get_closest_marker('hand')
-    cardlist = [cards.Card(*args) for args in marker.args]
-    yield cards.Hand(cardlist)
-
-
-@pytest.fixture
-def hands(request):
-    """Create a :class:`Hand` object for testing."""
-    marker = request.node.get_closest_marker('hands')
-    hands = []
-    for item in marker.args:
-        cardlist = [cards.Card(*args) for args in item]
-        hands.append(cards.Hand(cardlist))
-    return hands
-
-
-@pytest.fixture
-def player():
-    """Create a :class:`AutoPlayer` object for testing."""
-    return players.AutoPlayer(name='Eric', chips=100)
 
 
 # Common Engine tests.
@@ -1030,7 +985,7 @@ def test_Engine_serialize(engine):
     serial = engine.serialize()
     assert json.loads(serial) == {
         'class': 'Engine',
-        'bet_max': 500,
+        'bet_max': 100,
         'bet_min': 20,
         'buyin': 20,
         'card_count': 0,

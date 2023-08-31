@@ -7,216 +7,145 @@ This module contains the unit tests for the blackjack.willsplit module.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
-from functools import partial
-import inspect
-from types import MethodType
-import unittest as ut
-from unittest.mock import call, Mock, patch
+from random import seed
 
-from blackjack import cards, cli, players, game, model, willsplit
+import pytest
 
-
-class will_split_alwaysTestCase(ut.TestCase):
-    def test_paramters(self):
-        """Functions that follow the will_split protocol should
-        accept the following parameters: hand, player, dealer,
-        playerlist.
-        """
-        hand = cards.Hand()
-        player = players.Player((hand,), 'John Cleese')
-        g = game.Engine()
-        method = MethodType(willsplit.will_split_always, player)
-        player.will_split = partial(willsplit.will_split_always, None)
-        player.will_split(hand, g)
-
-        # The test was that no exception was raised when will_split
-        # was called.
-        self.assertTrue(True)
-
-    def test_always_true(self):
-        """will_split_always() should return True."""
-        hand = cards.Hand()
-        player = players.Player((hand,), 'John Cleese')
-        player.will_split = partial(willsplit.will_split_always, None)
-        actual = player.will_split(hand, None)
-
-        self.assertTrue(actual)
+from blackjack import model
+from blackjack import willsplit as ws
+from tests.common import hand, hands, engine, player
 
 
-class will_split_neverTestCase(ut.TestCase):
-    def test_never_split(self):
-        """will_split_never() should return False."""
-        expected = False
-
-        hand = cards.Hand([
-            cards.Card(10, 2),
-            cards.Card(10, 1),
-        ])
-        player = players.Player((hand,), 'Graham')
-        dhand = cards.Hand([
-            cards.Card(7, 3),
-            cards.Card(10, 0, cards.DOWN),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Engine(None, dealer, (player,), None, None)
-        actual = willsplit.will_split_never(player, hand, g)
-
-        self.assertEqual(expected, actual)
+# Test case.
+@pytest.mark.hand([5, 1], [5, 3])
+@pytest.mark.will('will_split', ws.will_split_always)
+def test_will_split_always(hand, engine, player):
+    """When called as the will_split method of a
+    :class:`Player` object with a :class:`game.Engine`,
+    :func:`willsplit.will_split_always`
+    should always split.
+    """
+    assert player.will_split(hand, engine)
 
 
-class will_split_randomTestCase(ut.TestCase):
-    @patch('blackjack.willsplit.choice', return_value=True)
-    def test_random_hit(self, mock_choice):
-        """When called, will_split_random() should call random.choice()
-        and return the result.
-        """
-        exp_result = True
-        exp_call = call([True, False])
-
-        act_result = willsplit.will_split_random(None, None, None)
-        act_call = mock_choice.mock_calls[-1]
-
-        self.assertEqual(exp_result, act_result)
-        self.assertEqual(exp_call, act_call)
+@pytest.mark.hand([5, 1], [5, 3])
+@pytest.mark.will('will_split', ws.will_split_never)
+def test_will_split_never(hand, engine, player):
+    """When called as the will_split method of a
+    :class:`Player` object with a :class:`game.Engine`,
+    :func:`willsplit.will_split_never`
+    should never split.
+    """
+    assert not player.will_split(hand, engine)
 
 
-class will_split_recommendedTestCase(ut.TestCase):
-    def test_split_ace_or_8(self):
-        """Always split aces or eights."""
-        expected = True
-
-        hand = cards.Hand([
-            cards.Card(1, 2),
-            cards.Card(1, 1),
-        ])
-        player = players.Player((hand,), 'Graham')
-        dhand = cards.Hand([
-            cards.Card(7, 3),
-            cards.Card(10, 0, cards.DOWN),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Engine(None, dealer, (player,), None, None)
-        actual = willsplit.will_split_recommended(player, hand, g)
-
-        self.assertEqual(expected, actual)
-
-    def test_split_4_5_or_8(self):
-        """Never split fours, fives, or eights."""
-        expected = False
-
-        hand = cards.Hand([
-            cards.Card(10, 2),
-            cards.Card(10, 1),
-        ])
-        player = players.Player((hand,), 'Graham')
-        dhand = cards.Hand([
-            cards.Card(7, 3),
-            cards.Card(10, 0, cards.DOWN),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Engine(None, dealer, (player,), None, None)
-        actual = willsplit.will_split_recommended(player, hand, g)
-
-        self.assertEqual(expected, actual)
-
-    def test_split_2_3_or_7(self):
-        """Split twos, threes, and sevens if the dealer's card is
-        seven or less.
-        """
-        expected1 = True
-        expected2 = False
-
-        hand = cards.Hand([
-            cards.Card(2, 2),
-            cards.Card(2, 1),
-        ])
-        player = players.Player((hand,), 'Graham')
-        dhand = cards.Hand([
-            cards.Card(7, 3),
-            cards.Card(10, 0, cards.DOWN),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Engine(None, dealer, (player,), None, None)
-        actual1 = willsplit.will_split_recommended(player, hand, g)
-
-        self.assertEqual(expected1, actual1)
-
-        hand = cards.Hand([
-            cards.Card(2, 2),
-            cards.Card(2, 1),
-        ])
-        player = players.Player((hand,), 'Graham')
-        dhand = cards.Hand([
-            cards.Card(8, 3),
-            cards.Card(10, 0, cards.DOWN),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Engine(None, dealer, (player,), None, None)
-        actual2 = willsplit.will_split_recommended(player, hand, g)
-
-        self.assertEqual(expected2, actual2)
-
-    def test_split_6(self):
-        """Split sixes if dealer's card is two through six."""
-        expected1 = True
-        expected2 = False
-
-        hand = cards.Hand([
-            cards.Card(6, 2),
-            cards.Card(6, 1),
-        ])
-        player = players.Player((hand,), 'Graham')
-        dhand = cards.Hand([
-            cards.Card(6, 3),
-            cards.Card(10, 0, cards.DOWN),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Engine(None, dealer, (player,), None, None)
-        actual1 = willsplit.will_split_recommended(player, hand, g)
-
-        self.assertEqual(expected1, actual1)
-
-        hand = cards.Hand([
-            cards.Card(6, 2),
-            cards.Card(6, 1),
-        ])
-        player = players.Player((hand,), 'Graham')
-        dhand = cards.Hand([
-            cards.Card(7, 3),
-            cards.Card(10, 0, cards.DOWN),
-        ])
-        dealer = players.Dealer((dhand,), 'Dealer')
-        g = game.Engine(None, dealer, (player,), None, None)
-        actual2 = willsplit.will_split_recommended(player, hand, g)
-
-        self.assertEqual(expected2, actual2)
+@pytest.mark.hand([5, 1], [5, 3])
+@pytest.mark.will('will_split', ws.will_split_random)
+def test_will_split_random(hand, engine, player):
+    """When called as the will_split method of a
+    :class:`Player` object with a :class:`game.Engine`,
+    :func:`willsplit.will_split_random`
+    should randomly split.
+    """
+    seed('spam')
+    assert player.will_split(hand, engine)
+    assert not player.will_split(hand, engine)
+    assert player.will_split(hand, engine)
 
 
-class will_split_userTestCase(ut.TestCase):
-    @patch('blackjack.game.BaseUI.split_prompt')
-    def test_split(self, mock_input):
-        """When the user chooses to split, will_split_user() returns
-        True.
-        """
-        expected = True
+@pytest.mark.hands(
+    [[1, 1], [1, 3]],
+    [[8, 1], [8, 3]],
+    [[7, 3], [10, 0]],
+)
+@pytest.mark.will('will_split', ws.will_split_recommended)
+def test_will_split_recommended_aces_and_8(hands, engine, player):
+    """When called as the will_split method of a
+    :class:`Player` object with a :class:`game.Engine`,
+    :func:`willsplit.will_split_recommended`
+    should always split aces and eights.
+    """
+    phand1, phand8, dhand = hands
+    engine.dealer.hands = (dhand,)
+    assert player.will_split(phand1, engine)
+    assert player.will_split(phand8, engine)
 
-        mock_input.return_value = model.IsYes(expected)
-        g = game.Engine(None, None, None, None, None)
-        actual = willsplit.will_split_user(None, None, g)
 
-        mock_input.assert_called()
-        self.assertEqual(expected, actual)
+@pytest.mark.hands(
+    [[4, 1], [4, 3]],
+    [[5, 1], [5, 3]],
+    [[11, 1], [11, 3]],
+    [[7, 3], [10, 0]],
+)
+@pytest.mark.will('will_split', ws.will_split_recommended)
+def test_will_split_recommended_4_5_10(hands, engine, player):
+    """When called as the will_split method of a
+    :class:`Player` object with a :class:`game.Engine`,
+    :func:`willsplit.will_split_recommended`
+    should never split fours, fives, and tens.
+    """
+    phand4, phand5, phand10, dhand = hands
+    engine.dealer.hands = (dhand,)
+    assert not player.will_split(phand4, engine)
+    assert not player.will_split(phand5, engine)
+    assert not player.will_split(phand10, engine)
 
-    @patch('blackjack.game.BaseUI.split_prompt')
-    def test_stand(self, mock_input):
-        """When the user chooses to split, will_split_user() returns
-        False.
-        """
-        expected = False
 
-        mock_input.return_value = model.IsYes(expected)
-        g = game.Engine(None, None, None, None, None)
-        actual = willsplit.will_split_user(None, None, g)
+@pytest.mark.hands(
+    [[2, 1], [2, 3]],
+    [[3, 1], [3, 3]],
+    [[7, 1], [7, 3]],
+    [[7, 3], [10, 0]],
+    [[8, 3], [10, 0]],
+)
+@pytest.mark.will('will_split', ws.will_split_recommended)
+def test_will_split_recommended_2_3_7(hands, engine, player):
+    """When called as the will_split method of a
+    :class:`Player` object with a :class:`game.Engine`,
+    :func:`willsplit.will_split_recommended`
+    should split twos, threes, and sevens if the dealer
+    is showing a seven or less. Otherwise don't split.
+    """
+    phand2, phand3, phand7, dhand7, dhand8 = hands
+    engine.dealer.hands = (dhand7,)
+    assert player.will_split(phand2, engine)
+    assert player.will_split(phand3, engine)
+    assert player.will_split(phand7, engine)
 
-        mock_input.assert_called()
-        self.assertEqual(expected, actual)
+    engine.dealer.hands = (dhand8,)
+    assert not player.will_split(phand2, engine)
+    assert not player.will_split(phand3, engine)
+    assert not player.will_split(phand7, engine)
+
+
+@pytest.mark.hands(
+    [[6, 1], [6, 3]],
+    [[6, 3], [10, 0]],
+    [[7, 3], [10, 0]],
+)
+@pytest.mark.will('will_split', ws.will_split_recommended)
+def test_will_split_recommended_6(hands, engine, player):
+    """When called as the will_split method of a
+    :class:`Player` object with a :class:`game.Engine`,
+    :func:`willsplit.will_split_recommended`
+    should split sixes if the dealer
+    is showing a six or less. Otherwise don't split.
+    """
+    phand, dhand6, dhand7 = hands
+    engine.dealer.hands = (dhand6,)
+    assert player.will_split(phand, engine)
+
+    engine.dealer.hands = (dhand7,)
+    assert not player.will_split(phand, engine)
+
+
+@pytest.mark.hand([5, 1], [5, 3])
+@pytest.mark.will('will_split', ws.will_split_user)
+def test_will_split_user(hand, engine, player):
+    """When called as the will_split method of a
+    :class:`Player` object with a :class:`game.Engine`,
+    :func:`willsplit.will_split_user`
+    should prompt the user for a decision.
+    """
+    engine.ui.split_prompt.return_value = model.IsYes('y')
+    assert player.will_split(hand, engine)
