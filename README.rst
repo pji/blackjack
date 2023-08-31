@@ -40,13 +40,13 @@ The following features are planned for the 0.1.0 release:
     *   x Clear splash screen from TableUI before play begins.
 *   x Add "How-To" to Table interface.
 *   x Add "How-To" to help.
+
+The following features are possible for future versions:
+
 * Build UI for saving and restoring game state.
     *   Create menu interface.
     *   Select item in menu.
     *   Escape to menu.
-
-The following features are possible for future versions:
-
 * Separate number of seats from number of players.
 	* Fix game.Engine.seats when restoring from file.
 	* Allow empty seats.
