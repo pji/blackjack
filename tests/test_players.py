@@ -14,7 +14,7 @@ from types import MethodType
 
 import pytest
 
-from blackjack import cards, cli, players, game, model
+from blackjack import cards, cli, game, model, players
 from blackjack import willbet as wb
 from blackjack import willdoubledown as wdd
 from blackjack import willhit as wh
@@ -73,7 +73,7 @@ def test_Player_deserialize_invalid(player):
     :meth:`Player.serialize` should return the deserialized object.
     If the `will_*` method names are not valid, raise a ValueError.
     """
-    pdict = player._asdict()
+    pdict = player.asdict()
     for key in [k for k in pdict if k.startswith('will_')]:
         bad_dict = pdict.copy()
         bad_dict[key] = 'spam'
@@ -149,12 +149,12 @@ def test_Player_str(player):
 
 # Tests for Player private methods.
 @pytest.mark.hands([[1, 3], [11, 3]], [[2, 0], [3, 1]])
-def test_Player__asdict(player, hands):
-    """When called, :meth:`Player._asdict() should serialize the object
+def test_Player_asdict(player, hands):
+    """When called, :meth:`Player.asdict() should serialize the object
     to a :class:`dict`.
     """
     player.hands = hands
-    assert player._asdict() == {
+    assert player.asdict() == {
         'class': 'Player',
         'chips': 100,
         'hands': hands,
@@ -231,8 +231,8 @@ def test_make_player():
     created :class:`Player` object.
     """
     seed('spam')
-    p1 = players.make_player()._asdict()
-    p2 = players.make_player()._asdict()
+    p1 = players.make_player().asdict()
+    p2 = players.make_player().asdict()
     assert p1['name'] == 'Andrew'
     assert p1['chips'] == 200
     assert p1['will_bet'] == 'will_bet_random'

@@ -14,8 +14,8 @@ from types import MethodType
 
 import pytest
 
-from blackjack import cli, cards, game, players
-from tests.common import deck, hand, hands, engine, player
+from blackjack import cards, cli, game, players
+from tests.common import deck, engine, hand, hands, player
 
 
 # Utility functions.

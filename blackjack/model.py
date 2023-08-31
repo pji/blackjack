@@ -9,9 +9,8 @@ data model.
 :license: MIT, see LICENSE for more details.
 """
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Any, Iterable, Optional, Sequence, Union
 from unicodedata import normalize
-from typing import Any, Iterable, Optional, Sequence
 
 from blessed import Terminal
 

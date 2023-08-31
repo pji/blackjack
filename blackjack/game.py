@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from json import dumps, loads
 from typing import Generator, Optional, Union
 
-from blackjack.cards import Deck, DeckObj, DOWN, Hand
+from blackjack.cards import DOWN, Deck, DeckObj, Hand
 from blackjack.model import (
     BaseEngine,
     Bet,
@@ -23,10 +23,10 @@ from blackjack.model import (
 from blackjack.players import (
     Dealer,
     Player,
-    make_player,
-    restore_player,
+    ValidPlayer,
     ValidPlayers,
-    ValidPlayer
+    make_player,
+    restore_player
 )
 from blackjack.utility import splash_title
 

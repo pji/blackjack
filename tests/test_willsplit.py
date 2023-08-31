@@ -13,7 +13,7 @@ import pytest
 
 from blackjack import model
 from blackjack import willsplit as ws
-from tests.common import hand, hands, engine, player
+from tests.common import engine, hand, hands, player
 
 
 # Test case.

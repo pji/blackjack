@@ -19,6 +19,7 @@ from typing import Sequence
 
 from blackjack.model import Boolean, Integer_, PosInt, valfactory
 
+
 # Global values.
 UP = True
 DOWN = False
@@ -204,7 +205,7 @@ class Card:
                 return True
         return False
 
-    def _astuple(self) -> tuple:
+    def astuple(self) -> tuple:
         """Return the card's attributes for serialization."""
         return (self.__class__.__name__, self.rank, self.suit, self.facing)
 
@@ -214,7 +215,7 @@ class Card:
 
     def serialize(self) -> str:
         """Serialize the object as JSON."""
-        return dumps(self._astuple())
+        return dumps(self.astuple())
 
 
 class Pile(MutableSequence):
@@ -315,7 +316,7 @@ class Pile(MutableSequence):
         self.cards = cards
 
     # Utility methods.
-    def _asdict(self) -> dict:
+    def asdict(self) -> dict:
         """Return a version of the object serialized as a dictionary."""
         return {
             'class': self.__class__.__name__,
@@ -340,7 +341,7 @@ class Pile(MutableSequence):
 
     def serialize(self) -> str:
         """Return the object serialized as a JSON string."""
-        return dumps(self._asdict())
+        return dumps(self.asdict())
 
 
 class Deck(Pile):
@@ -375,9 +376,9 @@ class Deck(Pile):
         super().__init__(cards, *args, **kwargs)
         self.size = size
 
-    def _asdict(self):
+    def asdict(self):
         """Return the object as a dictionary."""
-        serial = super()._asdict()
+        serial = super().asdict()
         serial['size'] = self.size
         return serial
 
@@ -430,9 +431,9 @@ class Hand(Pile):
     def __str__(self):
         return ' '.join(str(card) for card in self.cards)
 
-    def _asdict(self):
+    def asdict(self):
         """Return the object serialized as a dictionary."""
-        serial = super()._asdict()
+        serial = super().asdict()
         serial['doubled_down'] = self.doubled_down
         return serial
 

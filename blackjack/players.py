@@ -11,8 +11,8 @@ players, including the dealer.
 from functools import partial
 from json import dumps, loads
 from random import choice
-from typing import Callable, Optional, Type
 from types import MethodType
+from typing import Callable, Optional, Type
 
 import mkname
 from yadr import roll
@@ -140,9 +140,9 @@ class Player:
         if not isinstance(other, self.__class__):
             return NotImplemented
 
-        self_dict = self._asdict()
+        self_dict = self.asdict()
         del self_dict['insured']
-        other_dict = other._asdict()
+        other_dict = other.asdict()
         del other_dict['insured']
 
         return self_dict == other_dict
@@ -150,7 +150,7 @@ class Player:
     def __format__(self, format_spec):
         return self.name.__format__(format_spec)
 
-    def _asdict(self):
+    def asdict(self):
         """Return a dictionary that is a representation of the
         class.
         """
@@ -169,7 +169,7 @@ class Player:
 
     def serialize(self):
         """Return the object serialized as a JSON string."""
-        serial = self._asdict()
+        serial = self.asdict()
         serial['hands'] = [hand.serialize() for hand in serial['hands']]
         return dumps(serial)
 

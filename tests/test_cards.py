@@ -153,11 +153,11 @@ def test_Card_comparisons(card):
 
 
 # Tests for Card._astuple.
-def test_Card__astuple(card):
-    """When called, :meth:`blackjack.cards.Card._astuple` should return
+def test_Card_astuple(card):
+    """When called, :meth:`blackjack.cards.Card.astuple` should return
     the card's attributes as a tuple for serialization.
     """
-    assert card._astuple() == ('Card', 10, 'clubs', True)
+    assert card.astuple() == ('Card', 10, 'clubs', True)
 
 
 # Tests for Card.flip.

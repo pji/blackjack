@@ -9,9 +9,9 @@ a command line interface.
 :license: MIT, see LICENSE for more details.
 """
 import argparse
+import traceback as tb
 from collections import namedtuple
 from time import sleep
-import traceback as tb
 from typing import Any, Generator, Optional, Sequence, Union
 
 from blackjack import cards, game, model, players, termui

@@ -8,7 +8,7 @@ from types import MethodType
 
 import pytest
 
-from blackjack import cli, cards, players, game
+from blackjack import cards, cli, game, players
 
 
 # Utility function.

@@ -7,16 +7,18 @@ This module manages a user interface run through a terminal.
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
 """
-from collections import namedtuple
 import collections.abc as abc
-from importlib.resources import open_text
+from collections import namedtuple
+from importlib.resources import files
+from pathlib import Path
 from time import sleep
 from typing import Any, Generator, Optional, Sequence
 
+import clireader
 from blessed import Terminal
 from blessed.keyboard import Keystroke
-import clireader
 
+import blackjack.data
 from blackjack import model, players
 from blackjack.utility import Box
 
@@ -276,9 +278,10 @@ class Table(model.TerminalController):
     def _show_help(self):
         # Get the text of the rules page.
         title = 'rules.man'
-        default_file = open_text('blackjack.data', title)
-        text = default_file.read()
-        default_file.close()
+        data_pkg = files(blackjack.data)
+        default_file = Path(f'{data_pkg}') / title
+        with open(default_file) as fh:
+            text = fh.read()
 
         # Display the rules help.
         with self.term.fullscreen():

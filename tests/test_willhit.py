@@ -13,7 +13,7 @@ import pytest
 
 from blackjack import model
 from blackjack import willhit as wh
-from common import hand, hands, player, engine
+from tests.common import engine, hand, hands, player
 
 
 # Test cases.

@@ -13,6 +13,8 @@ clean:
 	rm -rf tests/*.pyc
 	rm -rf blackjack/__pycache__
 	rm -rf blackjack/*.pyc
+	rm -f *.log
+	rm -f *.json
 
 .PHONY: docs
 docs:
