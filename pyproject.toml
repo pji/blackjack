@@ -3,7 +3,36 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 
+[project]
+name = "blackjack"
+version = "0.1.1.dev"
+authors = [
+    {name="Paul J. Iutzi", email="pji@mac.com"},
+]
+description = "Yet another Python implementation of blackjack."
+readme = "README.rst"
+requires-python = ">=3.10,<4.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+
+[project.scripts]
+life = "blackjack.cli:main"
+
+
+[project.urls]
+"Homepage" = "https://github.com/pji/life"
+"Documentation" = "https://github.com/pji/life"
+"Source" = "https://github.com/pji/life"
+
+
 [tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
 markers = [
     "argv",
     "deck",
@@ -13,3 +42,47 @@ markers = [
     "validator",
     "will",
 ]
+
+
+[tool.poetry.group.dev.dependencies]
+rstcheck = "^6.2.4"
+pycodestyle = "^2.12.1"
+mypy = "^1.15.0"
+build = "^1.2.2.post1"
+pytest = "^8.3.4"
+pytest-mock = "^3.14.0"
+tox = "^4.24.1"
+isort = "^6.0.0"
+poetry-plugin-export = "^1.9.0"
+
+
+[tool.poetry.dependencies]
+blessed = "^1.20.0"
+mkname = "^0.2.3"
+clireader = {path = "../clireader"}
+
+
+[tool.rstcheck]
+report_level = "WARNING"
+ignore_directives = ["autoclass", "autofunction"]
+
+
+[tool.setuptools.package-data]
+blackjack = ['data/rules.man',]
+
+
+[tool.tox]
+legacy_tox_ini = """[tox]
+envlist = py310, py311, py312, py313
+
+
+[testenv]
+allowlist_externals = isort
+commands =
+    pytest {posargs: tests}
+    isort ./blackjack --check-only --diff --skip .tox --lai 2 -m 3
+    isort ./tests --check-only --diff --skip .tox --lai 2 -m 3
+deps = -rrequirements.txt
+    pytest
+    pytest-mock
+"""

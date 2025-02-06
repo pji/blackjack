@@ -26,32 +26,43 @@ Still To Do
 -----------
 The following features are planned for the 0.1.0 release:
 
-*   x Allow running as a console script.
-*   x Handle the additional bet when splitting the hand.
-    *   x Only allow splitting when player has chips for the bet.
-    *   x Take the chips for the bet from the player.
-*   x End round immediately if dealer has natural blackjack.
-    *   x Dealer checks if face-up card is a 10, J, Q, K, or A.
-    *   x If dealer has a natural, skip to settlement.
-    *   x If player has a natural, they get their bet back.
-    *   x All other players lose.
-*   x Add opening splash screen.
-    *   x Display splash screen.
-    *   x Clear splash screen from TableUI before play begins.
-*   x Add "How-To" to Table interface.
-*   x Add "How-To" to help.
+*   Allow running as a console script.
+*   Handle the additional bet when splitting the hand.
+
+    *   Only allow splitting when player has chips for the bet.
+    *   Take the chips for the bet from the player.
+    
+*   End round immediately if dealer has natural blackjack.
+
+    *   Dealer checks if face-up card is a 10, J, Q, K, or A.
+    *   If dealer has a natural, skip to settlement.
+    *   If player has a natural, they get their bet back.
+    *   All other players lose.
+    
+*   Add opening splash screen.
+
+    *   Display splash screen.
+    *   Clear splash screen from TableUI before play begins.
+    
+*   Add "How-To" to Table interface.
+*   Add "How-To" to help.
 
 The following features are possible for future versions:
 
 * Build UI for saving and restoring game state.
+
     *   Create menu interface.
     *   Select item in menu.
     *   Escape to menu.
+    
 * Separate number of seats from number of players.
+
 	* Fix game.Engine.seats when restoring from file.
 	* Allow empty seats.
 	* Allow players to join partway through a hand.
+	
 * Allow player interaction.
+
 	* Display recent actions in TableUI.
 	* Allow players to notice other players.
 	* Allow players to react to other players.
@@ -60,7 +71,9 @@ The following features are possible for future versions:
 	* Allow casino to react to players.
 	* Add casino catching and removing card counting players.
 	* Allow players to join a table partway through the shoe.
+	
 * Add optional rules.
+
     * Allow splitting more than once.
     * Allow resplitting aces.
     * Allow early surrender.
@@ -70,6 +83,7 @@ The following features are possible for future versions:
     * Allow side bets.
     * Add late surrender.
     * Add doubling after split.
+    
 * Add ability to configure by file.
 * Allow multiple human players to play in single game over network.
 
@@ -79,5 +93,5 @@ Testing
 To run the unit tests, pull the repository and run the following from 
 the root of the repository::
 
-    python3 -m unittest discover tests
+    python -m pytest tests/
 

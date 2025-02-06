@@ -55,7 +55,11 @@ def check_requirements():
     """Check requirements."""
     print('Checking requirements...')
     os.putenv('PIPENV_VERBOSITY', '-1')
-    cmd = '.venv/bin/python -m pipenv lock -r'
+    cmd = (
+        '.venv/bin/python -m poetry export '
+        '--without-hashes '
+        '-f requirements.txt '
+    )
     current = os.popen(cmd).readlines()
     current = wrap_lines(current, 35, '', '  ')
     with open('requirements.txt') as fh:

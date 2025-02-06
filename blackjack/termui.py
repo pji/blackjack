@@ -23,6 +23,14 @@ from blackjack import model, players
 from blackjack.utility import Box
 
 
+# Typing.
+UILoop = Generator[
+    str | int,
+    Sequence[str | int],
+    None
+]
+
+
 # Utility classes.
 Field = namedtuple('Field', 'name fmt')
 
@@ -437,7 +445,7 @@ class Table(model.TerminalController):
 
 class TableUI(model.EngineUI):
     """A table-based terminal UI for blackjack."""
-    loop: Generator
+    loop: UILoop
 
     # General operation methods.
     def __init__(self, ctlr: Optional[model.TerminalController] = None,
@@ -827,7 +835,11 @@ def main(
     with ctlr.term.fullscreen(), ctlr.term.hidden_cursor():
         resp = None
         while True:
-            event, *args = yield resp
+            yielded = yield resp
+            if yielded:
+                event, *args = yielded
+            else:
+                raise ValueError('UI Loop recieved empty yield.')
             resp = getattr(ctlr, event)(*args)
             if is_interactive:
                 sleep(.15)
