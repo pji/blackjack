@@ -8,11 +8,11 @@ build:
 clean:
 	rm -rf docs/build/html
 	rm -rf dist
-	rm -rf blackjack.egg-info
+	rm -rf src/blackjack.egg-info
 	rm -rf tests/__pycache__
 	rm -rf tests/*.pyc
-	rm -rf blackjack/__pycache__
-	rm -rf blackjack/*.pyc
+	rm -rf src/blackjack/__pycache__
+	rm -rf src/blackjack/*.pyc
 	rm -f *.log
 	rm -f *.json
 

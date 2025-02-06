@@ -2,8 +2,8 @@
 cards
 ~~~~~
 
-The module contains the basic classes used by blackjack for handling
-cards.
+The module contains the classes for working with cards and decks
+of cards.
 
 :copyright: (c) 2020 by Paul J. Iutzi
 :license: MIT, see LICENSE for more details.
@@ -11,6 +11,7 @@ cards.
 from collections import OrderedDict
 from collections.abc import MutableSequence
 from copy import copy, deepcopy
+from dataclasses import dataclass, field
 from functools import total_ordering
 from itertools import product
 from json import dumps, loads
@@ -24,22 +25,39 @@ from blackjack.model import Boolean, Integer_, PosInt, valfactory
 UP = True
 DOWN = False
 RANKS = list(range(1, 14))
+RANK_TRANSLATION = {
+    1: 'A',
+    11: 'J',
+    12: 'Q',
+    13: 'K',
+}
 SUITS = OrderedDict([
     ('clubs', '♣'),
     ('diamonds', '♦'),
     ('hearts', '♥'),
     ('spades', '♠'),
 ])
+CARD_BACK = '\u2500'
 
 
 # Validator functions.
-def validate_cardtuple(self, value: 'Sequence[Card]') -> tuple:
-    """Validate a sequence of cards."""
+def validate_cardtuple(self, value: 'Sequence[Card]') -> 'tuple[Card, ...]':
+    """Validate a sequence of cards.
+
+    :param value: The value to validate.
+    :returns: A :class:`tuple` of :class:`blackjack.cards.Card` objects.
+    :rtype: tuple
+    """
+    # Normalize the sequence to a tuple.
     try:
         normal = tuple(value)
+
+    # Raise a VakueError if the value can't be normalized to a tuple.
     except TypeError:
         reason = 'cannot be made a tuple'
         raise ValueError(self.msg.format(reason))
+
+    # Ensure each item in the normalized sequence is a Card object.
     else:
         for item in normal:
             if not isinstance(item, Card):
@@ -49,7 +67,12 @@ def validate_cardtuple(self, value: 'Sequence[Card]') -> tuple:
 
 
 def validate_deck(self, value: 'Deck') -> 'Deck':
-    """Validate a deck."""
+    """Validate a deck.
+
+    :param value: The value to validate.
+    :returns: A :class:`blackjack.cards.Deck` object.
+    :rtype: blackjack.cards.Deck
+    """
     if isinstance(value, Deck):
         return value
     reason = 'object is not a Deck'
@@ -122,11 +145,53 @@ Suit = valfactory('Suit', validate_suit, 'Invalid suit ({}).')
 # Common classes.
 @total_ordering
 class Card:
-    """A playing card for the game of blackjack."""
+    """A playing card for the game of blackjack.
+
+    :param rank: (Optional.) The rank (number value) of the card.
+    :param suit: (Optional.) The suit of the card.
+    :param facing: (Optional.) Whether the card is face up. True
+        is face up. False is face down.
+    :return: A :class:`blackjack.cards.Card` object.
+    :rtype: blackjack.cards.Card
+
+    Usage::
+
+        >>> # Create a new card.
+        >>> card = Card(7, 'hearts', UP)
+        >>> card
+        Card(rank=7, suit='hearts', facing=True)
+        >>>
+        >>> # Card ranks are ints, so here is a queen of diamonds.
+        >>> card = Card(12, 'diamonds', UP)
+        >>> card
+        Card(rank=12, suit='diamonds', facing=True)
+        >>>
+        >>> # Converting it to a str shows that it's a queen.
+        >>> str(card)
+        'Q♦'
+        >>>
+        >>> # Cards can be face up or face down, which changes the str.
+        >>> card = Card(12, 'diamonds', DOWN)
+        >>> str(card)
+        '──'
+        >>>
+        >>> # You can also compare them. The comparison only looks at
+        >>> # both rank and suit.
+        >>> card_a = Card(8, 'spades', UP)
+        >>> card_b = Card(8, 'diamonds', UP)
+        >>> card_c = Card(11, 'clubs', UP)
+        >>> card_a == card_c
+        False
+        >>> card_a == card_b
+        False
+        >>> card_a < card_c
+        True
+    """
     rank = Rank('rank')
     suit = Suit('suit')
     facing = Boolean('facing')
 
+    # Class methods.
     @classmethod
     def deserialize(cls, s: str) -> 'Card':
         """Deserialize an instance of the class.
@@ -134,6 +199,12 @@ class Card:
         :param s: An object serialized as a json string.
         :return: An instance of the class.
         :type: Card
+
+        Usage::
+
+            >>> json = '["Card", 11, "clubs", true]'
+            >>> Card.deserialize(json)
+            Card(rank=11, suit='clubs', facing=True)
         """
         args = loads(s)
         if args[0] == cls.__name__:
@@ -142,21 +213,14 @@ class Card:
             msg = 'Serialized object was not a Card object.'
             raise TypeError(msg)
 
+    # Magic methods.
     def __init__(
         self,
         rank: int = 11,
         suit: str = 'spades',
         facing: bool = UP
     ) -> None:
-        """Initialize an instance of the class.
-
-        :param rank: (Optional.) The rank (number value) of the card.
-        :param suit: (Optional.) The suit of the card.
-        :param facing: (Optional.) Whether the card is face up. True
-            is face up. False is face down.
-        :return: None.
-        :rtype: None.
-        """
+        """Initialize an instance of the class."""
         self.rank = rank
         self.suit = suit
         self.facing = facing
@@ -167,19 +231,13 @@ class Card:
         return tmp.format(cls.__name__, self.rank, self.suit, self.facing)
 
     def __str__(self):
-        if self.facing == DOWN:
-            return '\u2500\u2500'
-
-        rank_translate = {
-            1: 'A',
-            11: 'J',
-            12: 'Q',
-            13: 'K',
-        }
-        rank = self.rank
-        if rank in rank_translate:
-            rank = rank_translate[rank]
-        suit = SUITS[self.suit]
+        rank = CARD_BACK
+        suit = CARD_BACK
+        if self.facing == UP:
+            rank = self.rank
+            if rank in RANK_TRANSLATION:
+                rank = RANK_TRANSLATION[rank]
+            suit = SUITS[self.suit]
         return f'{rank}{suit}'
 
     def __eq__(self, other):
@@ -205,21 +263,86 @@ class Card:
                 return True
         return False
 
-    def astuple(self) -> tuple:
-        """Return the card's attributes for serialization."""
+    # Public methods.
+    def astuple(self) -> tuple[str, int, str, bool]:
+        """Return the card's attributes for serialization.
+
+        :returns: A :class:`tuple` object.
+        :rtype: tuple
+
+        Usage::
+
+            >>> card = Card(11, 'clubs')
+            >>> card.astuple()
+            ('Card', 11, 'clubs', True)
+        """
         return (self.__class__.__name__, self.rank, self.suit, self.facing)
 
-    def flip(self):
-        """Flip the facing of the card."""
+    def flip(self) -> None:
+        """Flip the facing of the card.
+
+        :returns: `None`.
+        :rtype: NoneType
+
+        Usage::
+
+            >>> card = Card(11, 'clubs', DOWN)
+            >>> str(card)
+            '──'
+            >>> card.flip()
+            >>> str(card)
+            'J♣'
+            >>> card.flip()
+            >>> str(card)
+            '──'
+        """
         self.facing = not self.facing
 
     def serialize(self) -> str:
-        """Serialize the object as JSON."""
+        """Serialize the object as JSON.
+
+        :returns: A :class:`str` object.
+        :rtype: str
+
+        Usage::
+
+            >>> card = Card(11, 'clubs')
+            >>> card.serialize()
+            '["Card", 11, "clubs", true]'
+        """
         return dumps(self.astuple())
 
 
 class Pile(MutableSequence):
-    """A generic pile of cards."""
+    """A generic pile of cards.
+
+    :param cards: (Optional.) A list containing the cards held by
+        the deck.
+    :return: None
+    :rtype: None
+
+    Usage::
+
+        >>> # Creating a pile with cards.
+        >>> c1 = Card(11, 'spades')
+        >>> c2 = Card(6, 'hearts')
+        >>> c3 = Card(4, 'diamonds')
+        >>> pile = Pile([c1, c2, c3])
+        >>> pile
+        Pile['J♠', '6♥', '4♦']
+        >>>
+        >>> # You can get the number of cards in the pile.
+        >>> len(pile)
+        3
+        >>>
+        >>> # It works as an iterator.
+        >>> for card in pile:
+        ...     print(card)
+        ...
+        J♠
+        6♥
+        4♦
+    """
     _iter_index = Integer_('_iter_index')
     cards = CardTuple('cards')
 
@@ -243,16 +366,10 @@ class Pile(MutableSequence):
 
     def __init__(
         self,
-        cards: list[Card] | None = None,
+        cards: Sequence[Card] | None = None,
         _iter_index: int = 0
     ) -> None:
-        """Initialize and instance of the class.
-
-        :param cards: (Optional.) A list containing the cards held by
-            the deck.
-        :return: None
-        :rtype: None
-        """
+        """Initialize and instance of the class."""
         self._iter_index = _iter_index
         if not cards:
             cards = []

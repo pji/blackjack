@@ -20,7 +20,7 @@ classifiers = [
 
 
 [project.scripts]
-life = "blackjack.cli:main"
+blackjack = "blackjack.cli:main"
 
 
 [project.urls]
@@ -80,7 +80,7 @@ envlist = py310, py311, py312, py313
 allowlist_externals = isort
 commands =
     pytest {posargs: tests}
-    isort ./blackjack --check-only --diff --skip .tox --lai 2 -m 3
+    isort ./src/blackjack --check-only --diff --skip .tox --lai 2 -m 3
     isort ./tests --check-only --diff --skip .tox --lai 2 -m 3
 deps = -rrequirements.txt
     pytest

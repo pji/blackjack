@@ -140,7 +140,7 @@ def check_style(file_paths, ignore):
 def check_type_hints(path):
     """Check the type hinting."""
     print('Running type hinting check...')
-    results = mypy.api.run([path, ])
+    results = mypy.api.run([path,])
     for report in results[:-1]:
         ps = report.split('\n')
         for p in ps:
@@ -188,7 +188,7 @@ def get_module_dir():
     """Get the directory of the module."""
     cwd = os.getcwd()
     dirs = cwd.split('/')
-    return f'{cwd}/{dirs[-1]}'
+    return f'{cwd}/src/{dirs[-1]}'
 
 
 def in_ignore(name, ignore):

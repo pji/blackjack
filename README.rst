@@ -22,31 +22,17 @@ The blackjack rules used for a default game of blackjack come from
 .. _`Blackjack—Card Game Rules`: https://bicyclecards.com/how-to-play/blackjack/
 
 
+Recent Updates
+--------------
+The following was changed in v0.1.1:
+
+*   Switched from `pipenv` to `poetry`.
+*   Moved source into `src` directory.
+*   Typing clean up.
+
+
 Still To Do
 -----------
-The following features are planned for the 0.1.0 release:
-
-*   Allow running as a console script.
-*   Handle the additional bet when splitting the hand.
-
-    *   Only allow splitting when player has chips for the bet.
-    *   Take the chips for the bet from the player.
-    
-*   End round immediately if dealer has natural blackjack.
-
-    *   Dealer checks if face-up card is a 10, J, Q, K, or A.
-    *   If dealer has a natural, skip to settlement.
-    *   If player has a natural, they get their bet back.
-    *   All other players lose.
-    
-*   Add opening splash screen.
-
-    *   Display splash screen.
-    *   Clear splash screen from TableUI before play begins.
-    
-*   Add "How-To" to Table interface.
-*   Add "How-To" to help.
-
 The following features are possible for future versions:
 
 * Build UI for saving and restoring game state.
