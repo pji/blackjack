@@ -292,7 +292,7 @@ def test_Engine__double_down(mocker, engine, hand, player):
 
 
 @pytest.mark.hand([1, 2], [11, 3])
-def test_Engine__double_down(mocker, engine, hand, player):
+def test_Engine__double_down_blackjack(mocker, engine, hand, player):
     """Given a hand with blackjack and a player who will double
     down, :meth:`Engine._double_down` should not allow the double
     down.

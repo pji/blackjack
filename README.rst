@@ -28,6 +28,7 @@ The following was changed in v0.1.1:
 
 *   Switched from `pipenv` to `poetry`.
 *   Moved source into `src` directory.
+*   Improved documentation.
 *   Typing clean up.
 
 

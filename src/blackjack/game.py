@@ -386,9 +386,11 @@ class Engine(BaseEngine):
         :rtype: None.
         """
         scores = [score for score in hand.score() if score < 12 and score > 8]
-        if (scores and not hand.is_blackjack()
-                and player.chips >= self.buyin
-                and player.will_double_down(hand, self)):
+        if (
+            scores and not hand.is_blackjack
+            and player.chips >= self.buyin
+            and player.will_double_down(hand, self)
+        ):
             hand.doubled_down = True
             player.chips -= self.buyin
             self.ui.doubledown(player, self.buyin)
@@ -419,7 +421,7 @@ class Engine(BaseEngine):
 
     def _hit(self, player, hand=None):
         """Handle the player's hitting and standing."""
-        while (not hand.is_bust() and not hand.is_blackjack()
+        while (not hand.is_bust and not hand.is_blackjack
                 and player.will_hit(hand, self)):
             card = self._draw()
             card.flip()
@@ -469,7 +471,7 @@ class Engine(BaseEngine):
         :rtype: bool
         """
         if (
-                hand[0].rank == hand[1].rank
+                hand.can_split
                 and player.will_split(hand, self)
                 and player.chips >= player.bet
         ):
@@ -530,7 +532,7 @@ class Engine(BaseEngine):
         dhand = self.dealer.hands[0]
         for player in self.playerlist:
             # Handle insurance.
-            if player.insured and dhand.is_blackjack():
+            if player.insured and dhand.is_blackjack:
                 payout = player.insured * 2
                 if payout:
                     player.chips += payout
@@ -545,11 +547,11 @@ class Engine(BaseEngine):
 
                 # Event modifiers.
                 if len(player.hands) == 1:
-                    if dhand.is_blackjack() and phand.is_blackjack():
+                    if dhand.is_blackjack and phand.is_blackjack:
                         event = self.ui.tie
-                    elif dhand.is_blackjack():
+                    elif dhand.is_blackjack:
                         event = self.ui.loses
-                    elif phand.is_blackjack():
+                    elif phand.is_blackjack:
                         event = self.ui.wins
                     elif result is None:
                         event = self.ui.tie
@@ -558,7 +560,7 @@ class Engine(BaseEngine):
                     else:
                         event = self.ui.loses
                 else:
-                    if dhand.is_blackjack():
+                    if dhand.is_blackjack:
                         if index == 1:
                             event = self.ui.loses_split
                         else:
@@ -581,7 +583,7 @@ class Engine(BaseEngine):
 
                 # Payout modifiers.
                 if event == self.ui.wins or event == self.ui.wins_split:
-                    if phand.is_blackjack() and len(player.hands) == 1:
+                    if phand.is_blackjack and len(player.hands) == 1:
                         mod = 2.5
                     elif phand.doubled_down:
                         mod = 4
@@ -679,7 +681,7 @@ def main(engine: Engine, is_interactive: bool = True) -> Generator:
     while play:
         engine.bet()
         engine.deal()
-        if not engine.dealer.hands[0].is_blackjack():
+        if not engine.dealer.hands[0].is_blackjack:
             engine.play()
         else:
             for card in engine.dealer.hands[0]:

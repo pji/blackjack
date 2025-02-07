@@ -9,14 +9,13 @@ of cards.
 :license: MIT, see LICENSE for more details.
 """
 from collections import OrderedDict
-from collections.abc import MutableSequence
+from collections.abc import Iterable, MutableSequence, Sequence
 from copy import copy, deepcopy
 from dataclasses import dataclass, field
 from functools import total_ordering
 from itertools import product
 from json import dumps, loads
 from random import randrange, shuffle
-from typing import Sequence
 
 from blackjack.model import Boolean, Integer_, PosInt, valfactory
 
@@ -318,8 +317,11 @@ class Pile(MutableSequence):
 
     :param cards: (Optional.) A list containing the cards held by
         the deck.
-    :return: None
-    :rtype: None
+    :param _iter_index: (Optional.) The current index when iterating
+        through the pile. It's intended to be used only when deserializing
+        a pile. Defaults to 0.
+    :return: A :class:`blackjack.cards.Pile` object.
+    :rtype: blackjack.cards.Pile
 
     Usage::
 
@@ -434,93 +436,285 @@ class Pile(MutableSequence):
 
     # Utility methods.
     def asdict(self) -> dict:
-        """Return a version of the object serialized as a dictionary."""
+        """Return a version of the object serialized as a dictionary.
+
+        :returns: A :class:`dict` object.
+        :rtype: dict
+
+        Usage::
+
+            >>> c1 = Card(11, 'spades')
+            >>> c2 = Card(10, 'hearts')
+            >>> pile = Pile([c1, c2])
+            >>>
+            >>> # Serialize the pile.
+            >>> pile.serialize()                    # doctest: +ELLIPSIS
+            '{"class": "Pile", "_iter_index": 0, "car...true]"]}'
+        """
         return {
             'class': self.__class__.__name__,
             '_iter_index': self._iter_index,
             'cards': [card.serialize() for card in self.cards]
         }
 
-    def append(self, item):
+    def append(self, item: Card) -> None:
+        """Add a card to the end of the pile.
+
+        :param item: The card to add to the pile.
+        :returns: `None`.
+        :rtype: NoneType
+
+        Usage::
+
+            >>> c1 = Card(11, 'spades')
+            >>> c2 = Card(10, 'hearts')
+            >>> pile = Pile([c1, c2])
+            >>>
+            >>> # Add a new card to the pile.
+            >>> c3 = Card(1, 'clubs')
+            >>> pile.append(c3)
+            >>> pile
+            Pile['J♠', '10♥', 'A♣']
+        """
         cards = list(self.cards)
         cards.append(item)
         self.cards = tuple(cards)
 
-    def copy(self):
-        """Return a copy of the Deck object."""
+    def copy(self) -> 'Pile':
+        """Return a copy of the Deck object.
+
+        :returns: A :class:`blackjack.cards.Pile` object.
+        :rtype: blackjack.cards.Pile
+
+        Usage::
+
+            >>> c1 = Card(11, 'spades')
+            >>> c2 = Card(10, 'hearts')
+            >>> pile = Pile([c1, c2])
+            >>>
+            >>> # Copy the pile.
+            >>> new = pile.copy()
+            >>>
+            >>> # Copies are equivalent.
+            >>> new == pile
+            True
+            >>>
+            >>> # But they aren't the same object.
+            >>> new is pile
+            False
+        """
         return copy(self)
 
-    def extend(self, iterable):
-        """Append all items from the given iterable."""
+    def extend(self, iterable: Iterable[Card]) -> None:
+        """Append all items from the given iterable.
+
+        :param iterable: The :class:`Iterable` to add to the pile.
+        :returns: `None`.
+        :rtype: NoneType
+
+        Usage::
+
+            >>> c1 = Card(11, 'spades')
+            >>> c2 = Card(10, 'hearts')
+            >>> pile1 = Pile([c1, c2])
+            >>>
+            >>> c3 = Card(1, 'spades')
+            >>> c4 = Card(11, 'clubs')
+            >>> pile2 = Pile([c3, c4])
+            >>>
+            >>> # Add pile2 to the end of pile1.
+            >>> pile1.extend(pile2)
+            >>> pile1
+            Pile['J♠', '10♥', 'A♠', 'J♣']
+        """
         cards = list(self.cards)
         cards.extend(iterable)
         self.cards = tuple(cards)
 
     def serialize(self) -> str:
-        """Return the object serialized as a JSON string."""
+        """Return the object serialized as a JSON string.
+
+        :returns: A :class:`str` object.
+        :rtype: str
+
+        Usage::
+
+            >>> c1 = Card(11, 'spades')
+            >>> c2 = Card(10, 'hearts')
+            >>> pile = Pile([c1, c2])
+            >>>
+            >>> # Serialize the pile.
+            >>> pile.serialize()                # doctest: +ELLIPSIS
+            '{"class": "Pile", "_iter_index": 0,... true]"]}'
+        """
         return dumps(self.asdict())
 
 
 class Deck(Pile):
-    """A deck of playing cards for blackjack."""
+    """A deck of playing cards for blackjack.
+
+    :param cards: (Optional.) The cards to add to the deck. Defaults
+        to `None`.
+    :param size: (Optional.) The number of 52 card decks in the full
+        deck. Defaults to `1`.
+    :param _iter_index: (Optional.) The current index when iterating
+        through the pile. It's intended to be used only when deserializing
+        a pile. Defaults to 0.
+    :returns: A :class:`blackjack.cards.Deck` object.
+    :rtype: blackjack.cards.Deck
+
+    Usage::
+
+        >>> cards = [Card(r, s) for s, r in product(SUITS, RANKS)]
+        >>> deck = Deck(cards, size=1)
+        >>> deck                                    # doctest: +ELLIPSIS
+        Deck['A♣', '2♣', '3♣', '4♣', '5♣', '6♣', '7♣', '8♣', '9♣',... 'K♠']
+    """
     size = PosInt('size')
 
+    # Class methods.
     @classmethod
     def build(cls, num_decks: int = 1):
         """(Class method.) Create a Deck object that is populated
-        with cards.
+        with cards. The cards in the deck are all face down.
 
         :param num_decks: (Optional.) The number of standard decks to
             use when constructing the deck.
-        :return: An instance of Deck that contains Card objects.
-        :rtype: Deck
-        """
-        d = cls()
-        d.size = num_decks
-        ranks = reversed(RANKS)
-        std_deck = [Card(rank, suit, DOWN) for suit, rank
-                    in product(SUITS, ranks)]
-        for i in range(d.size):
-            d.extend(deepcopy(std_deck))
-        return d
+        :return: A :class:`blackjack.cards.Deck` object.
+        :rtype: blackjack.cards.Deck
 
+        Usage::
+
+            >>> # Create a deck containing three standard 52-card decks.
+            >>> deck = Deck.build(3)
+            >>>
+            >>> # It is made of three decks.
+            >>> deck.size
+            3
+            >>>
+            >>> # Thee decks has 52 * 3 = 156 cards.
+            >>> len(deck)
+            156
+        """
+        ranks = reversed(RANKS)
+        std_deck = [Card(r, s, DOWN) for s, r in product(SUITS, ranks)]
+        cards = []
+        for i in range(num_decks):
+            cards.extend(deepcopy(std_deck))
+        return cls(cards, num_decks)
+
+    # Magic methods.
     def __init__(
         self,
-        cards: list[Card] | None = None,
+        cards: Sequence[Card] | None = None,
         size: int = 1,
         *args, **kwargs
     ) -> None:
         super().__init__(cards, *args, **kwargs)
         self.size = size
 
-    def asdict(self):
-        """Return the object as a dictionary."""
+    # Public methods.
+    def asdict(self) -> dict[str, str | int | list[str]]:
+        """Return the object as a dictionary.
+
+        :returns: A :class:`dict` object.
+        :rtype: dict
+
+        Usage::
+
+            >>> deck = Deck.build(1)
+            >>>
+            >>> # Serialize the deck as a dict.
+            >>> deck.asdict()                   # doctest: +ELLIPSIS
+            {'class': 'Deck', '_iter_index': 0, ... 'size': 1}
+        """
         serial = super().asdict()
         serial['size'] = self.size
         return serial
 
-    def draw(self):
+    def draw(self) -> Card:
         """Draw the top card from the deck.
 
         NOTE: Due to how lists work, it is more efficient for the top
         of the deck to be index -1 rather than index 0, even though
         this is counterintuitive.
 
-        :return: The top card from the deck.
-        :rtype: Card
+        :return: A :class:`blackjack.cards.Card` object.
+        :rtype: blackjack.cards.Card
+
+        Usage::
+
+            >>> deck = Deck.build(1)
+            >>>
+            >>> # Draw a card.
+            >>> deck.draw()
+            Card(rank=1, suit='spades', facing=False)
         """
         return self.pop()
 
-    def shuffle(self):
-        """Randomize the order of the deck."""
+    def shuffle(self) -> None:
+        """Randomize the order of the deck.
+
+        :returns: `None`.
+        :rtype: NoneType
+
+        Usage::
+
+            >>> deck = Deck.build(1)
+            >>>
+            >>> # Before the shuffle the cards are all in order.
+            >>> for card in deck[:5]:
+            ...     repr(card)
+            ...
+            "Card(rank=13, suit='clubs', facing=False)"
+            "Card(rank=12, suit='clubs', facing=False)"
+            "Card(rank=11, suit='clubs', facing=False)"
+            "Card(rank=10, suit='clubs', facing=False)"
+            "Card(rank=9, suit='clubs', facing=False)"
+            >>>
+            >>> # Shuffling changes the order.
+            >>> deck.shuffle()
+            >>> for card in deck[:5]:
+            ...     repr(card)
+            ...
+            "Card(rank=10, suit='hearts', facing=False)"
+            "Card(rank=1, suit='hearts', facing=False)"
+            "Card(rank=7, suit='spades', facing=False)"
+            "Card(rank=4, suit='clubs', facing=False)"
+            "Card(rank=7, suit='hearts', facing=False)"
+        """
         cards = list(self.cards)
         shuffle(cards)
         self.cards = tuple(cards)
 
-    def random_cut(self):
+    def random_cut(self) -> None:
         """Remove the last 60-75 cards from the deck. This is done
         before a round of blackjack begins to make it harder to
         count cards.
+
+        :returns: `None`.
+        :rtype: NoneType
+
+        Usage::
+
+            >>> # Seeding the random number generator to ensure repeatability
+            >>> # for testing. Don't do this when not testing.
+            >>> from random import seed
+            >>> seed('spam')
+            >>>
+            >>> # Create the deck.
+            >>> deck = Deck.build(3)
+            >>> len(deck)
+            156
+            >>> deck[0]
+            Card(rank=13, suit='clubs', facing=False)
+            >>>
+            >>> # Cut the deck.
+            >>> deck.random_cut()
+            >>> len(deck)
+            93
+            >>> deck[0]
+            Card(rank=2, suit='clubs', facing=False)
         """
         num = randrange(60, 76)
         self.cards = self.cards[num:]
@@ -533,9 +727,30 @@ class Hand(Pile):
     busting) is a house rule. This implementation is based on the
     Bicycle rules for Blackjack at bicyclecards.com, so it doesn't
     implement that rule.
+
+    :param cards: (Optional.) The cards to add to the deck. Defaults
+        to `None`.
+    :param _iter_index: (Optional.) The current index when iterating
+        through the pile. It's intended to be used only when deserializing
+        a pile. Defaults to 0.
+    :param doubled_down: (Optional.) Whether the hand has been doubled
+        down. Defaults to `False`.
+    :returns: A :class:`blackjack.cards.Hand` object.
+    :rtype: blackjack.cards.Hand
+
+    Usage::
+
+        >>> # Create a hand.
+        >>> c1 = Card(1, 'hearts')
+        >>> c2 = Card(11, 'spades')
+        >>> cards = [c1, c2]
+        >>> hand = Hand(cards)
+        >>> hand
+        Hand['A♥', 'J♠']
     """
     doubled_down = Boolean('doubled_down')
 
+    # Magic methods.
     def __init__(self, *args, doubled_down: bool = False, **kwargs) -> None:
         """Initialize an instance of the class."""
         super().__init__(*args, **kwargs)
@@ -548,19 +763,16 @@ class Hand(Pile):
     def __str__(self):
         return ' '.join(str(card) for card in self.cards)
 
-    def asdict(self):
-        """Return the object serialized as a dictionary."""
-        serial = super().asdict()
-        serial['doubled_down'] = self.doubled_down
-        return serial
-
-    def can_split(self):
+    # Properties.
+    @property
+    def can_split(self) -> bool:
         """Determine whether the hand can be split."""
         if len(self) == 2 and self[0].rank == self[1].rank:
             return True
         return False
 
-    def is_blackjack(self):
+    @property
+    def is_blackjack(self) -> bool:
         """Determine whether the hand is a natural blackjack."""
         if len(self.cards) == 2:
             ranks = sorted([card.rank for card in self.cards])
@@ -568,14 +780,35 @@ class Hand(Pile):
                 return True
         return False
 
-    def is_bust(self):
+    @property
+    def is_bust(self) -> bool:
         """Return whether the hand is bust."""
         scores = [score for score in self.score() if score <= 21]
         if not scores:
             return True
         return False
 
-    def score(self):
+    # Public methods.
+    def asdict(self) -> dict[str, str | int | list[str]]:
+        """Return the object serialized as a dictionary.
+
+        :returns: A :class:`dict` object.
+        :rtype: dict
+
+        Usage::
+
+            >>> cards = [Card(1, 'hearts'), Card(11, 'spades')]
+            >>> hand = Hand(cards)
+            >>>
+            >>> # Serialize the hand.
+            >>> hand.asdict()                   # doctest: +ELLIPSIS
+            {'class': 'Hand', '_iter_index': 0,... False}
+        """
+        serial = super().asdict()
+        serial['doubled_down'] = self.doubled_down
+        return serial
+
+    def score(self) -> list[int]:
         scores = set()
 
         # Sorting by ranks makes it easier to score.
@@ -612,12 +845,12 @@ class Hand(Pile):
                 scores.add(score + score_aces)
 
         # Return results.
-        scores = list(scores)
-        return sorted(scores)
+        result = list(scores)
+        return sorted(result)
 
     def split(self):
         """Split the hand."""
-        if not self.can_split():
+        if not self.can_split:
             msg = 'Hand cannot be split.'
             raise ValueError(msg)
         hand = sorted(self.cards)

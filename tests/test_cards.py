@@ -568,8 +568,8 @@ def test_Hand_can_split(hands):
     :class:`Hand` can be split.
     """
     hand, hand_20 = hands
-    assert hand_20.can_split()
-    assert not hand.can_split()
+    assert hand_20.can_split
+    assert not hand.can_split
 
 
 # Tests for Hand_is_blackjack.
@@ -583,9 +583,9 @@ def test_Hand_is_blackjack(hands):
     :class:`Hand` is a natural blackjack.
     """
     blackjack, hand_20, hand_21 = hands
-    assert blackjack.is_blackjack()
-    assert not hand_21.is_blackjack()
-    assert not hand_20.is_blackjack()
+    assert blackjack.is_blackjack
+    assert not hand_21.is_blackjack
+    assert not hand_20.is_blackjack
 
 
 # Tests for Hand.is_bust.
@@ -594,9 +594,9 @@ def test_Hand_is_bust(hand):
     """When called, :meth:`Hand.is_bust` should return whether the
     :class:`Hand` is bust.
     """
-    assert not hand.is_bust()
+    assert not hand.is_bust
     hand.append(cards.Card(10, 2))
-    assert hand.is_bust()
+    assert hand.is_bust
 
 
 # Tests for Hand.score.
