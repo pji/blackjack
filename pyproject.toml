@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "blackjack"
-version = "0.1.1.dev"
+version = "0.1.1"
 authors = [
     {name="Paul J. Iutzi", email="pji@mac.com"},
 ]
