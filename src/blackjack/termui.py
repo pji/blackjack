@@ -36,6 +36,11 @@ Field = namedtuple('Field', 'name fmt')
 
 
 # Terminal functions.
+def move(term: Terminal, y: int, x: int) -> str:
+    """Create the string to move the cursor."""
+    return term.move(str(y), str(x))
+
+
 def splash(text: Sequence[str]) -> None:
     """Draw a splash screen in the terminal."""
     prompt = 'Press any key to continue.'
@@ -44,12 +49,12 @@ def splash(text: Sequence[str]) -> None:
     with term.fullscreen(), term.cbreak():
         for line in text:
             x = term.width // 2 - len(line) // 2
-            print(term.move(y, x) + line)
+            print(term.move_xy(x, y) + line)
             y += 1
         print(
-            term.move(
-                term.height - 1,
-                term.width // 2 - len(prompt) // 2
+            term.move_xy(
+                term.width // 2 - len(prompt) // 2,
+                term.height - 1
             )
             + prompt
         )
@@ -234,7 +239,7 @@ class Table(model.TerminalController):
 
     def _clear_row(self, y:int) -> None:
         """Clear a line in the UI."""
-        print(self.term.move(y, 0) + ' ' * 80)
+        print(self.term.move_xy(0, y) + ' ' * 80)
 
     def _clear_status(self) -> None:
         """Clear the status."""
@@ -253,12 +258,12 @@ class Table(model.TerminalController):
         y = row + 4
         x = list(self._field_locs)[col]
         fmt = self.fields[col].fmt
-        print(self.term.move(y, x) + fmt.format(text))
+        print(self.term.move_xy(x, y) + fmt.format(text))
 
     def _draw_header(self) -> None:
         """Draw the header lines."""
         for y, line in enumerate(self.header):
-            print(self.term.move(y, 1) + line)
+            print(self.term.move_xy(1, y) + line)
 
     def _draw_status(self):
         """Draw the status information."""
@@ -267,13 +272,13 @@ class Table(model.TerminalController):
             y = y_start + line
             self._clear_row(y)
             text = f'{key}: {self.status[key]}'
-            print(self.term.move(y, 1) + text)
+            print(self.term.move_xy(1, y) + text)
         print(self.term.move(y + 1, 0) + self._bot)
 
     def _draw_table_bottom(self):
         """Draw the bottom of the table."""
         y = len(self.data) + self._header_rows
-        print(self.term.move(y, 0) + self._bot)
+        print(self.term.move_xy(0, y) + self._bot)
 
     def _draw_table(self):
         """Draw a row in the table."""
@@ -281,7 +286,7 @@ class Table(model.TerminalController):
         row_fmt = self.frame.rside + fields + self.frame.lside
         for index in range(len(self.data)):
             y = index + self._header_rows
-            print(self.term.move(y, 0) + row_fmt.format(*self.data[index]))
+            print(self.term.move_xy(0, y) + row_fmt.format(*self.data[index]))
 
     def _show_help(self):
         # Get the text of the rules page.
@@ -318,7 +323,7 @@ class Table(model.TerminalController):
         """Write an error to the UI."""
         y = self._y_error
         fmt = '{:<' + str(self.term.width) + '}'
-        print(self.term.move(y, 1) + fmt.format(msg))
+        print(self.term.move_xy(1, y) + fmt.format(msg))
 
     def input(
             self,
@@ -336,12 +341,12 @@ class Table(model.TerminalController):
         # Print the input prompt.
         y = self._y_input
         fmt = '{:<' + str(self.term.width) + '}'
-        print(self.term.move(y, 1) + fmt.format(prompt))
+        print(self.term.move_xy(1, y) + fmt.format(prompt))
 
         # Get the input.
         with self.term.cbreak():
             resp: Optional[Keystroke] = self.term.inkey()
-        print(self.term.move(y, 1) + fmt.format(''))
+        print(self.term.move_xy(1, y) + fmt.format(''))
 
         # Use the default if no input is given.
         if not resp or resp == '\n':
@@ -379,7 +384,7 @@ class Table(model.TerminalController):
         )
         fmt = '{:<' + str(self.term.width) + '}'
         full_prompt = fmt.format(prompt + ' > ')
-        print(self.term.move(y, 1) + full_prompt)
+        print(self.term.move_xy(1, y) + full_prompt)
         x = len(prompt) + 2
 
         # Collect the input.
@@ -391,16 +396,16 @@ class Table(model.TerminalController):
                     self._show_help()
                     self.clear()
                     self.draw()
-                    print(self.term.move(y, 1) + full_prompt)
+                    print(self.term.move_xy(1, y) + full_prompt)
                 else:
                     char = str(resp)
-                    print(self.term.move(y, x) + char)
+                    print(self.term.move_xy(x, y) + char)
                     x += 1
                     text = text + char
                 resp = self.term.inkey()
 
         # Rehome the cursor.
-        print(self.term.move(y, 1) + fmt.format(''))
+        print(self.term.move_xy(1, y) + fmt.format(''))
 
         # Return the input.
         if not text or text == '\n':

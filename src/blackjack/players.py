@@ -48,10 +48,10 @@ def get_chips(bet):
 def make_name():
     """Create a name for a player."""
     config = mkname.get_config('')
-    names = mkname.get_names_by_kind(kind='given')
+    names = mkname.get_names(kind='given')
     if roll('1d3') > 1:
-        return mkname.build_compound_name(names)
-    return mkname.select_name(names)
+        return mkname.build_compound_name_from_names(names)
+    return mkname.select_name_from_names(names)
 
 
 # Base class.

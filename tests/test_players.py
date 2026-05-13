@@ -233,14 +233,14 @@ def test_make_player():
     seed('spam')
     p1 = players.make_player().asdict()
     p2 = players.make_player().asdict()
-    assert p1['name'] == 'Andrew'
+    assert p1['name'] == 'Felix'
     assert p1['chips'] == 200
     assert p1['will_bet'] == 'will_bet_random'
     assert p1['will_double_down'] == 'will_double_down_recommended'
     assert p1['will_hit'] == 'will_hit_never'
     assert p1['will_insure'] == 'will_insure_random'
     assert p1['will_split'] == 'will_split_random'
-    assert p2['name'] == 'Daren'
+    assert p2['name'] == 'Gwaul'
     assert p1['chips'] == 200
     assert p2['will_bet'] == 'will_bet_random'
     assert p2['will_double_down'] == 'will_double_down_recommended'
