@@ -2,7 +2,7 @@
 blackjack
 =========
 
-Yet another Python implementation of blackjack. The main purpose of 
+Yet another Python implementation of blackjack. The main purpose of
 this is to play around with basic concepts.
 
 
@@ -31,6 +31,11 @@ The following was changed in v0.1.1:
 *   Improved documentation.
 *   Typing clean up.
 
+The following was changed in v0.1.2:
+
+*   Updated dependencies.
+*   Updated deprecated dependency calls.
+
 
 Still To Do
 -----------
@@ -41,13 +46,13 @@ The following features are possible for future versions:
     *   Create menu interface.
     *   Select item in menu.
     *   Escape to menu.
-    
+
 * Separate number of seats from number of players.
 
 	* Fix game.Engine.seats when restoring from file.
 	* Allow empty seats.
 	* Allow players to join partway through a hand.
-	
+
 * Allow player interaction.
 
 	* Display recent actions in TableUI.
@@ -58,7 +63,7 @@ The following features are possible for future versions:
 	* Allow casino to react to players.
 	* Add casino catching and removing card counting players.
 	* Allow players to join a table partway through the shoe.
-	
+
 * Add optional rules.
 
     * Allow splitting more than once.
@@ -70,14 +75,14 @@ The following features are possible for future versions:
     * Allow side bets.
     * Add late surrender.
     * Add doubling after split.
-    
+
 * Add ability to configure by file.
 * Allow multiple human players to play in single game over network.
 
 
 Testing
 -------
-To run the unit tests, pull the repository and run the following from 
+To run the unit tests, pull the repository and run the following from
 the root of the repository::
 
     python -m pytest tests/
